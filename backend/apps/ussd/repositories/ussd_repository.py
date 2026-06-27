@@ -45,11 +45,49 @@ class USSDSessionRepository:
 
     def expire_stale(self, timeout_minutes: int) -> int:
         cutoff = timezone.now() - timedelta(minutes=timeout_minutes)
-        return (
-            self.get_queryset()
-            .filter(status=USSDSession.Status.ACTIVE, last_activity_at__lt=cutoff)
-            .update(status=USSDSession.Status.EXPIRED, ended_at=timezone.now())
+        stale = self.get_queryset().filter(
+            status=USSDSession.Status.ACTIVE,
+            last_activity_at__lt=cutoff,
         )
+        count = 0
+        for session in stale:
+            if session.state_data.get("vote") and not session.completed_vote:
+                session.status = USSDSession.Status.ABANDONED
+            else:
+                session.status = USSDSession.Status.EXPIRED
+            session.ended_at = timezone.now()
+            session.save(update_fields=["status", "ended_at"])
+            count += 1
+        return count
+
+    def reset_session(
+        self,
+        session: USSDSession,
+        *,
+        msisdn: str,
+        service_code: str = "",
+        network: str = "",
+    ) -> tuple[USSDSession, str]:
+        """Reuse carrier session_id after expiry/completion — Arkesel lifecycle recovery."""
+        previous_status = session.status
+        session.status = USSDSession.Status.ACTIVE
+        session.current_step = "WELCOME"
+        session.state_data = {"pending_auth_target": None, "_recovered_from": previous_status}
+        session.user = None
+        session.completed_vote = False
+        session.failure_reason = ""
+        session.request_count = 0
+        session.started_at = timezone.now()
+        session.last_activity_at = timezone.now()
+        session.ended_at = None
+        if msisdn:
+            session.msisdn = msisdn
+        if service_code:
+            session.service_code = service_code
+        if network:
+            session.network = network
+        session.save()
+        return session, previous_status
 
     def dashboard_stats(self) -> dict:
         today = timezone.now().date()

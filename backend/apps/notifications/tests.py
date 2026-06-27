@@ -110,3 +110,151 @@ class ArkeselProviderTests(TestCase):
             provider = ArkeselSmsProvider()
             result = provider.send(log)
             self.assertEqual(result["status_code"], mock_response.status_code)
+
+
+class SmsProductionReadinessTests(TestCase):
+    @patch("apps.notifications.providers.base.httpx.post")
+    def test_otp_sms_delivery_via_communication_service(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.raise_for_status = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'{"status":"success"}'
+        mock_response.json.return_value = {"status": "success"}
+        mock_post.return_value = mock_response
+
+        NotificationTemplate.objects.get_or_create(
+            code="otp_sms",
+            defaults={
+                "name": "OTP SMS",
+                "channel": NotificationTemplate.Channel.SMS,
+                "sms_body": "Your VoteBridge code is {otp_code}",
+                "is_active": True,
+            },
+        )
+        from apps.notifications.models import CommunicationProvider
+
+        CommunicationProvider.objects.create(
+            name="Arkesel Test",
+            provider_type=CommunicationProvider.ProviderType.ARKESEL_SMS,
+            is_active=True,
+            is_default=True,
+            config={"api_key": "test", "sender_id": "VoteBridge"},
+        )
+
+        service = CommunicationService()
+        with override_settings(ARKESEL_API_KEY="test-key", ARKESEL_SENDER_ID="VoteBridge"):
+            log = service.send_raw(
+                channel="sms",
+                recipient="233241234567",
+                body="Your VoteBridge code is 123456",
+                template_code="otp_sms",
+            )
+        self.assertEqual(log.status, DeliveryLog.Status.DELIVERED)
+
+    @patch("apps.notifications.providers.base.httpx.post")
+    def test_vote_confirmation_template_dispatch(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.raise_for_status = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'{"status":"success"}'
+        mock_response.json.return_value = {"status": "success"}
+        mock_post.return_value = mock_response
+
+        NotificationTemplate.objects.get_or_create(
+            code="vote_confirmation",
+            defaults={
+                "name": "Vote Confirmation",
+                "channel": NotificationTemplate.Channel.SMS,
+                "sms_body": "Your vote in {election_name} was recorded. Token: {token_code}",
+                "is_active": True,
+            },
+        )
+        from apps.notifications.models import CommunicationProvider
+
+        CommunicationProvider.objects.create(
+            name="Arkesel Vote",
+            provider_type=CommunicationProvider.ProviderType.ARKESEL_SMS,
+            is_active=True,
+            is_default=True,
+            config={"api_key": "test", "sender_id": "VoteBridge"},
+        )
+
+        service = CommunicationService()
+        with override_settings(ARKESEL_API_KEY="test-key", ARKESEL_SENDER_ID="VoteBridge"):
+            log = service.dispatch(
+                template_code="vote_confirmation",
+                channel=DeliveryLog.Channel.SMS,
+                recipient="233241234567",
+                context={"election_name": "SRC 2026", "token_code": "SVT-ABC"},
+            )
+        self.assertEqual(log.status, DeliveryLog.Status.DELIVERED)
+        self.assertIn("SRC 2026", log.body_snapshot)
+
+    @patch("apps.notifications.providers.base.httpx.post")
+    def test_sms_delivery_failure_sets_retry_status(self, mock_post):
+        mock_post.side_effect = Exception("Arkesel timeout")
+
+        NotificationTemplate.objects.get_or_create(
+            code="otp_sms_retry",
+            defaults={
+                "name": "OTP",
+                "channel": NotificationTemplate.Channel.SMS,
+                "sms_body": "Code {otp_code}",
+                "is_active": True,
+            },
+        )
+        from apps.notifications.models import CommunicationProvider
+
+        CommunicationProvider.objects.create(
+            name="Arkesel Fail",
+            provider_type=CommunicationProvider.ProviderType.ARKESEL_SMS,
+            is_active=True,
+            is_default=True,
+            config={"api_key": "test", "sender_id": "VoteBridge"},
+        )
+
+        service = CommunicationService()
+        with override_settings(ARKESEL_API_KEY="test-key", ARKESEL_SENDER_ID="VoteBridge"):
+            with self.assertRaises(Exception):
+                service.send_raw(
+                    channel="sms",
+                    recipient="233241234567",
+                    body="Code 999999",
+                    template_code="otp_sms_retry",
+                )
+
+        log = DeliveryLog.objects.order_by("-created_at").first()
+        self.assertEqual(log.status, DeliveryLog.Status.RETRYING)
+        self.assertEqual(log.retry_count, 1)
+
+    @patch("apps.notifications.providers.base.httpx.post")
+    def test_retry_delivery_succeeds_after_failure(self, mock_post):
+        mock_response = MagicMock()
+        mock_response.raise_for_status = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'{"status":"success"}'
+        mock_response.json.return_value = {"status": "success"}
+        mock_post.return_value = mock_response
+
+        from apps.notifications.models import CommunicationProvider
+
+        CommunicationProvider.objects.create(
+            name="Arkesel Retry",
+            provider_type=CommunicationProvider.ProviderType.ARKESEL_SMS,
+            is_active=True,
+            is_default=True,
+            config={"api_key": "test", "sender_id": "VoteBridge"},
+        )
+
+        log = DeliveryLog.objects.create(
+            recipient="233241234567",
+            channel=DeliveryLog.Channel.SMS,
+            body_snapshot="Retry me",
+            status=DeliveryLog.Status.RETRYING,
+            retry_count=1,
+            max_retries=3,
+        )
+        service = CommunicationService()
+        with override_settings(ARKESEL_API_KEY="test-key", ARKESEL_SENDER_ID="VoteBridge"):
+            updated = service.retry_delivery(log)
+        self.assertEqual(updated.status, DeliveryLog.Status.DELIVERED)

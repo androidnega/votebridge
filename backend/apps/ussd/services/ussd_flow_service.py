@@ -66,10 +66,19 @@ class UssdFlowService:
         self.session_repository.expire_stale(int(settings.USSD_SESSION_TIMEOUT_MINUTES))
 
         session = self.session_repository.get_by_session_id(session_id)
+        recovery_status = None
         step_before = session.current_step if session else steps.WELCOME
 
-        if is_new_session or not session or session.status != USSDSession.Status.ACTIVE:
+        if not session:
             session = self._create_session(session_id, msisdn, service_code, network)
+        elif session.status != USSDSession.Status.ACTIVE:
+            session, recovery_status = self.session_repository.reset_session(
+                session, msisdn=msisdn, service_code=service_code, network=network
+            )
+        elif is_new_session and session.request_count > 0:
+            session, recovery_status = self.session_repository.reset_session(
+                session, msisdn=msisdn, service_code=service_code, network=network
+            )
 
         session.request_count += 1
         session.last_activity_at = timezone.now()
@@ -121,6 +130,7 @@ class UssdFlowService:
             response=response,
             duration_ms=duration_ms,
             ip_address=ip_address,
+            recovery_status=recovery_status,
         )
         self._record_monitoring(session, response)
         return response
@@ -137,8 +147,12 @@ class UssdFlowService:
 
     def _show_main_menu(self, session) -> UssdResponse:
         session.current_step = steps.MAIN_MENU
+        recovered = session.state_data.pop("_recovered_from", None)
+        prefix = ""
+        if recovered in (USSDSession.Status.EXPIRED, USSDSession.Status.ABANDONED):
+            prefix = "Session expired. "
         return UssdResponse(
-            "CON Welcome to VoteBridge\n"
+            f"CON {prefix}Welcome to VoteBridge\n"
             "1. Vote\n"
             "2. My Voting Status\n"
             "3. Verify Vote\n"
@@ -389,10 +403,15 @@ class UssdFlowService:
         session.completed_vote = True
         session.status = USSDSession.Status.COMPLETED
         session.state_data["last_token"] = vote_state["token_code"]
+        sms_note = (
+            "SMS confirmation will be sent."
+            if getattr(user, "phone_number", "")
+            else "Verify your vote using menu option 3."
+        )
         msg = (
             f"END Vote recorded for {result['election_title']}.\n"
             f"Positions: {result['positions_count']}.\n"
-            "SMS confirmation sent."
+            f"{sms_note}"
         )
         return UssdResponse(msg, False)
 
@@ -542,6 +561,13 @@ class UssdFlowService:
     def _log_request(self, **kwargs) -> None:
         session = kwargs["session"]
         response: UssdResponse = kwargs["response"]
+        recovery_status = kwargs.get("recovery_status")
+        outcome = USSDRequestLog.Outcome.SUCCESS
+        if recovery_status in (USSDSession.Status.EXPIRED, USSDSession.Status.ABANDONED):
+            outcome = USSDRequestLog.Outcome.TIMEOUT
+        elif response.message.startswith("END") and session.status == USSDSession.Status.FAILED:
+            outcome = USSDRequestLog.Outcome.ERROR
+
         self.log_repository.create(
             session=session,
             carrier_session_id=session.session_id,
@@ -552,11 +578,7 @@ class UssdFlowService:
             step_after=session.current_step,
             response_message=response.message,
             continue_session=response.continue_session,
-            outcome=(
-                USSDRequestLog.Outcome.ERROR
-                if response.message.startswith("END") and session.status == USSDSession.Status.FAILED
-                else USSDRequestLog.Outcome.SUCCESS
-            ),
+            outcome=outcome,
             duration_ms=kwargs.get("duration_ms", 0),
             ip_address=kwargs.get("ip_address"),
         )
