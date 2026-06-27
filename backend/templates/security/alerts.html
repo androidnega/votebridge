@@ -1,0 +1,139 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Security Alerts{% endblock %}
+{% block page_heading %}Security Alerts{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="securityAlertsPage()" x-init="init()">
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <a href="/dashboard/security/" class="text-sm text-brand-600 hover:text-brand-800">← Security Center</a>
+    <div class="flex items-center gap-3">
+      {% include "components/realtime_indicator.html" %}
+      <select x-model="statusFilter" @change="load()" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
+        <option value="">All statuses</option>
+        <option value="open">Open</option>
+        <option value="reviewing">Reviewing</option>
+        <option value="escalated">Escalated</option>
+        <option value="resolved">Resolved</option>
+      </select>
+    </div>
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="message" class="mb-4 rounded-lg bg-green-50 p-4 text-sm text-green-700" x-text="message"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading alerts...</div>
+
+  <div class="space-y-4" x-show="!loading">
+    <template x-for="alert in alerts" :key="alert.alert_id">
+      <div class="card">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                :class="statusClass(alert.status)" x-text="alert.status"></span>
+              <span class="text-xs text-slate-500" x-text="alert.alert_type"></span>
+            </div>
+            <h3 class="mt-2 font-semibold text-slate-900" x-text="alert.title"></h3>
+            <p class="mt-1 text-sm text-slate-600" x-text="alert.description"></p>
+            <p class="mt-2 text-xs text-slate-500">
+              <span x-text="alert.user_email || 'Unknown user'"></span>
+              <span x-show="alert.election_title"> · </span>
+              <span x-text="alert.election_title"></span>
+              · <span x-text="formatDate(alert.created_at)"></span>
+            </p>
+          </div>
+          <div class="flex flex-wrap gap-2" x-show="alert.status !== 'resolved'">
+            <button x-show="alert.status === 'open'" @click="review(alert.alert_id)" class="btn-secondary text-sm">Review</button>
+            <button @click="escalate(alert.alert_id)" class="btn-secondary text-sm" x-show="alert.status !== 'escalated'">Escalate</button>
+            <button @click="resolve(alert.alert_id)" class="btn-primary text-sm">Resolve</button>
+          </div>
+        </div>
+      </div>
+    </template>
+    <div x-show="alerts.length === 0 && !loading" class="card p-8 text-center text-sm text-slate-500">
+      No security alerts found.
+    </div>
+  </div>
+</div>
+
+<script>
+function securityAlertsPage() {
+  return {
+    alerts: [],
+    statusFilter: "",
+    loading: false,
+    error: null,
+    message: null,
+    realtimeStatus: "connecting",
+    realtimeLabel: "Connecting",
+
+    async init() {
+      await this.load();
+      this.connectRealtime();
+    },
+
+    async load() {
+      this.loading = true;
+      try {
+        const query = this.statusFilter ? `?status=${this.statusFilter}` : "";
+        const result = await VoteBridgeAPI.getJson(`/fraud/alerts/${query}`);
+        this.alerts = result.data || [];
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    connectRealtime() {
+      if (!VoteBridgeAPI.getAccessToken()) return;
+      VoteBridgeRealtime.connect("security-alerts", "/ws/realtime/security/", {
+        onStatusChange: (status) => {
+          this.realtimeStatus = status;
+          this.realtimeLabel = { connected: "Live", connecting: "Connecting", disconnected: "Offline", error: "Error" }[status] || "Live";
+        },
+        onMessage: (message) => {
+          if (message.event === "security_alert_created" && message.data) {
+            if (!this.statusFilter || this.statusFilter === message.data.status) {
+              this.alerts.unshift(message.data);
+            }
+          }
+          if (message.event === "security_alert_resolved" && message.data) {
+            const idx = this.alerts.findIndex((a) => a.alert_id === message.data.alert_id);
+            if (idx >= 0) this.alerts[idx] = message.data;
+          }
+        },
+      });
+    },
+
+    async review(id) {
+      await this.action(id, "review", "Alert marked as reviewing.");
+    },
+    async resolve(id) {
+      await this.action(id, "resolve", "Alert resolved.");
+    },
+    async escalate(id) {
+      await this.action(id, "escalate", "Alert escalated.");
+    },
+    async action(id, type, msg) {
+      try {
+        await VoteBridgeAPI.postJson(`/fraud/alerts/${id}/${type}/`, {});
+        this.message = msg;
+        await this.load();
+      } catch (e) {
+        this.error = e.message;
+      }
+    },
+    formatDate(v) { return new Date(v).toLocaleString(); },
+    statusClass(status) {
+      return {
+        open: "bg-red-50 text-red-700",
+        reviewing: "bg-amber-50 text-amber-700",
+        escalated: "bg-purple-50 text-purple-700",
+        resolved: "bg-green-50 text-green-700",
+      }[status] || "bg-slate-100 text-slate-600";
+    },
+  };
+}
+</script>
+{% endblock %}

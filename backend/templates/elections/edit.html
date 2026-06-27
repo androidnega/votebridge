@@ -1,0 +1,115 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Edit Election{% endblock %}
+{% block page_heading %}Edit Election{% endblock %}
+
+{% block dashboard_content %}
+<div class="mx-auto max-w-2xl" x-data="electionEditPage('{{ election_uuid }}')" x-init="load()">
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading...</div>
+
+  <form @submit.prevent="submit" class="card space-y-4" x-show="form.title">
+    <div>
+      <label class="form-label" for="title">Title</label>
+      <input id="title" x-model="form.title" class="form-input mt-1" required>
+    </div>
+    <div>
+      <label class="form-label" for="description">Description</label>
+      <textarea id="description" x-model="form.description" rows="4" class="form-input mt-1"></textarea>
+    </div>
+    <div>
+      <label class="form-label" for="election_type">Election Type</label>
+      <select id="election_type" x-model="form.election_type" class="form-input mt-1" required>
+        <option value="general">General</option>
+        <option value="student_union">Student Union</option>
+        <option value="faculty">Faculty</option>
+        <option value="departmental">Departmental</option>
+        <option value="special">Special</option>
+      </select>
+    </div>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label class="form-label" for="start_date">Start Date</label>
+        <input id="start_date" type="datetime-local" x-model="form.start_date" class="form-input mt-1" required>
+      </div>
+      <div>
+        <label class="form-label" for="end_date">End Date</label>
+        <input id="end_date" type="datetime-local" x-model="form.end_date" class="form-input mt-1" required>
+      </div>
+    </div>
+    <div class="space-y-2">
+      <label class="flex items-center gap-2 text-sm text-slate-700">
+        <input type="checkbox" x-model="form.allow_web_voting" class="rounded border-slate-300 text-brand-600">
+        Allow Web Voting
+      </label>
+      <label class="flex items-center gap-2 text-sm text-slate-700">
+        <input type="checkbox" x-model="form.allow_ussd_voting" class="rounded border-slate-300 text-brand-600">
+        Allow USSD Voting
+      </label>
+      <label class="flex items-center gap-2 text-sm text-slate-700">
+        <input type="checkbox" x-model="form.allow_sms_notifications" class="rounded border-slate-300 text-brand-600">
+        Allow SMS Notifications
+      </label>
+    </div>
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary" :disabled="saving">Save Changes</button>
+      <a :href="`/dashboard/elections/${electionUuid}/`" class="btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+function electionEditPage(electionUuid) {
+  return {
+    electionUuid,
+    loading: false,
+    saving: false,
+    error: null,
+    form: {},
+    toLocalDatetime(value) {
+      const d = new Date(value);
+      d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+      return d.toISOString().slice(0, 16);
+    },
+    async load() {
+      this.loading = true;
+      try {
+        const result = await VoteBridgeAPI.getJson(`/elections/${this.electionUuid}/`);
+        const e = result.data;
+        this.form = {
+          title: e.title,
+          description: e.description,
+          election_type: e.election_type,
+          start_date: this.toLocalDatetime(e.start_date),
+          end_date: this.toLocalDatetime(e.end_date),
+          allow_web_voting: e.allow_web_voting,
+          allow_ussd_voting: e.allow_ussd_voting,
+          allow_sms_notifications: e.allow_sms_notifications,
+        };
+      } catch (err) {
+        this.error = err.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async submit() {
+      this.saving = true;
+      this.error = null;
+      try {
+        const payload = {
+          ...this.form,
+          start_date: new Date(this.form.start_date).toISOString(),
+          end_date: new Date(this.form.end_date).toISOString(),
+        };
+        await VoteBridgeAPI.patchJson(`/elections/${this.electionUuid}/`, payload);
+        window.location.href = `/dashboard/elections/${this.electionUuid}/`;
+      } catch (err) {
+        this.error = err.message;
+      } finally {
+        this.saving = false;
+      }
+    },
+  };
+}
+</script>
+{% endblock %}

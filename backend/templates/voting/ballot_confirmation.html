@@ -1,0 +1,82 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Ballot Confirmation{% endblock %}
+{% block page_heading %}Vote Confirmation{% endblock %}
+
+{% block dashboard_content %}
+<div class="mx-auto max-w-lg" x-data="ballotConfirmationPage('{{ election_uuid }}')" x-init="load()">
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading confirmation...</div>
+
+  <template x-if="confirmation">
+    <div class="card space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+          <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Vote Recorded</h2>
+          <p class="text-sm text-slate-600" x-text="confirmation.message"></p>
+        </div>
+      </div>
+
+      <dl class="space-y-3 text-sm">
+        <div class="flex justify-between border-b border-slate-100 pb-2">
+          <dt class="text-slate-500">Election</dt>
+          <dd class="font-medium text-slate-900" x-text="confirmation.election_title"></dd>
+        </div>
+        <div class="border-b border-slate-100 pb-2">
+          <dt class="text-slate-500 mb-2">Positions Completed</dt>
+          <dd>
+            <ul class="space-y-1">
+              <template x-for="title in confirmation.positions_completed" :key="title">
+                <li class="flex items-center gap-2 text-slate-900">
+                  <span class="text-green-600">✓</span>
+                  <span x-text="title"></span>
+                </li>
+              </template>
+            </ul>
+          </dd>
+        </div>
+        <div class="flex justify-between border-b border-slate-100 pb-2">
+          <dt class="text-slate-500">Submitted</dt>
+          <dd class="font-medium text-slate-900" x-text="formatDate(confirmation.timestamp)"></dd>
+        </div>
+      </dl>
+
+      <div class="flex flex-wrap gap-3 pt-2">
+        <a href="/dashboard/svt/verify/" class="btn-secondary">Verify Vote</a>
+        <a href="/dashboard/elections/" class="btn-primary">Back to Elections</a>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function ballotConfirmationPage(electionUuid) {
+  return {
+    electionUuid,
+    confirmation: null,
+    loading: false,
+    error: null,
+    load() {
+      const stored = sessionStorage.getItem("last_ballot_confirmation");
+      if (stored) {
+        try {
+          this.confirmation = JSON.parse(stored);
+          return;
+        } catch (e) {
+          /* fall through */
+        }
+      }
+      this.error = "No confirmation data found. Submit a ballot to see your receipt.";
+    },
+    formatDate(value) {
+      return new Date(value).toLocaleString();
+    },
+  };
+}
+</script>
+{% endblock %}

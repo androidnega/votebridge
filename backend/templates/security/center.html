@@ -1,0 +1,167 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Security Center{% endblock %}
+{% block page_heading %}Security Center{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="securityCenterPage()" x-init="init()">
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <p class="text-sm text-slate-500">Real-time security monitoring</p>
+    {% include "components/realtime_indicator.html" %}
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading security overview...</div>
+
+  <template x-if="summary">
+    <div class="space-y-6">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div class="card">
+          <p class="text-xs text-slate-500">Audit Events (24h)</p>
+          <p class="mt-1 text-2xl font-semibold text-slate-900" x-text="summary.audit.total_24h"></p>
+        </div>
+        <div class="card">
+          <p class="text-xs text-slate-500">Devices Seen (24h)</p>
+          <p class="mt-1 text-2xl font-semibold text-slate-900" x-text="summary.devices.total_24h"></p>
+        </div>
+        <div class="card">
+          <p class="text-xs text-slate-500">Locations (24h)</p>
+          <p class="mt-1 text-2xl font-semibold text-slate-900" x-text="summary.locations.total_24h"></p>
+        </div>
+        <div class="card">
+          <p class="text-xs text-slate-500">Open Alerts</p>
+          <p class="mt-1 text-2xl font-semibold text-red-600" x-text="summary.alerts.open"></p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="card">
+          <h3 class="text-sm font-semibold text-slate-900">Top Events (24h)</h3>
+          <ul class="mt-4 space-y-2 text-sm">
+            <template x-for="item in summary.audit.by_event_type.slice(0, 8)" :key="item.event_type">
+              <li class="flex justify-between border-b border-slate-100 pb-2">
+                <span class="text-slate-600" x-text="item.event_type"></span>
+                <span class="font-medium text-slate-900" x-text="item.count"></span>
+              </li>
+            </template>
+          </ul>
+        </div>
+        <div class="card">
+          <h3 class="text-sm font-semibold text-slate-900">Alert Status</h3>
+          <dl class="mt-4 space-y-2 text-sm">
+            <div class="flex justify-between"><dt class="text-slate-500">Open</dt><dd x-text="summary.alerts.open"></dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500">Reviewing</dt><dd x-text="summary.alerts.reviewing"></dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500">Escalated</dt><dd x-text="summary.alerts.escalated"></dd></div>
+            <div class="flex justify-between"><dt class="text-slate-500">Resolved</dt><dd x-text="summary.alerts.resolved"></dd></div>
+          </dl>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="text-sm font-semibold text-slate-900">Live Alert Feed</h3>
+          <span class="text-xs text-slate-500" x-text="`${feed.length} recent`"></span>
+        </div>
+        <div x-show="feed.length === 0" class="mt-4 rounded-lg border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+          No alerts yet. The feed updates in real time.
+        </div>
+        <ul class="mt-4 max-h-80 space-y-3 overflow-y-auto">
+          <template x-for="alert in feed" :key="alert.alert_id">
+            <li class="rounded-lg border border-slate-100 bg-slate-50/60 p-3 text-sm">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                  :class="alertStatusClass(alert.status)" x-text="alert.status"></span>
+                <span class="text-xs text-slate-500" x-text="formatDate(alert.created_at)"></span>
+              </div>
+              <p class="mt-1 font-medium text-slate-900" x-text="alert.title"></p>
+              <p class="text-xs text-slate-600" x-text="alert.description"></p>
+            </li>
+          </template>
+        </ul>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <a href="/dashboard/security/audit/" class="btn-secondary">Audit Logs</a>
+        <a href="/dashboard/security/devices/" class="btn-secondary">Device Monitoring</a>
+        <a href="/dashboard/security/locations/" class="btn-secondary">Location Monitoring</a>
+        <a href="/dashboard/security/alerts/" class="btn-secondary">Security Alerts</a>
+        <a href="/dashboard/fraud/" class="btn-primary">Fraud Dashboard</a>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function securityCenterPage() {
+  return {
+    summary: null,
+    feed: [],
+    loading: false,
+    error: null,
+    realtimeStatus: "connecting",
+    realtimeLabel: "Connecting",
+
+    async init() {
+      await this.load();
+      this.connectRealtime();
+    },
+
+    async load() {
+      this.loading = true;
+      try {
+        const [summaryResult, feedResult] = await Promise.all([
+          VoteBridgeAPI.getJson("/security/monitoring/summary/"),
+          VoteBridgeAPI.getJson("/dashboard/security-feed/"),
+        ]);
+        this.summary = summaryResult.data;
+        this.feed = feedResult.data?.alerts || [];
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    connectRealtime() {
+      if (!VoteBridgeAPI.getAccessToken()) return;
+      VoteBridgeRealtime.connect("security", "/ws/realtime/security/", {
+        onStatusChange: (status) => {
+          this.realtimeStatus = status;
+          this.realtimeLabel = { connected: "Live", connecting: "Connecting", disconnected: "Offline", error: "Error" }[status] || "Live";
+        },
+        onMessage: (message) => this.handleRealtime(message),
+      });
+    },
+
+    handleRealtime(message) {
+      if (message.event === "dashboard_stats" && message.data?.summary) {
+        if (this.summary) this.summary.alerts = message.data.summary;
+        return;
+      }
+      if (message.event === "security_alert_created" && message.data) {
+        this.feed.unshift(message.data);
+        if (this.summary?.alerts) this.summary.alerts.open = (this.summary.alerts.open || 0) + 1;
+      }
+      if (message.event === "security_alert_resolved" && message.data) {
+        const idx = this.feed.findIndex((a) => a.alert_id === message.data.alert_id);
+        if (idx >= 0) this.feed[idx] = message.data;
+        if (this.summary?.alerts) {
+          this.summary.alerts.open = Math.max(0, (this.summary.alerts.open || 0) - 1);
+          this.summary.alerts.resolved = (this.summary.alerts.resolved || 0) + 1;
+        }
+      }
+    },
+
+    formatDate(v) { return new Date(v).toLocaleString(); },
+    alertStatusClass(status) {
+      return {
+        open: "bg-red-50 text-red-700",
+        reviewing: "bg-amber-50 text-amber-700",
+        escalated: "bg-purple-50 text-purple-700",
+        resolved: "bg-green-50 text-green-700",
+      }[status] || "bg-slate-100 text-slate-600";
+    },
+  };
+}
+</script>
+{% endblock %}

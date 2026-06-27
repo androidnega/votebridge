@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply antialiased;
+  }
+
+  body {
+    @apply bg-surface-muted text-slate-800 font-sans;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-brand-600 ring-offset-2;
+  }
+}
+
+@layer components {
+  .vb-btn-primary {
+    @apply inline-flex min-h-touch items-center justify-center rounded-input bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .vb-btn-secondary {
+    @apply inline-flex min-h-touch items-center justify-center rounded-input border border-brand-600 bg-white px-4 py-2.5 text-sm font-semibold text-brand-600 shadow-sm transition hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .vb-input {
+    @apply block h-input w-full rounded-input border border-border bg-white px-3.5 text-sm text-slate-800 shadow-sm placeholder:text-slate-400 focus:border-brand-600 focus:ring-2 focus:ring-brand-600/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-500;
+  }
+
+  .vb-label {
+    @apply mb-1.5 block text-sm font-medium text-slate-800;
+  }
+
+  .vb-card {
+    @apply rounded-card bg-white p-card shadow-card ring-1 ring-slate-900/5;
+  }
+
+  .vb-page {
+    @apply space-y-section;
+  }
+
+  .vb-fade-in {
+    animation: vbFadeIn 0.2s ease-out;
+  }
+
+  .vb-content-max {
+    @apply mx-auto w-full max-w-wide;
+  }
+
+  .vb-content-standard {
+    @apply mx-auto w-full max-w-content;
+  }
+
+  .vb-slide-in {
+    animation: vbSlideIn 0.2s ease-out;
+  }
+}
+
+@keyframes vbFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes vbSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}

@@ -1,0 +1,111 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Request Voting Token{% endblock %}
+{% block page_heading %}Secure Voting Token (SVT){% endblock %}
+
+{% block dashboard_content %}
+<div x-data="svtRequestPage('{{ election_uuid }}')" x-init="load()">
+  <div class="mb-4">
+    <a href="/dashboard/elections/{{ election_uuid }}/" class="text-sm text-brand-600 hover:text-brand-800">← Back to election</a>
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading...</div>
+
+  <template x-if="election">
+    <div class="mx-auto max-w-lg space-y-6">
+      <div class="card">
+        <h2 class="text-lg font-semibold text-slate-900" x-text="election.title"></h2>
+        <p class="mt-2 text-sm text-slate-600">
+          Request a Secure Voting Token before casting your vote. Each token authorizes one vote and can be used to verify your ballot afterward.
+        </p>
+      </div>
+
+      <div class="card" x-show="!issued">
+        <button @click="requestSvt()" class="btn-primary w-full" :disabled="requesting">
+          <span x-text="requesting ? 'Generating token...' : 'Request Voting Token'"></span>
+        </button>
+      </div>
+
+      <div class="card space-y-4" x-show="issued">
+        <div class="rounded-lg bg-amber-50 p-4">
+          <p class="text-sm font-medium text-amber-900">Save this token now</p>
+          <p class="mt-1 text-xs text-amber-800">It will not be shown again. You need it to cast and verify your vote.</p>
+        </div>
+        <div class="rounded-lg bg-slate-50 p-4">
+          <p class="text-xs text-slate-500">Your SVT Code</p>
+          <p class="mt-1 break-all font-mono text-sm font-semibold text-slate-900" x-text="tokenCode"></p>
+        </div>
+        <dl class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <dt class="text-slate-500">Expires</dt>
+            <dd class="font-medium text-slate-900" x-text="formatDate(expiresAt)"></dd>
+          </div>
+          <div class="flex justify-between">
+            <dt class="text-slate-500">Status</dt>
+            <dd class="font-medium text-green-700" x-text="status"></dd>
+          </div>
+        </dl>
+        <div class="flex flex-wrap gap-3 pt-2">
+          <button @click="copyToken()" class="btn-secondary">Copy Token</button>
+          <a :href="`/dashboard/elections/${electionUuid}/vote/`" class="btn-primary" @click="saveTokenForBallot()">Go to Ballot</a>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function svtRequestPage(electionUuid) {
+  return {
+    electionUuid,
+    election: null,
+    loading: false,
+    requesting: false,
+    issued: false,
+    tokenCode: null,
+    expiresAt: null,
+    status: null,
+    error: null,
+    async load() {
+      this.loading = true;
+      try {
+        const result = await VoteBridgeAPI.getJson(`/elections/${this.electionUuid}/`);
+        this.election = result.data;
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async requestSvt() {
+      this.requesting = true;
+      this.error = null;
+      try {
+        const result = await VoteBridgeAPI.postJson(`/security/elections/${this.electionUuid}/svt/request/`, {});
+        this.tokenCode = result.data.token_code;
+        this.expiresAt = result.data.expires_at;
+        this.status = result.data.status;
+        this.issued = true;
+        sessionStorage.setItem(`svt_${this.electionUuid}`, this.tokenCode);
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.requesting = false;
+      }
+    },
+    saveTokenForBallot() {
+      if (this.tokenCode) {
+        sessionStorage.setItem(`svt_${this.electionUuid}`, this.tokenCode);
+      }
+    },
+    copyToken() {
+      navigator.clipboard.writeText(this.tokenCode);
+    },
+    formatDate(value) {
+      return new Date(value).toLocaleString();
+    },
+  };
+}
+</script>
+{% endblock %}

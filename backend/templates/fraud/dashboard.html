@@ -1,0 +1,160 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Fraud Dashboard{% endblock %}
+{% block page_heading %}Fraud Detection & Investigation{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="fraudDashboardPage()" x-init="init()">
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <p class="text-sm text-slate-500">Real-time fraud investigation feed</p>
+    {% include "components/realtime_indicator.html" %}
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading integrity report...</div>
+
+  <template x-if="report">
+    <div class="space-y-6">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div class="card">
+          <p class="text-xs text-slate-500">Total Cases</p>
+          <p class="mt-1 text-2xl font-semibold text-slate-900" x-text="report.total_fraud_cases"></p>
+        </div>
+        <div class="card">
+          <p class="text-xs text-slate-500">Open Cases</p>
+          <p class="mt-1 text-2xl font-semibold text-amber-600" x-text="report.open_cases"></p>
+        </div>
+        <div class="card">
+          <p class="text-xs text-slate-500">Resolved</p>
+          <p class="mt-1 text-2xl font-semibold text-green-600" x-text="report.resolved_cases"></p>
+        </div>
+        <div class="card">
+          <p class="text-xs text-slate-500">High Risk</p>
+          <p class="mt-1 text-2xl font-semibold text-orange-600" x-text="report.high_risk_cases"></p>
+        </div>
+        <div class="card">
+          <p class="text-xs text-slate-500">Critical</p>
+          <p class="mt-1 text-2xl font-semibold text-red-600" x-text="report.critical_cases"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="flex items-center justify-between gap-3">
+          <h3 class="text-sm font-semibold text-slate-900">Live Fraud Feed</h3>
+          <span class="text-xs text-slate-500" x-text="`${feed.length} recent`"></span>
+        </div>
+        <div x-show="feed.length === 0" class="mt-4 rounded-lg border border-dashed border-slate-200 p-6 text-center text-sm text-slate-500">
+          No fraud cases yet. New cases appear here in real time.
+        </div>
+        <ul class="mt-4 max-h-96 space-y-3 overflow-y-auto">
+          <template x-for="item in feed" :key="item.fraud_case_id">
+            <li class="rounded-lg border border-slate-100 bg-slate-50/60 p-3 text-sm">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                  :class="severityClass(item.severity)" x-text="item.severity"></span>
+                <span class="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600" x-text="item.status"></span>
+                <span class="text-xs text-slate-500" x-text="formatDate(item.created_at)"></span>
+              </div>
+              <p class="mt-1 font-medium text-slate-900" x-text="item.alert_title"></p>
+              <p class="text-xs text-slate-600">Risk score: <span x-text="item.risk_score"></span></p>
+              <a :href="`/dashboard/fraud/cases/${item.fraud_case_id}/`" class="mt-2 inline-block text-xs text-brand-600">View case →</a>
+            </li>
+          </template>
+        </ul>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <a href="/dashboard/fraud/cases/" class="btn-primary">View All Cases</a>
+        <a href="/dashboard/security/" class="btn-secondary">Security Center</a>
+        <a href="/dashboard/security/alerts/" class="btn-secondary">Security Alerts</a>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function fraudDashboardPage() {
+  return {
+    report: null,
+    feed: [],
+    loading: false,
+    error: null,
+    realtimeStatus: "connecting",
+    realtimeLabel: "Connecting",
+
+    async init() {
+      await this.load();
+      this.connectRealtime();
+    },
+
+    async load() {
+      this.loading = true;
+      try {
+        const [reportResult, feedResult] = await Promise.all([
+          VoteBridgeAPI.getJson("/fraud/integrity-report/"),
+          VoteBridgeAPI.getJson("/dashboard/fraud-feed/"),
+        ]);
+        this.report = reportResult.data;
+        this.feed = feedResult.data?.cases || [];
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    connectRealtime() {
+      if (!VoteBridgeAPI.getAccessToken()) return;
+      VoteBridgeRealtime.connect("fraud", "/ws/realtime/fraud/", {
+        onStatusChange: (status) => {
+          this.realtimeStatus = status;
+          this.realtimeLabel = { connected: "Live", connecting: "Connecting", disconnected: "Offline", error: "Error" }[status] || "Live";
+        },
+        onMessage: (message) => this.handleRealtime(message),
+      });
+    },
+
+    handleRealtime(message) {
+      if (message.event === "dashboard_stats" && message.data?.fraud_cases) {
+        this.report = { ...this.report, ...message.data.fraud_cases };
+        return;
+      }
+      if (message.event === "fraud_case_created" && message.data) {
+        this.feed.unshift({
+          fraud_case_id: message.data.fraud_case_id,
+          alert_title: message.data.alert_title,
+          severity: message.data.severity,
+          status: message.data.status,
+          risk_score: message.data.risk_score,
+          created_at: message.data.created_at,
+        });
+        if (this.report) {
+          this.report.total_fraud_cases = (this.report.total_fraud_cases || 0) + 1;
+          this.report.open_cases = (this.report.open_cases || 0) + 1;
+        }
+      }
+      if (message.event === "fraud_case_resolved" && message.data) {
+        const idx = this.feed.findIndex((c) => c.fraud_case_id === message.data.fraud_case_id);
+        if (idx >= 0) {
+          this.feed[idx].status = message.data.status;
+        }
+        if (this.report) {
+          this.report.open_cases = Math.max(0, (this.report.open_cases || 0) - 1);
+          this.report.resolved_cases = (this.report.resolved_cases || 0) + 1;
+        }
+      }
+    },
+
+    formatDate(v) { return new Date(v).toLocaleString(); },
+    severityClass(severity) {
+      return {
+        low: "bg-slate-100 text-slate-700",
+        medium: "bg-amber-50 text-amber-700",
+        high: "bg-orange-50 text-orange-700",
+        critical: "bg-red-50 text-red-700",
+      }[severity] || "bg-slate-100 text-slate-600";
+    },
+  };
+}
+</script>
+{% endblock %}

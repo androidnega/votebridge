@@ -1,0 +1,22 @@
+{% extends "layouts/authentication.html" %}
+
+{% block auth_title %}Sign In{% endblock %}
+
+{% block auth_content %}
+<h2 class="text-center text-lg font-semibold text-slate-900">Sign in to your account</h2>
+<p class="mt-2 text-center text-sm text-slate-600">
+  Authentication will be implemented in Phase 1.
+</p>
+<form class="mt-6 space-y-4" method="post" action="#">
+  {% csrf_token %}
+  <div>
+    <label for="username" class="form-label">Username</label>
+    <input type="text" id="username" name="username" class="form-input mt-1" autocomplete="username" disabled>
+  </div>
+  <div>
+    <label for="password" class="form-label">Password</label>
+    <input type="password" id="password" name="password" class="form-input mt-1" autocomplete="current-password" disabled>
+  </div>
+  <button type="submit" class="btn-primary w-full" disabled>Sign in</button>
+</form>
+{% endblock %}

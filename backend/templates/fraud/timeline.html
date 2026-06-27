@@ -1,0 +1,68 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Investigation Timeline{% endblock %}
+{% block page_heading %}Investigation Timeline{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="fraudTimelinePage('{{ fraud_case_id }}')" x-init="load()">
+  <div class="mb-4">
+    <a :href="`/dashboard/fraud/cases/${caseId}/`" class="text-sm text-brand-600 hover:text-brand-800">← Back to case</a>
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading timeline...</div>
+
+  <div class="space-y-4" x-show="!loading">
+    <template x-for="(event, index) in events" :key="index">
+      <div class="card flex gap-4">
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
+          :class="sourceClass(event.source)" x-text="event.source.charAt(0).toUpperCase()"></div>
+        <div class="flex-1">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <h3 class="text-sm font-semibold text-slate-900" x-text="event.title"></h3>
+            <span class="text-xs text-slate-500" x-text="formatDate(event.timestamp)"></span>
+          </div>
+          <p class="mt-1 text-sm text-slate-600" x-text="event.description"></p>
+          <span class="mt-2 inline-block rounded bg-slate-100 px-2 py-0.5 text-xs text-slate-600" x-text="`${event.source} · ${event.event_type}`"></span>
+        </div>
+      </div>
+    </template>
+    <div x-show="events.length === 0 && !loading" class="card p-8 text-center text-sm text-slate-500">
+      No timeline events found.
+    </div>
+  </div>
+</div>
+
+<script>
+function fraudTimelinePage(caseId) {
+  return {
+    caseId,
+    events: [],
+    loading: false,
+    error: null,
+    async load() {
+      this.loading = true;
+      try {
+        const result = await VoteBridgeAPI.getJson(`/fraud/cases/${this.caseId}/timeline/`);
+        this.events = result.data || [];
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    formatDate(v) { return new Date(v).toLocaleString(); },
+    sourceClass(source) {
+      return {
+        fraud_case: "bg-purple-100 text-purple-700",
+        security_alert: "bg-red-100 text-red-700",
+        audit_log: "bg-blue-100 text-blue-700",
+        vote: "bg-green-100 text-green-700",
+        device_log: "bg-amber-100 text-amber-700",
+        location_log: "bg-slate-200 text-slate-700",
+      }[source] || "bg-slate-100 text-slate-600";
+    },
+  };
+}
+</script>
+{% endblock %}

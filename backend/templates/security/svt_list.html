@@ -1,0 +1,137 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}SVT Management{% endblock %}
+{% block page_heading %}Issued Voting Tokens{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="svtAdminPage('{{ election_uuid }}')" x-init="load()">
+  <div class="mb-4 flex items-center justify-between">
+    <a href="/dashboard/elections/{{ election_uuid }}/" class="text-sm text-brand-600 hover:text-brand-800">← Back to election</a>
+    <select x-model="statusFilter" @change="load()" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
+      <option value="">All statuses</option>
+      <option value="issued">Issued</option>
+      <option value="validated">Validated</option>
+      <option value="used">Used</option>
+      <option value="expired">Expired</option>
+      <option value="revoked">Revoked</option>
+    </select>
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="message" class="mb-4 rounded-lg bg-green-50 p-4 text-sm text-green-700" x-text="message"></div>
+  <div x-show="reissuedToken" class="mb-4 rounded-lg bg-amber-50 p-4">
+    <p class="text-sm font-medium text-amber-900">New token issued (share securely with voter)</p>
+    <p class="mt-1 break-all font-mono text-xs text-amber-800" x-text="reissuedToken"></p>
+  </div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading tokens...</div>
+
+  <div class="overflow-hidden rounded-xl ring-1 ring-slate-900/5" x-show="!loading">
+    <table class="min-w-full divide-y divide-slate-200">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Voter</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Status</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Issued</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Expires</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Used</th>
+          <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 bg-white">
+        <template x-for="token in tokens" :key="token.svt_id">
+          <tr>
+            <td class="px-4 py-3 text-sm">
+              <p class="font-medium text-slate-900" x-text="token.user_name"></p>
+              <p class="text-xs text-slate-500" x-text="token.user_email"></p>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                :class="statusClass(token.status)" x-text="token.status"></span>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="formatDate(token.issued_at)"></td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="formatDate(token.expires_at)"></td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="token.used_at ? formatDate(token.used_at) : '—'"></td>
+            <td class="px-4 py-3 text-right text-sm space-x-2">
+              <button
+                x-show="token.status === 'issued'"
+                @click="revoke(token.svt_id)"
+                class="text-red-600 hover:text-red-800"
+              >Revoke</button>
+              <button
+                x-show="token.status === 'issued' || token.status === 'expired' || token.status === 'revoked'"
+                @click="reissue(token.svt_id)"
+                class="text-brand-600 hover:text-brand-800"
+                :disabled="token.status === 'used'"
+              >Reissue</button>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+    <div x-show="tokens.length === 0 && !loading" class="p-8 text-center text-sm text-slate-500">
+      No tokens found for this election.
+    </div>
+  </div>
+</div>
+
+<script>
+function svtAdminPage(electionUuid) {
+  return {
+    electionUuid,
+    tokens: [],
+    statusFilter: "",
+    loading: false,
+    error: null,
+    message: null,
+    reissuedToken: null,
+    async load() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const query = this.statusFilter ? `?status=${this.statusFilter}` : "";
+        const result = await VoteBridgeAPI.getJson(`/security/elections/${this.electionUuid}/svt/${query}`);
+        this.tokens = result.data || [];
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async revoke(svtId) {
+      if (!confirm("Revoke this voting token?")) return;
+      try {
+        await VoteBridgeAPI.postJson(`/security/svt/${svtId}/revoke/`, {});
+        this.message = "Token revoked.";
+        await this.load();
+      } catch (e) {
+        this.error = e.message;
+      }
+    },
+    async reissue(svtId) {
+      if (!confirm("Reissue a new token for this voter?")) return;
+      try {
+        const result = await VoteBridgeAPI.postJson(`/security/svt/${svtId}/reissue/`, {});
+        this.reissuedToken = result.data.token_code;
+        this.message = "New token issued.";
+        await this.load();
+      } catch (e) {
+        this.error = e.message;
+      }
+    },
+    formatDate(value) {
+      return new Date(value).toLocaleString();
+    },
+    statusClass(status) {
+      const map = {
+        issued: "bg-blue-50 text-blue-700",
+        validated: "bg-indigo-50 text-indigo-700",
+        used: "bg-green-50 text-green-700",
+        expired: "bg-slate-100 text-slate-600",
+        revoked: "bg-red-50 text-red-700",
+      };
+      return map[status] || map.issued;
+    },
+  };
+}
+</script>
+{% endblock %}

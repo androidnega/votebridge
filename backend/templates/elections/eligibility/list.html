@@ -1,0 +1,95 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Voter Eligibility{% endblock %}
+{% block page_heading %}Voter Eligibility{% endblock %}
+
+{% block topbar_actions %}
+<a href="/dashboard/elections/{{ election_uuid }}/eligibility/manage/" class="btn-primary">Manage Eligibility</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="eligibilityListPage('{{ election_uuid }}')" x-init="load()">
+  <div class="mb-4">
+    <a href="/dashboard/elections/{{ election_uuid }}/" class="text-sm text-brand-600 hover:text-brand-800">← Back to election</a>
+  </div>
+
+  <div class="mb-6 flex flex-wrap gap-4">
+    <input type="search" x-model="search" @input.debounce.300ms="load()" placeholder="Search voters..." class="form-input max-w-xs">
+    <select x-model="eligibleFilter" @change="load()" class="form-input max-w-xs">
+      <option value="">All</option>
+      <option value="true">Eligible</option>
+      <option value="false">Ineligible</option>
+    </select>
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading eligibility records...</div>
+
+  <div class="overflow-hidden rounded-xl ring-1 ring-slate-900/5" x-show="!loading">
+    <table class="min-w-full divide-y divide-slate-200">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Voter</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Index Number</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Eligible</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Reason</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Verified At</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 bg-white">
+        <template x-for="record in records" :key="record.uuid">
+          <tr>
+            <td class="px-4 py-3 text-sm">
+              <div class="font-medium text-slate-900" x-text="record.user_name"></div>
+              <div class="text-slate-500" x-text="record.user_email"></div>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="record.user_index_number || '—'"></td>
+            <td class="px-4 py-3 text-sm">
+              <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium"
+                :class="record.is_eligible ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'"
+                x-text="record.is_eligible ? 'Yes' : 'No'"></span>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="record.eligibility_reason || '—'"></td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="record.verified_at ? formatDate(record.verified_at) : '—'"></td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+    <div x-show="records.length === 0 && !loading" class="p-8 text-center text-sm text-slate-500">
+      No eligibility records yet.
+    </div>
+  </div>
+</div>
+
+<script>
+function eligibilityListPage(electionUuid) {
+  return {
+    electionUuid,
+    records: [],
+    search: "",
+    eligibleFilter: "",
+    loading: false,
+    error: null,
+    async load() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const params = new URLSearchParams();
+        if (this.search) params.set("search", this.search);
+        if (this.eligibleFilter) params.set("is_eligible", this.eligibleFilter);
+        const query = params.toString() ? `?${params.toString()}` : "";
+        const result = await VoteBridgeAPI.getJson(`/elections/${this.electionUuid}/eligibility/${query}`);
+        this.records = result.data || [];
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    formatDate(value) {
+      return new Date(value).toLocaleString();
+    },
+  };
+}
+</script>
+{% endblock %}

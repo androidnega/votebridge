@@ -1,0 +1,128 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Fraud Case Detail{% endblock %}
+{% block page_heading %}Fraud Case Investigation{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="fraudCaseDetailPage('{{ fraud_case_id }}')" x-init="load()">
+  <div class="mb-4">
+    <a href="/dashboard/fraud/cases/" class="text-sm text-brand-600 hover:text-brand-800">← Back to cases</a>
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="message" class="mb-4 rounded-lg bg-green-50 p-4 text-sm text-green-700" x-text="message"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading case...</div>
+
+  <template x-if="caseData">
+    <div class="space-y-6">
+      <div class="card">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium" :class="severityClass(caseData.severity)" x-text="caseData.severity"></span>
+              <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium" :class="statusClass(caseData.status)" x-text="caseData.status"></span>
+            </div>
+            <h2 class="mt-2 text-lg font-semibold text-slate-900" x-text="caseData.alert_title"></h2>
+            <p class="mt-1 text-sm text-slate-600" x-text="caseData.alert_type"></p>
+          </div>
+          <div class="text-right">
+            <p class="text-xs text-slate-500">Risk Score</p>
+            <p class="text-3xl font-bold" :class="caseData.risk_score >= 80 ? 'text-red-600' : caseData.risk_score >= 60 ? 'text-orange-600' : 'text-slate-900'" x-text="caseData.risk_score"></p>
+          </div>
+        </div>
+        <dl class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 text-sm">
+          <div><dt class="text-slate-500">Subject</dt><dd class="font-medium" x-text="caseData.user_name || caseData.user_email || 'Unknown'"></dd></div>
+          <div><dt class="text-slate-500">Election</dt><dd class="font-medium" x-text="caseData.election_title || '—'"></dd></div>
+          <div><dt class="text-slate-500">Opened</dt><dd class="font-medium" x-text="formatDate(caseData.created_at)"></dd></div>
+          <div><dt class="text-slate-500">Updated</dt><dd class="font-medium" x-text="formatDate(caseData.updated_at)"></dd></div>
+        </dl>
+      </div>
+
+      <div class="card" x-show="caseData.status !== 'resolved' && caseData.status !== 'dismissed'">
+        <h3 class="text-sm font-semibold text-slate-900">Investigation Actions</h3>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button x-show="caseData.status === 'open'" @click="investigate()" class="btn-primary text-sm">Start Investigation</button>
+          <button @click="escalate()" class="btn-secondary text-sm" x-show="caseData.status !== 'escalated'">Escalate</button>
+          <button @click="resolve()" class="btn-secondary text-sm">Resolve</button>
+          <button @click="dismiss()" class="btn-secondary text-sm">Dismiss</button>
+          <a :href="`/dashboard/fraud/cases/${caseId}/timeline/`" class="btn-secondary text-sm">View Timeline</a>
+        </div>
+        <div class="mt-4">
+          <label class="block text-xs text-slate-500">Add Note</label>
+          <textarea x-model="noteText" rows="3" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"></textarea>
+          <button @click="addNote()" class="btn-primary mt-2 text-sm" :disabled="!noteText.trim()">Add Note</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="text-sm font-semibold text-slate-900">Investigation Notes</h3>
+        <pre class="mt-4 whitespace-pre-wrap rounded-lg bg-slate-50 p-4 text-xs text-slate-700" x-text="caseData.investigation_notes || 'No notes yet.'"></pre>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function fraudCaseDetailPage(caseId) {
+  return {
+    caseId,
+    caseData: null,
+    noteText: "",
+    loading: false,
+    error: null,
+    message: null,
+    async load() {
+      this.loading = true;
+      try {
+        const result = await VoteBridgeAPI.getJson(`/fraud/cases/${this.caseId}/`);
+        this.caseData = result.data;
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async investigate() {
+      await this.action("investigate", "Investigation started.");
+    },
+    async resolve() {
+      await this.action("resolve", "Case resolved.");
+    },
+    async dismiss() {
+      await this.action("dismiss", "Case dismissed.");
+    },
+    async escalate() {
+      await this.action("escalate", "Case escalated.");
+    },
+    async addNote() {
+      try {
+        const result = await VoteBridgeAPI.postJson(`/fraud/cases/${this.caseId}/notes/`, { note: this.noteText });
+        this.caseData = result.data;
+        this.noteText = "";
+        this.message = "Note added.";
+      } catch (e) {
+        this.error = e.message;
+      }
+    },
+    async action(type, msg) {
+      try {
+        const body = this.noteText.trim() ? { note: this.noteText } : {};
+        const result = await VoteBridgeAPI.postJson(`/fraud/cases/${this.caseId}/${type}/`, body);
+        this.caseData = result.data;
+        this.noteText = "";
+        this.message = msg;
+      } catch (e) {
+        this.error = e.message;
+      }
+    },
+    formatDate(v) { return new Date(v).toLocaleString(); },
+    severityClass(s) {
+      return { low: "bg-slate-100 text-slate-600", medium: "bg-amber-50 text-amber-700", high: "bg-orange-50 text-orange-700", critical: "bg-red-50 text-red-700" }[s] || "";
+    },
+    statusClass(s) {
+      return { open: "bg-blue-50 text-blue-700", investigating: "bg-amber-50 text-amber-700", escalated: "bg-purple-50 text-purple-700", resolved: "bg-green-50 text-green-700", dismissed: "bg-slate-100 text-slate-600" }[s] || "";
+    },
+  };
+}
+</script>
+{% endblock %}

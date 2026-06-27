@@ -1,0 +1,73 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Add Position{% endblock %}
+{% block page_heading %}Add Position{% endblock %}
+
+{% block dashboard_content %}
+<div class="mx-auto max-w-2xl" x-data="positionCreatePage('{{ election_uuid }}')">
+  <div class="mb-4">
+    <a href="/dashboard/elections/{{ election_uuid }}/positions/" class="text-sm text-brand-600 hover:text-brand-800">← Back to positions</a>
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+
+  <form @submit.prevent="submit" class="card space-y-4">
+    <div>
+      <label class="form-label" for="title">Title</label>
+      <input id="title" x-model="form.title" class="form-input mt-1" placeholder="e.g. President" required>
+    </div>
+    <div>
+      <label class="form-label" for="description">Description</label>
+      <textarea id="description" x-model="form.description" rows="3" class="form-input mt-1"></textarea>
+    </div>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label class="form-label" for="max_votes_allowed">Max Votes Allowed</label>
+        <input id="max_votes_allowed" type="number" min="1" x-model.number="form.max_votes_allowed" class="form-input mt-1" required>
+        <p class="mt-1 text-xs text-slate-500">1 = single-choice, &gt;1 = multi-choice</p>
+      </div>
+      <div>
+        <label class="form-label" for="display_order">Display Order</label>
+        <input id="display_order" type="number" min="0" x-model.number="form.display_order" class="form-input mt-1">
+      </div>
+    </div>
+    <label class="flex items-center gap-2 text-sm text-slate-700">
+      <input type="checkbox" x-model="form.is_active" class="rounded border-slate-300 text-brand-600">
+      Active
+    </label>
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary" :disabled="loading">Add Position</button>
+      <a href="/dashboard/elections/{{ election_uuid }}/positions/" class="btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+function positionCreatePage(electionUuid) {
+  return {
+    electionUuid,
+    loading: false,
+    error: null,
+    form: {
+      title: "",
+      description: "",
+      max_votes_allowed: 1,
+      display_order: 0,
+      is_active: true,
+    },
+    async submit() {
+      this.loading = true;
+      this.error = null;
+      try {
+        await VoteBridgeAPI.postJson(`/elections/${this.electionUuid}/positions/`, this.form);
+        window.location.href = `/dashboard/elections/${this.electionUuid}/positions/`;
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+  };
+}
+</script>
+{% endblock %}

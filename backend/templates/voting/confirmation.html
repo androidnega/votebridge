@@ -1,0 +1,103 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Vote Confirmation{% endblock %}
+{% block page_heading %}Vote Confirmation{% endblock %}
+
+{% block dashboard_content %}
+<div class="mx-auto max-w-lg" x-data="confirmationPage('{{ vote_id }}')" x-init="load()">
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading confirmation...</div>
+
+  <template x-if="confirmation">
+    <div class="card space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+          <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <h2 class="text-lg font-semibold text-slate-900">Vote Recorded</h2>
+          <p class="text-sm text-slate-600" x-text="confirmation.message"></p>
+        </div>
+      </div>
+
+      <dl class="space-y-3 text-sm">
+        <div class="flex justify-between border-b border-slate-100 pb-2">
+          <dt class="text-slate-500">Election</dt>
+          <dd class="font-medium text-slate-900" x-text="confirmation.election_title"></dd>
+        </div>
+        <div class="flex justify-between border-b border-slate-100 pb-2">
+          <dt class="text-slate-500">Position</dt>
+          <dd class="font-medium text-slate-900" x-text="confirmation.position_title"></dd>
+        </div>
+        <div class="flex justify-between border-b border-slate-100 pb-2">
+          <dt class="text-slate-500">Candidate</dt>
+          <dd class="font-medium text-slate-900" x-text="confirmation.candidate_name"></dd>
+        </div>
+        <div class="flex justify-between border-b border-slate-100 pb-2">
+          <dt class="text-slate-500">Channel</dt>
+          <dd class="font-medium text-slate-900" x-text="confirmation.channel"></dd>
+        </div>
+        <div class="flex justify-between border-b border-slate-100 pb-2">
+          <dt class="text-slate-500">Vote ID</dt>
+          <dd class="font-mono text-xs text-slate-900" x-text="confirmation.vote_id"></dd>
+        </div>
+        <div class="flex justify-between border-b border-slate-100 pb-2">
+          <dt class="text-slate-500">Timestamp</dt>
+          <dd class="font-medium text-slate-900" x-text="formatDate(confirmation.timestamp)"></dd>
+        </div>
+      </dl>
+
+      <div x-show="verification" class="rounded-lg p-4" :class="verification.is_valid ? 'bg-green-50' : 'bg-red-50'">
+        <p class="text-sm font-medium" :class="verification.is_valid ? 'text-green-800' : 'text-red-800'">
+          <span x-text="verification.is_valid ? '✓ Vote verified successfully' : '✗ Vote verification failed'"></span>
+        </p>
+      </div>
+
+      <div class="flex flex-wrap gap-3 pt-2">
+        <button @click="verify()" class="btn-secondary" :disabled="verifying">Verify Vote</button>
+        <a :href="`/dashboard/elections/${confirmation.election_uuid}/vote/`" class="btn-primary">Return to Ballot</a>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function confirmationPage(voteId) {
+  return {
+    voteId,
+    confirmation: null,
+    verification: null,
+    loading: false,
+    verifying: false,
+    error: null,
+    async load() {
+      this.loading = true;
+      try {
+        const result = await VoteBridgeAPI.getJson(`/voting/votes/${this.voteId}/confirmation/`);
+        this.confirmation = result.data;
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async verify() {
+      this.verifying = true;
+      try {
+        const result = await VoteBridgeAPI.getJson(`/voting/votes/${this.voteId}/verify/`);
+        this.verification = result.data;
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.verifying = false;
+      }
+    },
+    formatDate(value) {
+      return new Date(value).toLocaleString();
+    },
+  };
+}
+</script>
+{% endblock %}

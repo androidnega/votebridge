@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}{% block auth_title %}Sign In{% endblock %} | VoteBridge{% endblock %}
+
+{% block body %}
+<div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
+  <div class="sm:mx-auto sm:w-full sm:max-w-md">
+    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-xl bg-brand-600">
+      <svg class="h-7 w-7 text-white" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    </div>
+    <h1 class="mt-6 text-center text-2xl font-bold tracking-tight text-slate-900">
+      VoteBridge
+    </h1>
+    <p class="mt-2 text-center text-sm text-slate-600">
+      Secure Real-Time Campus E-Voting
+    </p>
+  </div>
+
+  <div class="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+    <div class="card">
+      {% block auth_content %}{% endblock %}
+    </div>
+
+    {% block auth_footer %}{% endblock %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,18 @@
+---
+description: VoteBridge development seed data requirements
+alwaysApply: true
+---
+
+# Seed Data Standards
+
+Maintain realistic dev dataset via `python manage.py seed_demo_data`.
+
+## Must seed
+
+Super Admins, Admins, Election Officers, Students, Candidates, Demo Elections/Positions/Candidates, Demo Votes, Fraud Cases, Security Alerts, Results, Strongroom Records, Notifications.
+
+## Data style
+
+- Realistic Ghanaian names and TTU-style institution data
+- Student index numbers: `BC/ITS/24/047`, `BC/ITD/24/031`, `BC/ITN/24/112`, `BC/ICT/24/056` — support any valid programme code, never hardcode prefixes only
+- Document dev passwords in the management command docstring only — never hardcode credentials for production

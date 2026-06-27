@@ -1,0 +1,1 @@
+from apps.elections.permissions import CanManageCandidates

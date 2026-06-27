@@ -1,0 +1,495 @@
+================================================================================
+VOTEBRIDGE — COMPLETE PROJECT OVERVIEW
+================================================================================
+Generated: June 2025
+Workspace: VoteBridge (Secure Campus Election Platform)
+Institution branding default: Takoradi Technical University (TTU)
+
+This document summarizes where the project stands today, including recent work
+on enterprise UI (Phase UI-X), layout fixes, and Universal Identity Login.
+
+
+================================================================================
+1. WHAT VOTEBRIDGE IS
+================================================================================
+
+VoteBridge is a secure, real-time campus e-voting platform built for
+universities, electoral commissions, and enterprise organizations.
+
+Goals:
+  - Professional, modern, secure, clean, responsive UI
+  - Election integrity (no vote totals/rankings exposed while elections OPEN)
+  - Multi-channel voting (Web, USSD, SMS planned)
+  - Real-time monitoring, fraud detection, strongroom integrity, auditable results
+
+Primary users:
+  - Students (vote by index number)
+  - Candidates (student role variant)
+  - Administrators / Election Officers (admin role)
+  - Super Administrators (platform oversight)
+
+
+================================================================================
+2. TECHNOLOGY STACK
+================================================================================
+
+Backend:
+  - Django 5
+  - Django REST Framework (REST APIs)
+  - Django Channels (WebSockets / real-time)
+  - PostgreSQL (primary database)
+  - Redis (cache + channel layer)
+  - JWT (SimpleJWT) — access + refresh tokens, session tracking
+
+Frontend (primary SPA):
+  - Vue 3 + Pinia + Vue Router
+  - Vite 6 (dev server port 5173, proxies /api and /ws to port 8000)
+  - Tailwind CSS 3 (design tokens, Inter Variable font)
+  - Lazy-loaded route pages
+
+Legacy (still present, not primary):
+  - Alpine.js layer under frontend/src/js/ (older stack)
+
+Infrastructure:
+  - docker-compose.yml — PostgreSQL + Redis
+  - .env for secrets and configuration
+  - Settings: config.settings.development | config.settings.production
+
+
+================================================================================
+3. PROJECT STRUCTURE
+================================================================================
+
+VoteBridge/
+├── backend/
+│   ├── config/              Settings, URLs, ASGI/WSGI
+│   ├── apps/                Domain Django apps (see Section 4)
+│   ├── core/                Shared exceptions, API handlers
+│   ├── templates/           Legacy Django HTML templates
+│   └── manage.py
+├── frontend/
+│   ├── src/vue/             Primary Vue SPA (@ alias)
+│   ├── src/js/              Legacy Alpine
+│   ├── tailwind.config.cjs
+│   └── vite.config.js
+├── docs/
+│   ├── PHASE-UI-X-REPORT.md           UI-X phase report (sections A–M)
+│   └── VOTEBRIDGE-PROJECT-OVERVIEW.txt  (this file)
+├── requirements/
+├── docker-compose.yml
+└── .env / .env.example
+
+
+================================================================================
+4. BACKEND MODULES (APPS)
+================================================================================
+
+App              Purpose
+---------------  ----------------------------------------------------------
+accounts         Users, roles, authentication, OTP, JWT sessions, MFA logs
+elections        Elections, positions, eligibility, voting channels
+candidates       Candidate registration and approval
+voting           Ballot casting, vote records (immutable)
+security         Audit logs, device/location monitoring, SVT tokens
+fraud            Security alerts, fraud cases, risk scoring
+results          Election results, certification, publication, archive
+strongroom       Ballot seals, election seals, custody chain
+notifications    SMS/email/in-app notifications, delivery logs, templates
+ussd             USSD sessions, Arkesel callback flow, activity logs
+dashboard        Role-based dashboard API aggregates
+realtime         WebSocket consumers for live feeds
+
+Architecture rules (enforced by project standards):
+  - Business logic lives in Services only
+  - Repositories access data only
+  - API views stay thin
+  - While election is OPEN: never expose rankings, vote totals, or winners
+
+
+================================================================================
+5. FRONTEND STRUCTURE (VUE SPA)
+================================================================================
+
+frontend/src/vue/
+├── layouts/           Shell layouts (6 types — see Section 6)
+├── components/
+│   ├── layout/        AppShell
+│   ├── navigation/    AppSidebar, AppTopbar, GlobalSearch, UserMenu
+│   ├── ui/            Design system (VButton, VCard, VTable, PageHeader, etc.)
+│   ├── dashboard/     StatCard, ActivityFeed, Live feeds, etc.
+│   ├── voting/        Ballot wizard components
+│   ├── results/       Results panels and cards
+│   ├── strongroom/    Integrity, seals, custody timeline
+│   └── communications/ Delivery log table
+├── views/             36+ page views (auth, dashboard, elections, results, etc.)
+├── stores/            Pinia (auth, election, voting, results, fraud, security, etc.)
+├── composables/       useSidebar, useBreakpoints, useToast, useDashboardRealtime
+├── api/               Axios clients per domain
+├── router/            Routes + auth guards
+└── config/            branding.js (env-driven institution name, logo, etc.)
+
+
+================================================================================
+6. LAYOUT SYSTEM (PHASE UI-X)
+================================================================================
+
+Six reusable layouts:
+
+  AuthLayout           Split login screen (brand panel + form card)
+  DashboardLayout      AppShell + sidebar + topbar (authenticated app)
+  ElectionLayout       Election workspace (tabs, no sidebar)
+  PublicLayout         Maintenance and public pages
+  VerificationLayout   Public strongroom verification portal (/verify)
+  FullscreenLayout     Dark full-viewport shell (future monitoring ops)
+
+AppShell features:
+  - Sidebar: 280px expanded / 88px collapsed
+  - Mobile: off-canvas drawer with backdrop
+  - Desktop: fixed sidebar + main content padded (lg:pl-sidebar)
+  - Sidebar state persisted in localStorage
+  - Nested nav groups: Results, Communications, USSD
+  - Collapsed mode: icons + tooltips
+
+Topbar features:
+  - Institution logo and name
+  - Current page title + active open election name
+  - Global search (Cmd/Ctrl+K)
+  - Notifications badge with unread count
+  - Connection status indicator
+  - User menu (profile, sign out) — works on mobile
+
+Content width tokens:
+  - max-w-content  (1280px) — standard pages
+  - max-w-wide     (1600px) — default dashboard content
+  - max-w-monitor  (1920px) — large monitoring dashboards
+
+
+================================================================================
+7. DESIGN SYSTEM (PHASE UI-X)
+================================================================================
+
+Visual standards:
+  - Forest green primary (#1E5F46), flat colours, no gradients
+  - Inter Variable, weights 400–700
+  - 12px card radius, 10px input radius, soft shadows
+  - 44px minimum touch targets
+  - 200ms max animation duration
+
+Core UI components (components/ui/):
+  VButton, VInput, VPasswordInput, VCheckbox, VCard, VTable, VModal,
+  VAlert, VToast, VIcon, VBadge, StatusBadge, PageHeader, SectionHeader,
+  VTooltip, ModuleNav, EmptyState, LoadingSkeleton, ToastContainer
+
+Page structure standard (major modules updated):
+  PageHeader → Breadcrumb → ModuleNav (where applicable) → Content
+  Wrapper class: vb-page (space-y-section)
+
+Module horizontal tabs (ModuleNav):
+  - Results: Overview, Certification, Publication, Archive
+  - Communications: Dashboard, Logs, Queue, Providers, Templates, Test
+  - USSD: Dashboard, Sessions, Activity logs
+
+Views standardized with PageHeader + vb-page:
+  - Fraud, Security
+  - Results (hub + certification + publication + archive)
+  - Communications (dashboard + delivery logs)
+  - USSD (dashboard + sessions + activity logs)
+  - Elections list (gold standard reference page)
+
+Remaining UI polish (non-blocking):
+  - Profile, Strongroom sub-pages, some Communications sub-pages
+  - Dashboard role views still use bespoke headers (not PageHeader)
+  - VModal not yet wired for destructive confirmations
+  - Virtual scrolling not yet implemented
+
+
+================================================================================
+8. AUTHENTICATION — UNIVERSAL IDENTITY LOGIN (CURRENT)
+================================================================================
+
+Status: IMPLEMENTED (backend + frontend)
+
+Philosophy:
+  - Single login entry point — no role selector anywhere
+  - Users never choose Student / Admin / Super Admin
+  - Frontend does NOT determine account type
+  - Backend resolves identity and applies security policy
+  - Generic error on failure: "Invalid credentials." (no user enumeration)
+
+Login screen fields:
+  - Identity  (index, username, or email — one field)
+  - Password
+  - Remember me
+  - Forgot password (shows contact election office message)
+  - Sign In
+  - Help / Contact Election Office
+
+Primary API:
+  POST /api/v1/accounts/auth/login/
+  Body: { "identity": "...", "password": "..." }
+
+Identity resolution (server-side):
+  1. Contains @     → email lookup (case-insensitive)
+  2. Contains /     → index number lookup (normalized uppercase)
+  3. Otherwise      → username lookup, then index fallback
+
+After password verification:
+  → OTP challenge sent (channel based on user profile)
+  → Super admin: mandatory MFA (mfa_required: true)
+  → OTP response does NOT expose role or login_type
+
+OTP verify:
+  POST /api/v1/accounts/auth/otp/verify/
+  Returns: user_uuid, session_uuid, tokens, redirect_path
+
+Redirect paths (backend-determined):
+  student / candidate     → /dashboard/student
+  admin                   → /dashboard/admin
+  super_admin             → /dashboard/super-admin
+
+JWT session (unchanged architecture):
+  - Access token (~15 min) + refresh token (~7 days)
+  - Session tracking in database
+  - MFA logging + audit logging
+  - Token refresh and logout endpoints unchanged
+
+Legacy endpoints (still exist for compatibility):
+  POST /api/v1/accounts/auth/student/login/
+  POST /api/v1/accounts/auth/admin/login/
+  POST /api/v1/accounts/auth/super-admin/login/
+  (Also use generic "Invalid credentials." message now)
+
+Frontend auth files:
+  frontend/src/vue/views/auth/LoginView.vue
+  frontend/src/vue/views/auth/OTPVerificationView.vue
+  frontend/src/vue/stores/auth.js
+  frontend/src/vue/api/auth.js
+
+Backend auth files:
+  backend/apps/accounts/services/auth_service.py
+  backend/apps/accounts/api/auth_views.py  (UniversalLoginView)
+  backend/apps/accounts/api/auth_serializers.py
+  backend/apps/accounts/repositories/user_repository.py
+
+
+================================================================================
+9. NAVIGATION & ROUTING
+================================================================================
+
+Public routes:
+  /auth/login          Universal login
+  /auth/otp            OTP verification (no role labels shown)
+  /verify              Public election verification (VerificationLayout)
+  /maintenance         Maintenance page (PublicLayout)
+
+Authenticated app (DashboardLayout + AppShell):
+  /                    Overview hub (switches dashboard by role)
+  /dashboard/student   Student / candidate dashboard
+  /dashboard/admin     Admin / election officer dashboard
+  /dashboard/super-admin  Super admin command center
+  /elections           Election list
+  /elections/:uuid     Election workspace (ElectionLayout — detail, vote, confirm)
+  /results/*           Results hub and workflows
+  /strongroom/*        Strongroom integrity
+  /communications/*  Notification center ops
+  /ussd/*              USSD management
+  /notifications       Notification center (all roles)
+  /fraud               Fraud dashboard (admin+)
+  /security            Security center (admin+)
+  /profile             User profile
+
+Router guards:
+  - Requires auth for protected routes
+  - Role-based access via meta.roles
+  - OTP flow requires pending challenge in store
+  - Redirect to login with return URL when unauthenticated
+
+
+================================================================================
+10. REAL-TIME & WEBSOCKETS
+================================================================================
+
+WebSocket proxy: frontend Vite dev server proxies /ws → localhost:8000
+
+Live feeds used on dashboards:
+  - LiveTurnoutWidget, LiveFraudFeed, LiveSecurityFeed
+  - ConnectionStatusIndicator on topbar and module pages
+  - Pinia stores connect/disconnect realtime on mount/unmount
+
+Stores with realtime: dashboard, election, voting, results, fraud, security,
+notifications, ussd
+
+
+================================================================================
+11. SEED DATA & DEMO ENVIRONMENT
+================================================================================
+
+Commands:
+  python manage.py seed_demo_users     Users only
+  python manage.py seed_demo_data      Full platform demo (orchestrator)
+
+Demo password (all dev accounts, docstring only):
+  [REDACTED]
+
+Demo users (after seed_demo_users):
+  superadmin / superadmin@ttu.edu.gh     Super Admin
+  admin / admin@ttu.edu.gh               Admin
+  registrar / registrar@ttu.edu.gh       Admin (registrar)
+  electionofficer / electionofficer@ttu.edu.gh  Admin (election officer)
+  BC/ITS/24/047                          Student (Kwame Mensah)
+  BC/ITD/24/031                          Student (Ama Osei)
+  BC/ITN/24/112                          Candidate (Kofi Boateng)
+
+seed_demo_data also seeds:
+  - 4 demo elections (OPEN, SCHEDULED, CLOSED, DRAFT)
+  - Candidates on open election President position
+  - Security alerts (3) and fraud cases (up to 2)
+  - Closed election results + election seal
+  - Demo votes (closed election)
+  - Audit logs
+  - Strongroom custody records + ballot seals
+  - Communication demo (delivery logs, in-app notifications)
+  - USSD demo sessions and request logs
+
+Note: "Election Officer" is not a separate DB role — uses admin role.
+OTP in dev: check backend terminal / console email for 6-digit code.
+
+
+================================================================================
+12. RECENT WORK COMPLETED (THIS DEVELOPMENT ARC)
+================================================================================
+
+PHASE UI-X — Enterprise Design System, Responsiveness & Navigation
+  [DONE] Design tokens, 6 layouts, sidebar redesign, topbar redesign
+  [DONE] PageHeader, ModuleNav, EmptyState/LoadingSkeleton in ui/
+  [DONE] Nested sidebar groups, localStorage sidebar persistence
+  [DONE] Global search, user menu, notification badge
+  [DONE] Standardized major module pages (Fraud, Security, Results, Comms, USSD)
+  [DONE] Extended seed data (votes, audit logs, custody, ballot seals)
+  [DONE] Full report: docs/PHASE-UI-X-REPORT.md
+
+SIDEBAR LAYOUT FIX
+  [DONE] Fixed main content sitting under fixed sidebar on desktop
+  [DONE] Root cause: dynamic Tailwind grid classes not generated by JIT
+  [DONE] Solution: lg:pl-sidebar / lg:pl-sidebar-collapsed + safelist
+
+UNIVERSAL IDENTITY LOGIN
+  [DONE] Single POST /api/v1/accounts/auth/login/ endpoint
+  [DONE] Server-side identity resolution (email / index / username)
+  [DONE] Generic "Invalid credentials." — no enumeration
+  [DONE] Removed frontend role-switching and admin→super-admin cascade
+  [DONE] OTP challenge no longer exposes login_type
+  [DONE] redirect_path returned after OTP verify
+  [DONE] Login UI: Identity field per specification
+  [DONE] Seed users updated with usernames (admin, registrar, electionofficer, etc.)
+
+
+================================================================================
+13. WHAT IS NOT DONE YET / NEXT PHASE RECOMMENDATIONS
+================================================================================
+
+UI / Frontend:
+  - Apply PageHeader + ModuleNav to remaining sub-pages
+  - Unify Admin/Student/SuperAdmin dashboards on PageHeader pattern
+  - Wire VModal for publish/archive/certify confirmations
+  - Virtual scrolling for large tables
+  - Dark mode (tokens prepared, not implemented)
+  - Favorites / recently visited pages (future-ready via GlobalSearch)
+
+Authentication:
+  - Forgot password flow (currently shows contact election office only)
+  - Security key / hardware MFA for super admins (future)
+  - Per-policy OTP skip for low-risk student logins (policy engine not built)
+  - Dedicated election_officer role in schema (optional product decision)
+
+Backend / Testing:
+  - Automated tests for universal login flow
+  - Remove or formally deprecate legacy 3-endpoint login APIs
+
+Election integrity (ongoing discipline):
+  - Never expose vote totals/rankings/winners while election OPEN
+  - Applies to REST, WebSocket, Vue UI, USSD, SMS
+
+Parallel development rule (from UI-X phase forward):
+  Every future phase must deliver BOTH backend track AND matching
+  enterprise-quality frontend track together.
+
+
+================================================================================
+14. HOW TO RUN LOCALLY
+================================================================================
+
+1. Start infrastructure:
+     docker compose up -d
+
+2. Backend (from project root, venv activated):
+     cd backend
+     python manage.py migrate
+     python manage.py seed_demo_data
+     python manage.py runserver
+   OR with WebSockets:
+     uvicorn config.asgi:application --reload --host 0.0.0.0 --port 8000
+
+3. Frontend:
+     cd frontend
+     npm install
+     npm run dev
+
+4. Open app:
+     http://localhost:5173/auth/login
+
+5. Health check:
+     GET http://localhost:8000/health/
+
+Environment: copy .env.example → .env and configure POSTGRES_*, REDIS_URL, etc.
+
+
+================================================================================
+15. KEY DOCUMENTATION FILES
+================================================================================
+
+docs/PHASE-UI-X-REPORT.md          Full UI-X deliverables (sections A–M)
+docs/VOTEBRIDGE-PROJECT-OVERVIEW.txt   This overview
+README.md                          Quick start and stack summary
+.cursor/rules/votebridge-*.mdc     Workspace coding/UI/architecture standards
+backend/apps/ussd/USSD_FLOW.md     USSD channel flow documentation
+
+
+================================================================================
+16. BUILD STATUS (LAST VERIFIED)
+================================================================================
+
+Frontend: npm run build — PASS (Vue SPA, ~220KB main chunk gzip ~79KB)
+Backend:  python manage.py check — PASS (development settings)
+
+Known dev notes:
+  - Vite ws proxy may log ECONNRESET if backend not running during HMR
+  - Restart backend after auth API changes
+  - Re-run seed_demo_users after pull to get username-based staff logins
+
+
+================================================================================
+17. SUMMARY — WHERE WE ARE NOW
+================================================================================
+
+VoteBridge is a functioning full-stack campus election platform with:
+
+  ✓ Complete backend domain modules (elections through strongroom)
+  ✓ Vue 3 enterprise SPA with design system and responsive layouts
+  ✓ Real-time dashboards and WebSocket feeds
+  ✓ Universal Identity Login (single entry, role-agnostic UX)
+  ✓ Comprehensive dev seed data for realistic demos
+  ✓ Election integrity rules embedded in architecture standards
+
+The platform has moved from feature implementation toward production-grade
+UX: consistent navigation, professional visual language, mobile-first
+responsive behaviour, and secure authentication without role exposure.
+
+Immediate state: suitable for local development, demo, and continued
+module polish. Next work should follow the parallel backend+frontend rule and
+close remaining UI standardization gaps while hardening auth tests and
+operational flows (forgot password, modal confirmations, virtual scroll).
+
+================================================================================
+END OF OVERVIEW
+================================================================================

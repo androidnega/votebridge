@@ -1,0 +1,20 @@
+<span
+  class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset"
+  :class="{
+    'bg-green-50 text-green-700 ring-green-200': realtimeStatus === 'connected',
+    'bg-amber-50 text-amber-700 ring-amber-200': realtimeStatus === 'connecting',
+    'bg-slate-100 text-slate-600 ring-slate-200': realtimeStatus === 'disconnected',
+    'bg-red-50 text-red-700 ring-red-200': realtimeStatus === 'error',
+  }"
+>
+  <span
+    class="h-1.5 w-1.5 rounded-full"
+    :class="{
+      'bg-green-500 animate-pulse': realtimeStatus === 'connected',
+      'bg-amber-500 animate-pulse': realtimeStatus === 'connecting',
+      'bg-slate-400': realtimeStatus === 'disconnected',
+      'bg-red-500': realtimeStatus === 'error',
+    }"
+  ></span>
+  <span x-text="realtimeLabel || 'Live'"></span>
+</span>

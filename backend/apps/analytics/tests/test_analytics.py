@@ -1,0 +1,60 @@
+from django.test import TestCase
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient
+
+from apps.accounts.models import Role, User
+
+
+class AnalyticsAccessTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin_role, _ = Role.objects.get_or_create(
+            name=Role.Name.ADMIN,
+            defaults={"description": "Admin"},
+        )
+        self.student_role, _ = Role.objects.get_or_create(
+            name=Role.Name.STUDENT,
+            defaults={"description": "Student"},
+        )
+        self.admin = User.objects.create_user(
+            email="abi-admin@test.local",
+            username="abi-admin",
+            password="TestPass123!",
+            first_name="ABI",
+            last_name="Admin",
+            role=self.admin_role,
+        )
+        self.student = User.objects.create_user(
+            email="abi-student@test.local",
+            username="abi-student",
+            password="TestPass123!",
+            first_name="ABI",
+            last_name="Student",
+            role=self.student_role,
+        )
+
+    def test_student_cannot_access_overview(self):
+        self.client.force_authenticate(user=self.student)
+        response = self.client.get(reverse("analytics:overview"))
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_admin_can_access_overview(self):
+        self.client.force_authenticate(user=self.admin)
+        response = self.client.get(reverse("analytics:overview"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("total_votes", response.json()["data"])
+
+    def test_student_can_access_personal_analytics(self):
+        self.client.force_authenticate(user=self.student)
+        response = self.client.get(reverse("analytics:personal"))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class AnalyticsServiceTests(TestCase):
+    def test_overview_composes(self):
+        from apps.analytics.services.analytics_service import analytics_dashboard_service
+
+        payload = analytics_dashboard_service.get_overview()
+        self.assertIn("overall_turnout_percent", payload)
+        self.assertIn("trends", payload)

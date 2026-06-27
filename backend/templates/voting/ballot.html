@@ -1,0 +1,206 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Ballot{% endblock %}
+{% block page_heading %}Cast Your Vote{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="ballotPage('{{ election_uuid }}')" x-init="load()">
+  <div class="mb-4">
+    <a href="/dashboard/elections/{{ election_uuid }}/" class="text-sm text-brand-600 hover:text-brand-800">← Back to election</a>
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="message" class="mb-4 rounded-lg bg-green-50 p-4 text-sm text-green-700" x-text="message"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading ballot...</div>
+
+  <div class="card mb-6" x-show="!loading && !sessionActive">
+    <h3 class="text-sm font-semibold text-slate-900">Secure Voting Token</h3>
+    <p class="mt-1 text-sm text-slate-600">Request one SVT for this election. Enter it once to vote across all positions on your ballot.</p>
+    <div class="mt-4 flex flex-wrap items-end gap-3">
+      <div class="flex-1 min-w-[200px]">
+        <label class="block text-xs text-slate-500">SVT Code</label>
+        <input type="text" x-model="tokenCode" class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm" placeholder="Paste your voting token">
+      </div>
+      <a href="/dashboard/elections/{{ election_uuid }}/svt/" class="btn-secondary">Request SVT</a>
+      <button @click="validateSvt()" class="btn-primary" :disabled="validating || !tokenCode">Validate & Start Ballot</button>
+    </div>
+  </div>
+
+  <div class="card mb-6 border-green-200 bg-green-50" x-show="sessionActive">
+    <p class="text-sm font-medium text-green-800">✓ Ballot session active — complete your selections and submit your ballot.</p>
+  </div>
+
+  <template x-if="ballot && sessionActive">
+    <div class="space-y-6">
+      <div class="card">
+        <h2 class="text-lg font-semibold text-slate-900" x-text="ballot.election_title"></h2>
+        <p class="mt-1 text-sm text-slate-600">Select your preferred candidate(s) for each position, then submit your ballot.</p>
+      </div>
+
+      <template x-for="position in ballot.positions" :key="position.uuid">
+        <div class="card" x-show="position.votes_remaining > 0">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <h3 class="text-base font-semibold text-slate-900" x-text="position.title"></h3>
+              <p class="mt-1 text-sm text-slate-600" x-text="position.description"></p>
+            </div>
+            <span class="text-xs text-slate-500" x-text="`${position.votes_remaining} vote(s) allowed`"></span>
+          </div>
+
+          <div class="mt-4 space-y-3">
+            <template x-for="candidate in position.candidates" :key="candidate.uuid">
+              <label
+                class="flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition"
+                :class="isSelected(position.uuid, candidate.uuid) ? 'border-brand-400 bg-brand-50' : 'border-slate-200 hover:border-brand-300'"
+              >
+                <input
+                  type="radio"
+                  :name="`position-${position.uuid}`"
+                  :value="candidate.uuid"
+                  :disabled="candidate.has_voted"
+                  @change="selectCandidate(position, candidate)"
+                  class="mt-1 text-brand-600"
+                  x-show="position.choice_type === 'single'"
+                >
+                <input
+                  type="checkbox"
+                  :value="candidate.uuid"
+                  :disabled="candidate.has_voted"
+                  @change="toggleCandidate(position, candidate, $event.target.checked)"
+                  class="mt-1 rounded text-brand-600"
+                  x-show="position.choice_type === 'multi'"
+                >
+                <div class="flex-1">
+                  <p class="font-medium text-slate-900" x-text="candidate.full_name"></p>
+                  <p class="text-sm text-slate-500" x-text="candidate.department"></p>
+                  <p class="mt-1 text-sm text-slate-600" x-text="candidate.manifesto"></p>
+                  <span x-show="candidate.has_voted" class="mt-2 inline-block text-xs font-medium text-green-700">✓ Already voted</span>
+                </div>
+              </label>
+            </template>
+          </div>
+        </div>
+      </template>
+
+      <div class="card">
+        <button
+          type="button"
+          @click="submitBallot()"
+          class="btn-primary w-full sm:w-auto"
+          :disabled="submitting || !hasSelections()"
+        >
+          <span x-text="submitting ? 'Submitting ballot...' : 'Submit Ballot'"></span>
+        </button>
+        <p class="mt-2 text-xs text-slate-500">Your SVT will be consumed when you submit. You cannot change selections after submission.</p>
+      </div>
+
+      <div class="flex flex-wrap gap-3">
+        <a :href="`/dashboard/elections/${electionUuid}/my-votes/`" class="btn-secondary">View My Votes</a>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function ballotPage(electionUuid) {
+  return {
+    electionUuid,
+    ballot: null,
+    tokenCode: sessionStorage.getItem(`svt_${electionUuid}`) || "",
+    sessionActive: false,
+    loading: false,
+    validating: false,
+    submitting: false,
+    error: null,
+    message: null,
+    selections: {},
+    async load() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const result = await VoteBridgeAPI.getJson(`/voting/elections/${this.electionUuid}/ballot/`);
+        this.ballot = result.data;
+        this.ballot.positions.forEach((p) => {
+          this.selections[p.uuid] = [];
+        });
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async validateSvt() {
+      if (!this.tokenCode) {
+        this.error = "Enter your Secure Voting Token first.";
+        return;
+      }
+      this.validating = true;
+      this.error = null;
+      try {
+        await VoteBridgeAPI.postJson(`/security/elections/${this.electionUuid}/svt/validate/`, {
+          token_code: this.tokenCode,
+        });
+        sessionStorage.setItem(`svt_${this.electionUuid}`, this.tokenCode);
+        this.sessionActive = true;
+        this.message = "Ballot session started. Make your selections and submit when ready.";
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.validating = false;
+      }
+    },
+    isSelected(positionUuid, candidateUuid) {
+      return (this.selections[positionUuid] || []).includes(candidateUuid);
+    },
+    selectCandidate(position, candidate) {
+      if (candidate.has_voted) return;
+      this.selections[position.uuid] = [candidate.uuid];
+    },
+    toggleCandidate(position, candidate, checked) {
+      if (candidate.has_voted) return;
+      const list = this.selections[position.uuid] || [];
+      if (checked) {
+        if (list.length < position.votes_remaining) {
+          this.selections[position.uuid] = [...list, candidate.uuid];
+        }
+      } else {
+        this.selections[position.uuid] = list.filter((id) => id !== candidate.uuid);
+      }
+    },
+    hasSelections() {
+      return Object.values(this.selections).some((list) => list.length > 0);
+    },
+    buildSelectionsPayload() {
+      return Object.entries(this.selections)
+        .filter(([, candidates]) => candidates.length > 0)
+        .map(([positionUuid, candidateUuids]) => ({
+          position_uuid: positionUuid,
+          candidate_uuids: candidateUuids,
+        }));
+    },
+    async submitBallot() {
+      if (!this.sessionActive || !this.tokenCode) {
+        this.error = "Validate your SVT before submitting.";
+        return;
+      }
+      this.submitting = true;
+      this.error = null;
+      try {
+        const result = await VoteBridgeAPI.postJson(`/voting/elections/${this.electionUuid}/submit/`, {
+          token_code: this.tokenCode,
+          channel_name: "web",
+          selections: this.buildSelectionsPayload(),
+        });
+        sessionStorage.setItem("last_ballot_confirmation", JSON.stringify(result.data));
+        sessionStorage.removeItem(`svt_${this.electionUuid}`);
+        window.location.href = `/dashboard/elections/${this.electionUuid}/vote/confirmation/`;
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.submitting = false;
+      }
+    },
+  };
+}
+</script>
+{% endblock %}

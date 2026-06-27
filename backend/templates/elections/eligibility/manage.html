@@ -1,0 +1,107 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Manage Eligibility{% endblock %}
+{% block page_heading %}Manage Eligibility{% endblock %}
+
+{% block dashboard_content %}
+<div class="mx-auto max-w-3xl" x-data="eligibilityManagePage('{{ election_uuid }}')">
+  <div class="mb-4">
+    <a href="/dashboard/elections/{{ election_uuid }}/eligibility/" class="text-sm text-brand-600 hover:text-brand-800">← Back to eligibility list</a>
+  </div>
+
+  <div x-show="message" class="mb-4 rounded-lg bg-green-50 p-4 text-sm text-green-700" x-text="message"></div>
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+
+  <div class="card space-y-6">
+    <div>
+      <h3 class="text-sm font-semibold text-slate-900">Add Single Voter</h3>
+      <form @submit.prevent="addSingle" class="mt-4 space-y-4">
+        <div>
+          <label class="form-label" for="user_uuid">User UUID</label>
+          <input id="user_uuid" x-model="single.user_uuid" class="form-input mt-1" placeholder="Voter user UUID" required>
+        </div>
+        <div>
+          <label class="form-label" for="reason">Eligibility Reason</label>
+          <input id="reason" x-model="single.eligibility_reason" class="form-input mt-1" placeholder="e.g. Registered student">
+        </div>
+        <label class="flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" x-model="single.is_eligible" class="rounded border-slate-300 text-brand-600">
+          Eligible to vote
+        </label>
+        <button type="submit" class="btn-primary" :disabled="loading">Add Voter</button>
+      </form>
+    </div>
+
+    <hr class="border-slate-200">
+
+    <div>
+      <h3 class="text-sm font-semibold text-slate-900">Bulk Update</h3>
+      <p class="mt-1 text-sm text-slate-600">Enter one user UUID per line.</p>
+      <form @submit.prevent="bulkUpdate" class="mt-4 space-y-4">
+        <div>
+          <label class="form-label" for="user_uuids">User UUIDs</label>
+          <textarea id="user_uuids" x-model="bulk.user_uuids_text" rows="5" class="form-input mt-1 font-mono text-sm" placeholder="uuid-1&#10;uuid-2&#10;uuid-3" required></textarea>
+        </div>
+        <div>
+          <label class="form-label" for="bulk_reason">Eligibility Reason</label>
+          <input id="bulk_reason" x-model="bulk.eligibility_reason" class="form-input mt-1">
+        </div>
+        <label class="flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" x-model="bulk.is_eligible" class="rounded border-slate-300 text-brand-600">
+          Mark as eligible
+        </label>
+        <button type="submit" class="btn-secondary" :disabled="loading">Bulk Update</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function eligibilityManagePage(electionUuid) {
+  return {
+    electionUuid,
+    loading: false,
+    error: null,
+    message: null,
+    single: { user_uuid: "", is_eligible: true, eligibility_reason: "" },
+    bulk: { user_uuids_text: "", is_eligible: true, eligibility_reason: "" },
+    async addSingle() {
+      this.loading = true;
+      this.error = null;
+      this.message = null;
+      try {
+        await VoteBridgeAPI.postJson(`/elections/${this.electionUuid}/eligibility/`, this.single);
+        this.message = "Voter eligibility record created.";
+        this.single = { user_uuid: "", is_eligible: true, eligibility_reason: "" };
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async bulkUpdate() {
+      this.loading = true;
+      this.error = null;
+      this.message = null;
+      try {
+        const user_uuids = this.bulk.user_uuids_text
+          .split("\n")
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const result = await VoteBridgeAPI.postJson(`/elections/${this.electionUuid}/eligibility/bulk/`, {
+          user_uuids,
+          is_eligible: this.bulk.is_eligible,
+          eligibility_reason: this.bulk.eligibility_reason,
+        });
+        this.message = `Updated ${result.data.length} voter(s).`;
+        this.bulk.user_uuids_text = "";
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+  };
+}
+</script>
+{% endblock %}

@@ -1,0 +1,73 @@
+---
+description: VoteBridge UI/UX, colour system, components, and responsive standards (2026 Enterprise Edition)
+alwaysApply: true
+---
+
+# UI / UX Standards — Phase UI-X (2026)
+
+Premium enterprise election platform. Mobile-first. Fully responsive.
+
+## Visual rules
+
+- Flat professional colours only — **no gradients**
+- Forest green primary (`brand-*`, `#1E5F46`)
+- Plenty of whitespace; 12px card radius; 10px input radius; soft shadows only
+- Inter Variable, weights 400–700 only
+- Cards must not feel crowded
+
+## Colour tokens (Tailwind)
+
+| Role | Token / Hex |
+|------|-------------|
+| Primary | `brand-*` / `#1E5F46` |
+| Primary hover | `brand-hover` / `#184C38` |
+| Secondary | `slate-700` / `#334155` |
+| Background | `surface-muted` / `#F5F7F9` |
+| Surface | `surface` / `#FFFFFF` |
+| Border | `border` / `#E2E8F0` |
+| Success | `success-*` / `#2E7D32` |
+| Warning | `warning-*` / `#CA8A04` |
+| Danger | `danger-*` / `#C62828` |
+| Information | `info-*` / `#0F766E` |
+
+## Status badge colours
+
+| Status | Variant |
+|--------|---------|
+| Draft | grey |
+| Scheduled | blue-grey |
+| Open | green |
+| Paused | amber |
+| Closed | red |
+| Archived | dark grey |
+
+## Spacing tokens
+
+- Page padding: `px-page` (32px)
+- Section spacing: `space-y-section` (32px)
+- Card padding: `p-card` (24px)
+- Input/button gap: 16px
+
+## Authentication
+
+- **Single unified login** — no role selector
+- Index number OR email in one field; backend determines role
+- OTP screen must not expose role labels
+
+## Required page states
+
+Every page: **loading** (skeleton), **empty**, **error**
+
+## Components — reuse before creating
+
+`AppShell`, `PageHeader`, `SectionHeader`, `VCard`, `VButton`, `VInput`, `VTable`, `StatCard`, `EmptyState`, `LoadingSkeleton`, `StatusBadge`, `VIcon`
+
+## Responsive
+
+- Sidebar: 280px expanded / 88px collapsed; drawer on mobile
+- Tables: card layout on mobile
+- Lazy-load Vue route pages
+
+## Accessibility
+
+Keyboard navigation, visible focus rings, ARIA labels, 44px touch targets, WCAG AA contrast.

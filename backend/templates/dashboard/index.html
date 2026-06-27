@@ -1,0 +1,245 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Overview{% endblock %}
+{% block page_heading %}Overview{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="dashboardOverviewPage()" x-init="init()">
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
+    <p class="text-sm text-slate-500">Live election monitoring</p>
+    {% include "components/realtime_indicator.html" %}
+  </div>
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+
+  <!-- Admin widgets -->
+  <template x-if="role === 'admin'">
+    <div class="space-y-8">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div class="card">
+          <p class="text-sm font-medium text-slate-500">Active Elections</p>
+          <p class="mt-2 text-3xl font-bold text-slate-900" x-text="loading ? '—' : (stats.active_elections ?? 0)"></p>
+        </div>
+        <div class="card">
+          <p class="text-sm font-medium text-slate-500">Total Votes Cast</p>
+          <p class="mt-2 text-3xl font-bold text-slate-900" x-text="loading ? '—' : (stats.total_votes_cast ?? 0)"></p>
+        </div>
+        <div class="card">
+          <p class="text-sm font-medium text-slate-500">Registered Voters</p>
+          <p class="mt-2 text-3xl font-bold text-slate-900" x-text="loading ? '—' : (stats.registered_voters ?? 0)"></p>
+        </div>
+        <div class="card">
+          <p class="text-sm font-medium text-slate-500">Turnout</p>
+          <p class="mt-2 text-3xl font-bold text-brand-600" x-text="loading ? '—' : `${stats.turnout_percentage ?? 0}%`"></p>
+        </div>
+        <div class="card">
+          <p class="text-sm font-medium text-slate-500">Open Alerts</p>
+          <p class="mt-2 text-3xl font-bold text-red-600" x-text="loading ? '—' : (stats.security_alerts?.open ?? 0)"></p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div class="card">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-slate-900">Security Alerts</h2>
+            <a href="/dashboard/security/alerts/" class="text-sm text-brand-600 hover:text-brand-800">View all</a>
+          </div>
+          <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div class="rounded-lg bg-red-50 p-3"><dt class="text-red-600">Open</dt><dd class="text-xl font-semibold text-red-800" x-text="stats.security_alerts?.open ?? 0"></dd></div>
+            <div class="rounded-lg bg-amber-50 p-3"><dt class="text-amber-600">Reviewing</dt><dd class="text-xl font-semibold text-amber-800" x-text="stats.security_alerts?.reviewing ?? 0"></dd></div>
+            <div class="rounded-lg bg-purple-50 p-3"><dt class="text-purple-600">Escalated</dt><dd class="text-xl font-semibold text-purple-800" x-text="stats.security_alerts?.escalated ?? 0"></dd></div>
+            <div class="rounded-lg bg-green-50 p-3"><dt class="text-green-600">Resolved</dt><dd class="text-xl font-semibold text-green-800" x-text="stats.security_alerts?.resolved ?? 0"></dd></div>
+          </dl>
+        </div>
+        <div class="card">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-slate-900">Fraud Cases</h2>
+            <a href="/dashboard/fraud/" class="text-sm text-brand-600 hover:text-brand-800">View dashboard</a>
+          </div>
+          <dl class="mt-4 grid grid-cols-2 gap-3 text-sm">
+            <div class="rounded-lg bg-slate-50 p-3"><dt class="text-slate-500">Total</dt><dd class="text-xl font-semibold" x-text="stats.fraud_cases?.total_fraud_cases ?? 0"></dd></div>
+            <div class="rounded-lg bg-amber-50 p-3"><dt class="text-amber-600">Open</dt><dd class="text-xl font-semibold text-amber-800" x-text="stats.fraud_cases?.open_cases ?? 0"></dd></div>
+            <div class="rounded-lg bg-orange-50 p-3"><dt class="text-orange-600">High Risk</dt><dd class="text-xl font-semibold text-orange-800" x-text="stats.fraud_cases?.high_risk_cases ?? 0"></dd></div>
+            <div class="rounded-lg bg-red-50 p-3"><dt class="text-red-600">Critical</dt><dd class="text-xl font-semibold text-red-800" x-text="stats.fraud_cases?.critical_cases ?? 0"></dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <!-- Student widgets -->
+  <template x-if="role === 'student'">
+    <div class="space-y-8">
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div class="card">
+          <p class="text-sm font-medium text-slate-500">Active Elections</p>
+          <p class="mt-2 text-3xl font-bold text-slate-900" x-text="loading ? '—' : (stats.active_elections_count ?? 0)"></p>
+        </div>
+        <div class="card">
+          <p class="text-sm font-medium text-slate-500">Open Now</p>
+          <p class="mt-2 text-3xl font-bold text-green-600" x-text="loading ? '—' : (stats.election_status_summary?.open ?? 0)"></p>
+        </div>
+        <div class="card">
+          <p class="text-sm font-medium text-slate-500">Votes Recorded</p>
+          <p class="mt-2 text-3xl font-bold text-brand-600" x-text="loading ? '—' : (stats.vote_confirmation_status?.recorded ?? 0)"></p>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="text-lg font-semibold text-slate-900">Election Status</h2>
+        <div x-show="loading" class="mt-4 text-sm text-slate-500">Loading elections...</div>
+        <div x-show="!loading && (stats.active_elections || []).length === 0" class="mt-4 rounded-lg border border-dashed border-slate-200 p-8 text-center text-sm text-slate-500">
+          No active elections you are eligible for.
+        </div>
+        <div class="mt-4 space-y-3" x-show="!loading && (stats.active_elections || []).length > 0">
+          <template x-for="election in stats.active_elections || []" :key="election.election_uuid">
+            <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-slate-100 bg-slate-50/50 p-4">
+              <div>
+                <p class="font-medium text-slate-900" x-text="election.election_title"></p>
+                <p class="text-xs text-slate-500 mt-1">
+                  Status: <span class="font-medium capitalize" x-text="election.election_status"></span>
+                  · Confirmation: <span class="font-medium" x-text="confirmationLabel(election.confirmation_status)"></span>
+                </p>
+              </div>
+              <div class="flex gap-2">
+                <a :href="`/dashboard/elections/${election.election_uuid}/vote/`" class="btn-primary text-sm" x-show="election.confirmation_status !== 'recorded'">Vote</a>
+                <a :href="`/dashboard/elections/${election.election_uuid}/`" class="btn-secondary text-sm">Details</a>
+              </div>
+            </div>
+          </template>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2 class="text-lg font-semibold text-slate-900">Vote Confirmation Status</h2>
+        <dl class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3 text-sm">
+          <div class="rounded-lg bg-green-50 p-4"><dt class="text-green-700">Recorded</dt><dd class="mt-1 text-2xl font-bold text-green-800" x-text="stats.vote_confirmation_status?.recorded ?? 0"></dd></div>
+          <div class="rounded-lg bg-amber-50 p-4"><dt class="text-amber-700">In Progress</dt><dd class="mt-1 text-2xl font-bold text-amber-800" x-text="stats.vote_confirmation_status?.in_progress ?? 0"></dd></div>
+          <div class="rounded-lg bg-slate-50 p-4"><dt class="text-slate-600">Pending</dt><dd class="mt-1 text-2xl font-bold text-slate-800" x-text="stats.vote_confirmation_status?.pending ?? 0"></dd></div>
+        </dl>
+      </div>
+    </div>
+  </template>
+
+  <div x-show="loading && !role" class="text-sm text-slate-500">Loading dashboard...</div>
+</div>
+
+<script>
+function dashboardOverviewPage() {
+  return {
+    role: null,
+    stats: {},
+    loading: true,
+    error: null,
+    wsKey: "dashboard",
+    realtimeStatus: "connecting",
+    realtimeLabel: "Connecting",
+
+    async init() {
+      await this.loadSnapshot();
+      this.connectRealtime();
+    },
+
+    async loadSnapshot() {
+      this.loading = true;
+      this.error = null;
+      try {
+        let result;
+        try {
+          result = await VoteBridgeAPI.getJson("/dashboard/admin/");
+          this.role = "admin";
+        } catch (adminError) {
+          result = await VoteBridgeAPI.getJson("/dashboard/student/");
+          this.role = "student";
+        }
+        this.stats = result.data || {};
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    connectRealtime() {
+      if (!VoteBridgeAPI.getAccessToken()) return;
+      this.setRealtimeStatus("connecting");
+      VoteBridgeRealtime.connect(this.wsKey, "/ws/realtime/dashboard/", {
+        onStatusChange: (status) => this.setRealtimeStatus(status),
+        onMessage: (message) => this.handleRealtimeMessage(message),
+      });
+    },
+
+    setRealtimeStatus(status) {
+      this.realtimeStatus = status;
+      this.realtimeLabel = {
+        connected: "Live",
+        connecting: "Connecting",
+        disconnected: "Offline",
+        error: "Error",
+      }[status] || "Live";
+    },
+
+    handleRealtimeMessage(message) {
+      if (message.event === "dashboard_stats" && message.data) {
+        if (message.data.role === "admin" && this.role === "admin") {
+          this.stats = { ...this.stats, ...message.data };
+        }
+        if (message.data.role === "student" && this.role === "student") {
+          this.stats = { ...this.stats, ...message.data };
+        }
+        return;
+      }
+
+      if (this.role === "admin") {
+        if (message.event === "ballot_submitted" && message.data) {
+          if (message.data.total_votes_cast !== undefined) {
+            this.stats.total_votes_cast = message.data.total_votes_cast;
+          }
+          if (message.data.turnout_percentage !== undefined) {
+            this.stats.turnout_percentage = message.data.turnout_percentage;
+          }
+        }
+        if (message.event === "security_alert_created" && this.stats.security_alerts) {
+          this.stats.security_alerts.open = (this.stats.security_alerts.open || 0) + 1;
+        }
+        if (message.event === "security_alert_resolved" && this.stats.security_alerts) {
+          this.stats.security_alerts.open = Math.max(0, (this.stats.security_alerts.open || 0) - 1);
+          this.stats.security_alerts.resolved = (this.stats.security_alerts.resolved || 0) + 1;
+        }
+        if (message.event === "fraud_case_created" && this.stats.fraud_cases) {
+          this.stats.fraud_cases.total_fraud_cases = (this.stats.fraud_cases.total_fraud_cases || 0) + 1;
+          this.stats.fraud_cases.open_cases = (this.stats.fraud_cases.open_cases || 0) + 1;
+        }
+        if (message.event === "fraud_case_resolved" && this.stats.fraud_cases) {
+          this.stats.fraud_cases.open_cases = Math.max(0, (this.stats.fraud_cases.open_cases || 0) - 1);
+          this.stats.fraud_cases.resolved_cases = (this.stats.fraud_cases.resolved_cases || 0) + 1;
+        }
+      }
+
+      if (this.role === "student") {
+        if (["ballot_submitted", "svt_issued", "election_opened", "election_closed"].includes(message.event)) {
+          this.refreshStudentStats();
+        }
+      }
+    },
+
+    async refreshStudentStats() {
+      try {
+        const result = await VoteBridgeAPI.getJson("/dashboard/student/");
+        this.stats = result.data || {};
+      } catch (e) {
+        /* keep existing stats */
+      }
+    },
+
+    confirmationLabel(status) {
+      return {
+        recorded: "Vote recorded",
+        in_progress: "Ballot in progress",
+        token_issued: "Token issued",
+        not_started: "Not started",
+      }[status] || status;
+    },
+  };
+}
+</script>
+{% endblock %}

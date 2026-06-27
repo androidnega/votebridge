@@ -1,0 +1,103 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Edit Candidate{% endblock %}
+{% block page_heading %}Edit Candidate{% endblock %}
+
+{% block dashboard_content %}
+<div class="mx-auto max-w-2xl" x-data="candidateEditPage('{{ candidate_uuid }}')" x-init="load()">
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading...</div>
+
+  <form @submit.prevent="submit" class="card space-y-4" x-show="form.full_name">
+    <div>
+      <label class="form-label" for="position_uuid">Position</label>
+      <select id="position_uuid" x-model="form.position_uuid" class="form-input mt-1" required>
+        <template x-for="pos in positions" :key="pos.uuid">
+          <option :value="pos.uuid" x-text="`${pos.title} (${pos.choice_type})`"></option>
+        </template>
+      </select>
+    </div>
+    <div>
+      <label class="form-label" for="full_name">Full Name</label>
+      <input id="full_name" x-model="form.full_name" class="form-input mt-1" required>
+    </div>
+    <div>
+      <label class="form-label" for="department">Department</label>
+      <input id="department" x-model="form.department" class="form-input mt-1">
+    </div>
+    <div>
+      <label class="form-label" for="manifesto">Manifesto</label>
+      <textarea id="manifesto" x-model="form.manifesto" rows="4" class="form-input mt-1"></textarea>
+    </div>
+    <div x-show="imageUrl">
+      <img :src="imageUrl" alt="Candidate photo" class="h-24 w-24 rounded-lg object-cover ring-1 ring-slate-200">
+    </div>
+    <div>
+      <label class="form-label" for="image">Replace Photo</label>
+      <input id="image" type="file" accept="image/*" @change="onFileChange" class="mt-1 block w-full text-sm text-slate-600">
+    </div>
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary" :disabled="saving">Save Changes</button>
+      <a :href="`/dashboard/elections/${electionUuid}/candidates/`" class="btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+function candidateEditPage(candidateUuid) {
+  return {
+    candidateUuid,
+    electionUuid: "",
+    loading: false,
+    saving: false,
+    error: null,
+    imageUrl: "",
+    imageFile: null,
+    positions: [],
+    form: {},
+    onFileChange(e) {
+      this.imageFile = e.target.files[0] || null;
+    },
+    async load() {
+      this.loading = true;
+      try {
+        const result = await VoteBridgeAPI.getJson(`/candidates/${this.candidateUuid}/`);
+        const c = result.data;
+        this.electionUuid = c.election_uuid;
+        this.imageUrl = c.image_url || "";
+        const posResult = await VoteBridgeAPI.getJson(`/elections/${this.electionUuid}/positions/`);
+        this.positions = posResult.data || [];
+        this.form = {
+          position_uuid: c.position_uuid,
+          full_name: c.full_name,
+          department: c.department,
+          manifesto: c.manifesto,
+        };
+      } catch (err) {
+        this.error = err.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async submit() {
+      this.saving = true;
+      this.error = null;
+      try {
+        const formData = new FormData();
+        formData.append("position_uuid", this.form.position_uuid);
+        formData.append("full_name", this.form.full_name);
+        formData.append("department", this.form.department);
+        formData.append("manifesto", this.form.manifesto);
+        if (this.imageFile) formData.append("image", this.imageFile);
+        await VoteBridgeAPI.patchForm(`/candidates/${this.candidateUuid}/`, formData);
+        window.location.href = `/dashboard/elections/${this.electionUuid}/candidates/`;
+      } catch (err) {
+        this.error = err.message;
+      } finally {
+        this.saving = false;
+      }
+    },
+  };
+}
+</script>
+{% endblock %}

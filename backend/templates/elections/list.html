@@ -1,0 +1,107 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Elections{% endblock %}
+{% block page_heading %}Elections{% endblock %}
+
+{% block topbar_actions %}
+<a href="/dashboard/elections/create/" class="btn-primary">Create Election</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="electionListPage()" x-init="loadElections()">
+  <div class="mb-6 flex flex-wrap gap-4">
+    <input type="search" x-model="search" @input.debounce.300ms="loadElections()" placeholder="Search elections..." class="form-input max-w-xs">
+    <select x-model="statusFilter" @change="loadElections()" class="form-input max-w-xs">
+      <option value="">All statuses</option>
+      <option value="draft">Draft</option>
+      <option value="scheduled">Scheduled</option>
+      <option value="open">Open</option>
+      <option value="paused">Paused</option>
+      <option value="closed">Closed</option>
+      <option value="archived">Archived</option>
+    </select>
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading elections...</div>
+
+  <div class="overflow-hidden rounded-xl ring-1 ring-slate-900/5" x-show="!loading">
+    <table class="min-w-full divide-y divide-slate-200">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Title</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Type</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Status</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Start</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">End</th>
+          <th class="px-4 py-3 text-right text-xs font-semibold text-slate-600">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 bg-white">
+        <template x-for="election in elections" :key="election.uuid">
+          <tr>
+            <td class="px-4 py-3 text-sm font-medium text-slate-900" x-text="election.title"></td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="election.election_type_display"></td>
+            <td class="px-4 py-3">
+              <span class="inline-flex rounded-full px-2 py-1 text-xs font-medium ring-1 ring-inset"
+                :class="statusClass(election.status)" x-text="election.status_display"></span>
+            </td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="formatDate(election.start_date)"></td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="formatDate(election.end_date)"></td>
+            <td class="px-4 py-3 text-right text-sm">
+              <a :href="`/dashboard/elections/${election.uuid}/`" class="text-brand-600 hover:text-brand-800">View</a>
+              <span class="mx-1 text-slate-300">|</span>
+              <a :href="`/dashboard/elections/${election.uuid}/edit/`" class="text-brand-600 hover:text-brand-800">Edit</a>
+            </td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+    <div x-show="elections.length === 0 && !loading" class="p-8 text-center text-sm text-slate-500">
+      No elections found.
+    </div>
+  </div>
+</div>
+
+<script>
+function electionListPage() {
+  return {
+    elections: [],
+    search: "",
+    statusFilter: "",
+    loading: false,
+    error: null,
+    async loadElections() {
+      this.loading = true;
+      this.error = null;
+      try {
+        const params = new URLSearchParams();
+        if (this.search) params.set("search", this.search);
+        if (this.statusFilter) params.set("status", this.statusFilter);
+        const query = params.toString() ? `?${params.toString()}` : "";
+        const result = await VoteBridgeAPI.getJson(`/elections/${query}`);
+        this.elections = result.data || [];
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    formatDate(value) {
+      return new Date(value).toLocaleString();
+    },
+    statusClass(status) {
+      const map = {
+        draft: "bg-slate-50 text-slate-600 ring-slate-500/10",
+        scheduled: "bg-blue-50 text-blue-700 ring-blue-600/20",
+        open: "bg-green-50 text-green-700 ring-green-600/20",
+        paused: "bg-amber-50 text-amber-700 ring-amber-600/20",
+        closed: "bg-slate-100 text-slate-700 ring-slate-600/20",
+        archived: "bg-slate-50 text-slate-500 ring-slate-400/20",
+      };
+      return map[status] || map.draft;
+    },
+  };
+}
+</script>
+{% endblock %}

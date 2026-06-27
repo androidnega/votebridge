@@ -1,0 +1,23 @@
+---
+description: Required completion report sections for every VoteBridge phase
+alwaysApply: true
+---
+
+# Phase Completion Reports
+
+Every phase deliverable must include sections **A–J**:
+
+| Section | Content |
+|---------|---------|
+| A | Completion Report |
+| B | Architecture Compliance |
+| C | Database Changes |
+| D | APIs |
+| E | Vue Components |
+| F | Security Impact |
+| G | Performance Impact |
+| H | Responsive Design Notes |
+| I | Testing Strategy |
+| J | Deployment Notes |
+
+Also document seed data changes when applicable (see seed-data rule).

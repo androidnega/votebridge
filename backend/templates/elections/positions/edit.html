@@ -1,0 +1,87 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Edit Position{% endblock %}
+{% block page_heading %}Edit Position{% endblock %}
+
+{% block dashboard_content %}
+<div class="mx-auto max-w-2xl" x-data="positionEditPage('{{ election_uuid }}', '{{ position_uuid }}')" x-init="load()">
+  <div class="mb-4">
+    <a href="/dashboard/elections/{{ election_uuid }}/positions/" class="text-sm text-brand-600 hover:text-brand-800">← Back to positions</a>
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading...</div>
+
+  <form @submit.prevent="submit" class="card space-y-4" x-show="form.title">
+    <div>
+      <label class="form-label" for="title">Title</label>
+      <input id="title" x-model="form.title" class="form-input mt-1" required>
+    </div>
+    <div>
+      <label class="form-label" for="description">Description</label>
+      <textarea id="description" x-model="form.description" rows="3" class="form-input mt-1"></textarea>
+    </div>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div>
+        <label class="form-label" for="max_votes_allowed">Max Votes Allowed</label>
+        <input id="max_votes_allowed" type="number" min="1" x-model.number="form.max_votes_allowed" class="form-input mt-1" required>
+      </div>
+      <div>
+        <label class="form-label" for="display_order">Display Order</label>
+        <input id="display_order" type="number" min="0" x-model.number="form.display_order" class="form-input mt-1">
+      </div>
+    </div>
+    <label class="flex items-center gap-2 text-sm text-slate-700">
+      <input type="checkbox" x-model="form.is_active" class="rounded border-slate-300 text-brand-600">
+      Active
+    </label>
+    <div class="flex gap-3">
+      <button type="submit" class="btn-primary" :disabled="saving">Save Changes</button>
+      <a href="/dashboard/elections/{{ election_uuid }}/positions/" class="btn-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+function positionEditPage(electionUuid, positionUuid) {
+  return {
+    electionUuid,
+    positionUuid,
+    loading: false,
+    saving: false,
+    error: null,
+    form: {},
+    async load() {
+      this.loading = true;
+      try {
+        const result = await VoteBridgeAPI.getJson(`/elections/${this.electionUuid}/positions/${this.positionUuid}/`);
+        const p = result.data;
+        this.form = {
+          title: p.title,
+          description: p.description,
+          max_votes_allowed: p.max_votes_allowed,
+          display_order: p.display_order,
+          is_active: p.is_active,
+        };
+      } catch (err) {
+        this.error = err.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async submit() {
+      this.saving = true;
+      this.error = null;
+      try {
+        await VoteBridgeAPI.patchJson(`/elections/${this.electionUuid}/positions/${this.positionUuid}/`, this.form);
+        window.location.href = `/dashboard/elections/${this.electionUuid}/positions/`;
+      } catch (err) {
+        this.error = err.message;
+      } finally {
+        this.saving = false;
+      }
+    },
+  };
+}
+</script>
+{% endblock %}

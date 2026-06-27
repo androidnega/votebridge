@@ -1,0 +1,93 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Verify Vote{% endblock %}
+{% block page_heading %}Verify Vote with SVT{% endblock %}
+
+{% block dashboard_content %}
+<div class="mx-auto max-w-lg" x-data="svtVerifyPage()" x-init="init()">
+  <p class="mb-6 text-sm text-slate-600">
+    Enter your Secure Voting Token to verify that your ballot was recorded. Candidate selections are never shown on verification.
+  </p>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+
+  <div class="card space-y-4">
+    <div>
+      <label class="block text-sm font-medium text-slate-700">SVT Code</label>
+      <input
+        type="text"
+        x-model="tokenCode"
+        class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 font-mono text-sm"
+        placeholder="Paste your voting token"
+      >
+    </div>
+    <button @click="verify()" class="btn-primary w-full" :disabled="verifying || !tokenCode">
+      <span x-text="verifying ? 'Verifying...' : 'Verify Vote'"></span>
+    </button>
+  </div>
+
+  <template x-if="result">
+    <div class="card mt-6 space-y-4">
+      <div class="rounded-lg p-4" :class="result.is_valid ? 'bg-green-50' : 'bg-red-50'">
+        <p class="text-sm font-medium" :class="result.is_valid ? 'text-green-800' : 'text-red-800'">
+          <span x-text="result.is_valid ? '✓ Ballot verified successfully' : '✗ Ballot verification failed'"></span>
+        </p>
+      </div>
+      <dl class="space-y-3 text-sm">
+        <div class="flex justify-between border-b border-slate-100 pb-2">
+          <dt class="text-slate-500">Election</dt>
+          <dd class="font-medium text-slate-900" x-text="result.election_title"></dd>
+        </div>
+        <div class="border-b border-slate-100 pb-2">
+          <dt class="text-slate-500 mb-2">Positions Completed</dt>
+          <dd>
+            <ul class="space-y-1">
+              <template x-for="title in result.positions_completed" :key="title">
+                <li class="text-slate-900" x-text="title"></li>
+              </template>
+            </ul>
+          </dd>
+        </div>
+        <div class="flex justify-between border-b border-slate-100 pb-2">
+          <dt class="text-slate-500">Submitted</dt>
+          <dd class="font-medium text-slate-900" x-text="formatDate(result.timestamp)"></dd>
+        </div>
+      </dl>
+    </div>
+  </template>
+</div>
+
+<script>
+function svtVerifyPage() {
+  return {
+    tokenCode: "",
+    verifying: false,
+    error: null,
+    result: null,
+    init() {
+      const params = new URLSearchParams(window.location.search);
+      const stored = params.get("token") || sessionStorage.getItem("last_svt_token");
+      if (stored) this.tokenCode = stored;
+    },
+    async verify() {
+      this.verifying = true;
+      this.error = null;
+      this.result = null;
+      try {
+        const response = await VoteBridgeAPI.postJson("/security/svt/verify/", {
+          token_code: this.tokenCode,
+        });
+        this.result = response.data;
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.verifying = false;
+      }
+    },
+    formatDate(value) {
+      return new Date(value).toLocaleString();
+    },
+  };
+}
+</script>
+{% endblock %}

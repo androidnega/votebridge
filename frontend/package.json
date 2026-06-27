@@ -1,0 +1,29 @@
+{
+  "name": "votebridge-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:vue": "vite --open /index.html",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@tailwindcss/forms": "^0.5.10",
+    "@tailwindcss/typography": "^0.5.16",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "tailwindcss": "^3.4.17",
+    "vite": "^6.2.0"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.9",
+    "axios": "^1.18.1",
+    "echarts": "^6.1.0",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.38",
+    "vue-router": "^4.6.4"
+  }
+}

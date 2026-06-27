@@ -1,0 +1,108 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Election Details{% endblock %}
+{% block page_heading %}Election Details{% endblock %}
+
+{% block topbar_actions %}
+<a href="/dashboard/elections/{{ election_uuid }}/positions/" class="btn-secondary">Positions</a>
+<a href="/dashboard/elections/{{ election_uuid }}/eligibility/" class="btn-secondary">Eligibility</a>
+<a href="/dashboard/elections/{{ election_uuid }}/edit/" class="btn-secondary">Edit</a>
+<a href="/dashboard/elections/{{ election_uuid }}/candidates/" class="btn-primary">Manage Candidates</a>
+{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="electionDetailPage('{{ election_uuid }}')" x-init="load()">
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading election...</div>
+
+  <template x-if="election">
+    <div class="space-y-6">
+      <div class="card">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h2 class="text-xl font-semibold text-slate-900" x-text="election.title"></h2>
+            <p class="mt-1 text-sm text-slate-600" x-text="election.description"></p>
+          </div>
+          <span class="inline-flex rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset"
+            :class="statusClass(election.status)" x-text="election.status_display"></span>
+        </div>
+        <dl class="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div><dt class="text-xs text-slate-500">Type</dt><dd class="text-sm font-medium" x-text="election.election_type_display"></dd></div>
+          <div><dt class="text-xs text-slate-500">Start</dt><dd class="text-sm font-medium" x-text="formatDate(election.start_date)"></dd></div>
+          <div><dt class="text-xs text-slate-500">End</dt><dd class="text-sm font-medium" x-text="formatDate(election.end_date)"></dd></div>
+          <div><dt class="text-xs text-slate-500">Candidates</dt><dd class="text-sm font-medium" x-text="`${election.approved_candidate_count} approved / ${election.candidate_count} total`"></dd></div>
+          <div><dt class="text-xs text-slate-500">Positions</dt><dd class="text-sm font-medium" x-text="election.position_count"></dd></div>
+        </dl>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <a href="/dashboard/elections/{{ election_uuid }}/svt/" class="btn-primary">Request SVT</a>
+          <a href="/dashboard/elections/{{ election_uuid }}/vote/" class="btn-secondary">Cast Vote</a>
+          <a href="/dashboard/elections/{{ election_uuid }}/my-votes/" class="btn-secondary">My Votes</a>
+          <a href="/dashboard/svt/verify/" class="btn-secondary">Verify Vote</a>
+          <a href="/dashboard/elections/{{ election_uuid }}/svt/manage/" class="btn-secondary">Manage SVTs</a>
+        </div>
+        <div class="mt-4 flex flex-wrap gap-2 text-sm text-slate-600">
+          <span x-show="election.allow_web_voting" class="rounded bg-slate-100 px-2 py-1">Web</span>
+          <span x-show="election.allow_ussd_voting" class="rounded bg-slate-100 px-2 py-1">USSD</span>
+          <span x-show="election.allow_sms_notifications" class="rounded bg-slate-100 px-2 py-1">SMS Notifications</span>
+        </div>
+      </div>
+
+      <div class="card" x-show="!election.is_read_only">
+        <h3 class="text-sm font-semibold text-slate-900">Lifecycle Actions</h3>
+        <div class="mt-4 flex flex-wrap gap-2">
+          <button @click="transition('schedule')" class="btn-secondary" x-show="election.status === 'draft'">Schedule</button>
+          <button @click="transition('open')" class="btn-primary" x-show="election.status === 'scheduled'">Open</button>
+          <button @click="transition('pause')" class="btn-secondary" x-show="election.status === 'open'">Pause</button>
+          <button @click="transition('open')" class="btn-primary" x-show="election.status === 'paused'">Resume</button>
+          <button @click="transition('close')" class="btn-secondary" x-show="election.status === 'open' || election.status === 'paused'">Close</button>
+          <button @click="transition('archive')" class="btn-secondary" x-show="election.status === 'closed'">Archive</button>
+        </div>
+      </div>
+    </div>
+  </template>
+</div>
+
+<script>
+function electionDetailPage(electionUuid) {
+  return {
+    electionUuid,
+    election: null,
+    loading: false,
+    error: null,
+    async load() {
+      this.loading = true;
+      try {
+        const result = await VoteBridgeAPI.getJson(`/elections/${this.electionUuid}/`);
+        this.election = result.data;
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    async transition(action) {
+      try {
+        const result = await VoteBridgeAPI.postJson(`/elections/${this.electionUuid}/${action}/`, {});
+        this.election = result.data;
+      } catch (e) {
+        this.error = e.message;
+      }
+    },
+    formatDate(value) {
+      return new Date(value).toLocaleString();
+    },
+    statusClass(status) {
+      const map = {
+        draft: "bg-slate-50 text-slate-600 ring-slate-500/10",
+        scheduled: "bg-blue-50 text-blue-700 ring-blue-600/20",
+        open: "bg-green-50 text-green-700 ring-green-600/20",
+        paused: "bg-amber-50 text-amber-700 ring-amber-600/20",
+        closed: "bg-slate-100 text-slate-700 ring-slate-600/20",
+        archived: "bg-slate-50 text-slate-500 ring-slate-400/20",
+      };
+      return map[status] || map.draft;
+    },
+  };
+}
+</script>
+{% endblock %}

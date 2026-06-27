@@ -1,0 +1,75 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block dashboard_title %}Audit Logs{% endblock %}
+{% block page_heading %}Audit Logs{% endblock %}
+
+{% block dashboard_content %}
+<div x-data="auditLogsPage()" x-init="load()">
+  <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <a href="/dashboard/security/" class="text-sm text-brand-600 hover:text-brand-800">← Security Center</a>
+    <select x-model="eventType" @change="load()" class="rounded-lg border border-slate-300 px-3 py-1.5 text-sm">
+      <option value="">All events</option>
+      <option value="login_success">Login Success</option>
+      <option value="login_failed">Login Failed</option>
+      <option value="election_accessed">Election Accessed</option>
+      <option value="ballot_viewed">Ballot Viewed</option>
+      <option value="vote_cast">Vote Cast</option>
+      <option value="svt_issued">SVT Issued</option>
+      <option value="svt_vote_verified">SVT Verified</option>
+      <option value="election_status_changed">Election Status Changed</option>
+    </select>
+  </div>
+
+  <div x-show="error" class="mb-4 rounded-lg bg-red-50 p-4 text-sm text-red-700" x-text="error"></div>
+  <div x-show="loading" class="text-sm text-slate-500">Loading audit logs...</div>
+
+  <div class="overflow-hidden rounded-xl ring-1 ring-slate-900/5" x-show="!loading">
+    <table class="min-w-full divide-y divide-slate-200">
+      <thead class="bg-slate-50">
+        <tr>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Event</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">User</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Election</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">IP</th>
+          <th class="px-4 py-3 text-left text-xs font-semibold text-slate-600">Time</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100 bg-white">
+        <template x-for="log in logs" :key="log.audit_id">
+          <tr>
+            <td class="px-4 py-3 text-sm font-medium text-slate-900" x-text="log.event_type"></td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="log.user_email || '—'"></td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="log.election_title || '—'"></td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="log.ip_address || '—'"></td>
+            <td class="px-4 py-3 text-sm text-slate-600" x-text="formatDate(log.timestamp)"></td>
+          </tr>
+        </template>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+function auditLogsPage() {
+  return {
+    logs: [],
+    eventType: "",
+    loading: false,
+    error: null,
+    async load() {
+      this.loading = true;
+      try {
+        const query = this.eventType ? `?event_type=${this.eventType}` : "";
+        const result = await VoteBridgeAPI.getJson(`/security/monitoring/audit-logs/${query}`);
+        this.logs = result.data || [];
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.loading = false;
+      }
+    },
+    formatDate(v) { return new Date(v).toLocaleString(); },
+  };
+}
+</script>
+{% endblock %}
