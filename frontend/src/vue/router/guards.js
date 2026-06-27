@@ -12,10 +12,20 @@ export function setupRouterGuards(router) {
     const guestOnly = to.matched.some((record) => record.meta.guest);
     const isPublic = to.matched.some((record) => record.meta.public);
     const requiresOtp = to.meta.requiresOtp;
+    const requiresBiometric = to.meta.requiresBiometric;
     const allowedRoles = to.meta.roles;
 
     if (isPublic) {
       return true;
+    }
+
+    if (requiresBiometric) {
+      const { useBiometricsStore } = await import("@/stores/biometrics");
+      const biometricsStore = useBiometricsStore();
+      biometricsStore.loadPendingAuth();
+      if (!biometricsStore.pendingAuth?.pending_auth_token) {
+        return { name: "auth-login", query: { redirect: to.query.redirect } };
+      }
     }
 
     if (requiresOtp && !authStore.hasPendingOtp) {
@@ -33,7 +43,7 @@ export function setupRouterGuards(router) {
       return { name: "forbidden" };
     }
 
-    if (guestOnly && authStore.isAuthenticated && !requiresOtp) {
+    if (guestOnly && authStore.isAuthenticated && !requiresOtp && !requiresBiometric) {
       return { name: "home" };
     }
 

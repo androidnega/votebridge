@@ -32,3 +32,5 @@ export { ussdApi } from "./ussd";
 export { operationsApi } from "./operations";
 export { systemControlApi } from "./systemControl";
 export { analyticsApi } from "./analytics";
+export { biometricsApi } from "./biometrics";
+export { trustedDevicesApi } from "./trustedDevices";

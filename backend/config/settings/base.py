@@ -20,6 +20,8 @@ env = environ.Env(
     VITE_DEV_MODE=(bool, False),
     VITE_DEV_SERVER_PORT=(int, 5173),
     LOG_LEVEL=(str, "INFO"),
+    BIOMETRICS_INFERENCE_MODE=(str, "auto"),
+    BIOMETRICS_MODEL_DIR=(str, ""),
 )
 
 environ.Env.read_env(PROJECT_ROOT / ".env")
@@ -60,6 +62,8 @@ LOCAL_APPS = [
     "apps.operations",
     "apps.system",
     "apps.analytics",
+    "apps.biometrics",
+    "apps.trusted_devices",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -327,3 +331,8 @@ LOGGING = {
         },
     },
 }
+
+# Biometric identity assurance
+BIOMETRICS_INFERENCE_MODE = env("BIOMETRICS_INFERENCE_MODE")
+_biometrics_model_dir = env("BIOMETRICS_MODEL_DIR")
+BIOMETRICS_MODEL_DIR = Path(_biometrics_model_dir) if _biometrics_model_dir else BASE_DIR / "models" / "biometrics"

@@ -25,6 +25,36 @@ const router = createRouter({
           component: () => import("@/views/auth/OTPVerificationView.vue"),
           meta: { title: "Verify code", requiresOtp: true, guest: true },
         },
+        {
+          path: "biometric-verify",
+          name: "auth-biometric-verify",
+          component: () => import("@/views/biometrics/BiometricVerifyView.vue"),
+          meta: { title: "Identity verification", requiresBiometric: true, guest: true },
+        },
+        {
+          path: "info/election-period",
+          name: "auth-info-election-period",
+          component: () => import("@/views/auth/info/AuthInfoPageView.vue"),
+          meta: { title: "Election period", guest: true, infoPage: true, infoSlug: "election-period" },
+        },
+        {
+          path: "info/voting-instructions",
+          name: "auth-info-voting-instructions",
+          component: () => import("@/views/auth/info/AuthInfoPageView.vue"),
+          meta: { title: "Voting instructions", guest: true, infoPage: true, infoSlug: "voting-instructions" },
+        },
+        {
+          path: "info/security",
+          name: "auth-info-security",
+          component: () => import("@/views/auth/info/AuthInfoPageView.vue"),
+          meta: { title: "Security information", guest: true, infoPage: true, infoSlug: "security" },
+        },
+        {
+          path: "info/help",
+          name: "auth-info-help",
+          component: () => import("@/views/auth/info/AuthInfoPageView.vue"),
+          meta: { title: "Help & FAQ", guest: true, infoPage: true, infoSlug: "help" },
+        },
       ],
     },
     {
@@ -85,6 +115,12 @@ const router = createRouter({
           name: "security",
           component: () => import("@/views/security/SecurityView.vue"),
           meta: { title: "Security Center" },
+        },
+        {
+          path: "security/trusted-devices",
+          name: "security-trusted-devices",
+          component: () => import("@/views/security/TrustedDevicesView.vue"),
+          meta: { title: "Trusted Devices", roles: ["admin", "super_admin"] },
         },
         {
           path: "fraud",
@@ -285,6 +321,25 @@ const router = createRouter({
           component: () => import("@/views/system-control/SystemCategorySettingsView.vue"),
           props: { category: "authentication", title: "Authentication", sensitive: true },
           meta: { title: "Authentication", roles: ["super_admin"] },
+        },
+        {
+          path: "system-control/identity-assurance",
+          name: "system-control-identity-assurance",
+          component: () => import("@/views/system-control/SystemCategorySettingsView.vue"),
+          props: { category: "identity_assurance", title: "Identity Assurance", sensitive: true },
+          meta: { title: "Identity Assurance", roles: ["super_admin"] },
+        },
+        {
+          path: "biometrics/enroll",
+          name: "biometrics-enroll",
+          component: () => import("@/views/biometrics/BiometricEnrollView.vue"),
+          meta: { title: "Biometric Enrollment", roles: ["super_admin"] },
+        },
+        {
+          path: "biometrics/history",
+          name: "biometrics-history",
+          component: () => import("@/views/biometrics/BiometricHistoryView.vue"),
+          meta: { title: "Biometric History", roles: ["admin", "super_admin"] },
         },
         {
           path: "system-control/security",

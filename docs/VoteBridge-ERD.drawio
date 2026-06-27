@@ -1,0 +1,568 @@
+<mxfile host="app.diagrams.net" modified="2026-06-27T00:00:00.000Z" agent="VoteBridge" version="22.1.0" type="device">
+  <diagram id="votebridge-erd" name="VoteBridge ERD">
+    <mxGraphModel dx="2400" dy="1600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="3200" pageHeight="2400" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- GROUP: ACCOUNTS -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <mxCell id="grp_accounts" value="ACCOUNTS" style="swimlane;horizontal=0;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="40" width="480" height="420" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="role" value="&lt;b&gt;Role&lt;/b&gt; (accounts_role)&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot;&gt;🔑 &lt;b&gt;PK&lt;/b&gt; id&lt;br&gt;uuid (UK)&lt;br&gt;name (UK)&lt;br&gt;description, is_active&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_accounts">
+          <mxGeometry x="20" y="50" width="200" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="user" value="&lt;b&gt;User&lt;/b&gt; (accounts_user)&lt;hr size=&quot;1&quot;&gt;&lt;div align=&quot;left&quot;&gt;🔑 &lt;b&gt;PK&lt;/b&gt; id&lt;br&gt;uuid (UK), email (UK), username (UK)&lt;br&gt;🔗 &lt;b&gt;FK&lt;/b&gt; role_id → Role&lt;br&gt;index_number, student_id, phone_number&lt;br&gt;is_verified, is_staff, is_active&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=center;verticalAlign=top;spacingTop=4;fontStyle=1" vertex="1" parent="grp_accounts">
+          <mxGeometry x="20" y="190" width="440" height="130" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="otp_request" value="&lt;b&gt;OTPRequest&lt;/b&gt; (accounts_otp_request)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK user_id → User&lt;br&gt;purpose, channel, otp_hash&lt;br&gt;expires_at, is_verified, attempts&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_accounts">
+          <mxGeometry x="250" y="50" width="210" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="mfa_log" value="&lt;b&gt;MFALog&lt;/b&gt; (accounts_mfa_log)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK user_id → User (nullable)&lt;br&gt;event_type, ip_address&lt;br&gt;metadata, created_at&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_accounts">
+          <mxGeometry x="250" y="340" width="210" height="60" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="session" value="&lt;b&gt;Session&lt;/b&gt; (accounts_session)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK user_id → User&lt;br&gt;refresh_token_jti (UK)&lt;br&gt;is_active, expires_at&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_accounts">
+          <mxGeometry x="20" y="340" width="200" height="60" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- GROUP: ELECTIONS & CANDIDATES -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <mxCell id="grp_elections" value="ELECTIONS &amp; CANDIDATES" style="swimlane;horizontal=0;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="560" y="40" width="500" height="500" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="election" value="&lt;b&gt;Election&lt;/b&gt; (elections_election)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id, uuid (UK)&lt;br&gt;🔗 FK created_by_id → User&lt;br&gt;title, election_type, status&lt;br&gt;start_date, end_date&lt;br&gt;allow_web/ussd/sms voting&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=top;spacingTop=4;fontStyle=1" vertex="1" parent="grp_elections">
+          <mxGeometry x="20" y="50" width="220" height="130" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="position" value="&lt;b&gt;Position&lt;/b&gt; (elections_position)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK election_id → Election&lt;br&gt;title, max_votes_allowed&lt;br&gt;display_order, is_active&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_elections">
+          <mxGeometry x="20" y="210" width="220" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="voting_channel" value="&lt;b&gt;VotingChannel&lt;/b&gt; (elections_voting_channel)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;channel_name (UK)&lt;br&gt;web | ussd | sms&lt;br&gt;is_active&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_elections">
+          <mxGeometry x="260" y="50" width="220" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="voter_eligibility" value="&lt;b&gt;VoterEligibility&lt;/b&gt; (elections_voter_eligibility)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK election_id → Election&lt;br&gt;🔗 FK user_id → User&lt;br&gt;🔗 FK verified_by_id → User (nullable)&lt;br&gt;is_eligible, eligibility_reason&lt;br&gt;UK (election, user)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_elections">
+          <mxGeometry x="260" y="160" width="220" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="candidate" value="&lt;b&gt;Candidate&lt;/b&gt; (candidates_candidate)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK election_id → Election&lt;br&gt;🔗 FK position_id → Position&lt;br&gt;full_name, department, manifesto&lt;br&gt;status, image&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_elections">
+          <mxGeometry x="20" y="340" width="220" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- GROUP: VOTING & SVT -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <mxCell id="grp_voting" value="VOTING &amp; SVT" style="swimlane;horizontal=0;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="560" y="570" width="500" height="220" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="vote" value="&lt;b&gt;Vote&lt;/b&gt; (voting_vote)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK vote_id (UUID)&lt;br&gt;🔗 FK election_id → Election&lt;br&gt;🔗 FK position_id → Position&lt;br&gt;🔗 FK candidate_id → Candidate&lt;br&gt;🔗 FK user_id → User&lt;br&gt;🔗 FK channel_id → VotingChannel&lt;br&gt;svt_id (logical ref → SVTToken)&lt;br&gt;vote_hash, timestamp&lt;br&gt;UK (user, position, candidate)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=top;spacingTop=4;fontStyle=1" vertex="1" parent="grp_voting">
+          <mxGeometry x="20" y="50" width="280" height="150" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="svt_token" value="&lt;b&gt;SVTToken&lt;/b&gt; (svt_tokens)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK svt_id (UUID)&lt;br&gt;🔗 FK user_id → User&lt;br&gt;🔗 FK election_id → Election&lt;br&gt;token_code (UK), status&lt;br&gt;issued_at, expires_at, used_at&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_voting">
+          <mxGeometry x="320" y="50" width="160" height="130" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- GROUP: RESULTS & STRONGROOM -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <mxCell id="grp_results" value="RESULTS &amp; STRONGROOM" style="swimlane;horizontal=0;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="40" width="520" height="520" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="election_result" value="&lt;b&gt;ElectionResult&lt;/b&gt; (results_election_result)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK election_id → Election (1:1)&lt;br&gt;🔗 FK generated/certified/published/archived_by → User&lt;br&gt;status, standings (JSON)&lt;br&gt;turnout_percentage, result_hash&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=center;verticalAlign=top;spacingTop=4;fontStyle=1" vertex="1" parent="grp_results">
+          <mxGeometry x="20" y="50" width="240" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ballot_seal" value="&lt;b&gt;BallotSeal&lt;/b&gt; (strongroom_ballot_seal)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK election_id → Election&lt;br&gt;🔗 FK user_id → User&lt;br&gt;svt_id, vote_references (JSON)&lt;br&gt;seal_hash, vote_count, status&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_results">
+          <mxGeometry x="20" y="200" width="240" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="election_seal" value="&lt;b&gt;ElectionSeal&lt;/b&gt; (strongroom_election_seal)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK election_id → Election (1:1)&lt;br&gt;🔗 FK election_result_id → ElectionResult (1:1)&lt;br&gt;🔗 FK sealed_by/locked_by → User&lt;br&gt;election_seal_hash, status&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_results">
+          <mxGeometry x="280" y="50" width="220" height="120" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="custody_record" value="&lt;b&gt;CustodyRecord&lt;/b&gt; (strongroom_custody_record)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK election_id → Election&lt;br&gt;🔗 FK actor_id → User (nullable)&lt;br&gt;action, entity_type, entity_uuid&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_results">
+          <mxGeometry x="280" y="190" width="220" height="90" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="integrity_verification" value="&lt;b&gt;IntegrityVerification&lt;/b&gt; (strongroom_integrity_verification)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK election_id → Election&lt;br&gt;🔗 FK verified_by_id → User (nullable)&lt;br&gt;verification_type, is_valid, integrity_score&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_results">
+          <mxGeometry x="280" y="300" width="220" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- GROUP: SECURITY & FRAUD -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <mxCell id="grp_security" value="SECURITY &amp; FRAUD" style="swimlane;horizontal=0;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="590" width="520" height="400" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="device_log" value="&lt;b&gt;DeviceLog&lt;/b&gt; (device_logs)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK device_log_id&lt;br&gt;🔗 FK user_id → User (nullable)&lt;br&gt;browser_fingerprint, device_type&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_security">
+          <mxGeometry x="20" y="50" width="200" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="location_log" value="&lt;b&gt;LocationLog&lt;/b&gt; (location_logs)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK location_log_id&lt;br&gt;ip_address (UK)&lt;br&gt;country, region, city, lat/lng&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_security">
+          <mxGeometry x="20" y="150" width="200" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="audit_log" value="&lt;b&gt;AuditLog&lt;/b&gt; (audit_logs)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK audit_id&lt;br&gt;🔗 FK user_id → User (nullable)&lt;br&gt;🔗 FK election_id → Election (nullable)&lt;br&gt;🔗 FK device_log_id → DeviceLog (nullable)&lt;br&gt;🔗 FK location_log_id → LocationLog (nullable)&lt;br&gt;event_type, metadata, timestamp&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_security">
+          <mxGeometry x="240" y="50" width="260" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="security_alert" value="&lt;b&gt;SecurityAlert&lt;/b&gt; (security_alerts)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK alert_id&lt;br&gt;🔗 FK user_id → User (nullable)&lt;br&gt;🔗 FK election_id → Election (nullable)&lt;br&gt;🔗 FK device_log_id → DeviceLog (nullable)&lt;br&gt;🔗 FK location_log_id → LocationLog (nullable)&lt;br&gt;🔗 FK reviewed/resolved/escalated_by → User&lt;br&gt;alert_type, status, title&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=top;spacingTop=4;fontStyle=1" vertex="1" parent="grp_security">
+          <mxGeometry x="240" y="180" width="260" height="130" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="fraud_case" value="&lt;b&gt;FraudCase&lt;/b&gt; (fraud_cases)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK fraud_case_id&lt;br&gt;🔗 FK related_alert_id → SecurityAlert (1:1 UK)&lt;br&gt;🔗 FK election_id → Election (nullable)&lt;br&gt;🔗 FK user_id → User (nullable)&lt;br&gt;risk_score, severity, status&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_security">
+          <mxGeometry x="20" y="260" width="480" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- GROUP: NOTIFICATIONS -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <mxCell id="grp_notifications" value="NOTIFICATIONS" style="swimlane;horizontal=0;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="490" width="480" height="300" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="comm_provider" value="&lt;b&gt;CommunicationProvider&lt;/b&gt; (notifications_provider)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;provider_type, name&lt;br&gt;config (JSON), is_default&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_notifications">
+          <mxGeometry x="20" y="50" width="210" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="notif_template" value="&lt;b&gt;NotificationTemplate&lt;/b&gt; (notifications_template)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;code (UK), channel&lt;br&gt;subject, body_text, sms_body&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_notifications">
+          <mxGeometry x="20" y="150" width="210" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="delivery_log" value="&lt;b&gt;DeliveryLog&lt;/b&gt; (notifications_delivery_log)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK user_id → User (nullable)&lt;br&gt;🔗 FK template_id → NotificationTemplate&lt;br&gt;🔗 FK provider_id → CommunicationProvider&lt;br&gt;recipient, channel, status&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_notifications">
+          <mxGeometry x="250" y="50" width="210" height="110" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="in_app_notif" value="&lt;b&gt;InAppNotification&lt;/b&gt; (notifications_in_app)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK user_id → User&lt;br&gt;🔗 FK delivery_log_id → DeliveryLog (nullable)&lt;br&gt;title, body, is_read, is_archived&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_notifications">
+          <mxGeometry x="250" y="180" width="210" height="90" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- GROUP: USSD -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <mxCell id="grp_ussd" value="USSD" style="swimlane;horizontal=0;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="820" width="480" height="180" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ussd_session" value="&lt;b&gt;USSDSession&lt;/b&gt; (ussd_session)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;session_id (UK), msisdn&lt;br&gt;🔗 FK user_id → User (nullable)&lt;br&gt;status, current_step, state_data&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_ussd">
+          <mxGeometry x="20" y="50" width="210" height="100" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="ussd_request_log" value="&lt;b&gt;USSDRequestLog&lt;/b&gt; (ussd_request_log)&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK session_id → USSDSession (nullable)&lt;br&gt;carrier_session_id, msisdn&lt;br&gt;raw_input, outcome, duration_ms&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_ussd">
+          <mxGeometry x="250" y="50" width="210" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- GROUP: SYSTEM -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <mxCell id="grp_system" value="SYSTEM" style="swimlane;horizontal=0;startSize=30;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="560" y="820" width="1060" height="180" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="institution_profile" value="&lt;b&gt;InstitutionProfile&lt;/b&gt;&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK updated_by_id → User&lt;br&gt;institution_name, branding&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_system">
+          <mxGeometry x="20" y="50" width="180" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="system_setting" value="&lt;b&gt;SystemSetting&lt;/b&gt;&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id, key (UK)&lt;br&gt;🔗 FK updated_by_id → User&lt;br&gt;category, value (JSON)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_system">
+          <mxGeometry x="220" y="50" width="180" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="setting_revision" value="&lt;b&gt;SettingRevision&lt;/b&gt;&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK setting_id → SystemSetting&lt;br&gt;🔗 FK changed_by_id → User&lt;br&gt;old_value, new_value, version&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_system">
+          <mxGeometry x="420" y="50" width="180" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="feature_flag" value="&lt;b&gt;FeatureFlag&lt;/b&gt;&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id, key (UK)&lt;br&gt;🔗 FK last_changed_by_id → User&lt;br&gt;enabled, description&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_system">
+          <mxGeometry x="620" y="50" width="180" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="maintenance_state" value="&lt;b&gt;MaintenanceState&lt;/b&gt;&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK updated_by_id → User&lt;br&gt;is_enabled, emergency_stop_*&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_system">
+          <mxGeometry x="820" y="50" width="180" height="80" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="backup_record" value="&lt;b&gt;BackupRecord&lt;/b&gt;&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;🔑 PK id&lt;br&gt;🔗 FK created_by_id → User&lt;br&gt;filename, status, backup_type&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;align=center;verticalAlign=top;spacingTop=4;" vertex="1" parent="grp_system">
+          <mxGeometry x="1020" y="50" width="180" height="80" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- LEGEND -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <mxCell id="legend" value="&lt;b&gt;Cardinality Legend (Crow's Foot)&lt;/b&gt;&lt;hr&gt;&lt;div align=&quot;left&quot;&gt;││ = exactly one (mandatory)&lt;br&gt;○| = zero or one (optional)&lt;br&gt;&lt;| = many&lt;br&gt;○&amp;lt; = zero or many&lt;br&gt;&lt;br&gt;&lt;b&gt;Colour Key&lt;/b&gt;&lt;br&gt;Blue = User (central hub)&lt;br&gt;Green = Elections / Candidates&lt;br&gt;Red = Voting / SVT&lt;br&gt;Orange = Results / Strongroom&lt;br&gt;Purple = Security / Fraud / Role&lt;br&gt;Yellow = Auth logs / Notifications&lt;br&gt;Grey = System config&lt;/div&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#333333;align=center;verticalAlign=top;spacingTop=6;" vertex="1" parent="1">
+          <mxGeometry x="1660" y="40" width="280" height="220" as="geometry"/>
+        </mxCell>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!-- RELATIONSHIPS: ACCOUNTS -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <mxCell id="e_role_user" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="role" target="user">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_user_otp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="user" target="otp_request">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_user_mfa" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERmany;endFill=0;strokeWidth=2;dashed=1;" edge="1" parent="1" source="user" target="mfa_log">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_user_session" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="user" target="session">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- RELATIONSHIPS: ELECTIONS -->
+        <mxCell id="e_user_election" value="creates" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;fontStyle=1" edge="1" parent="1" source="user" target="election">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="500" y="305"/>
+              <mxPoint x="500" y="155"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_election_position" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="election" target="position">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_election_candidate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="election" target="candidate">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_position_candidate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="position" target="candidate">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_election_eligibility" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="election" target="voter_eligibility">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_user_eligibility" value="voter" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;dashed=1;" edge="1" parent="1" source="user" target="voter_eligibility">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="520" y="305"/>
+              <mxPoint x="520" y="280"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- RELATIONSHIPS: VOTING -->
+        <mxCell id="e_election_vote" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="election" target="vote">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="670" y="560"/>
+              <mxPoint x="670" y="660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_position_vote" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="position" target="vote">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="600" y="520"/>
+              <mxPoint x="600" y="660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_candidate_vote" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="candidate" target="vote">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_user_vote" value="casts" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;fontStyle=1" edge="1" parent="1" source="user" target="vote">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="480" y="460"/>
+              <mxPoint x="480" y="660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_channel_vote" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="voting_channel" target="vote">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="900" y="125"/>
+              <mxPoint x="900" y="660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_svt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="user" target="svt_token">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="540" y="460"/>
+              <mxPoint x="540" y="660"/>
+              <mxPoint x="960" y="660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_election_svt" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="election" target="svt_token">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="560"/>
+              <mxPoint x="720" y="660"/>
+              <mxPoint x="960" y="660"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_svt_vote" value="logical ref" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=1;dashed=1;strokeColor=#b85450;" edge="1" parent="1" source="svt_token" target="vote">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- RELATIONSHIPS: RESULTS & STRONGROOM -->
+        <mxCell id="e_election_result" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERmandOne;endFill=0;strokeWidth=2;fontStyle=1" edge="1" parent="1" source="election" target="election_result">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_user_result" value="lifecycle actors" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=1;dashed=1;" edge="1" parent="1" source="user" target="election_result">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="460" y="305"/>
+              <mxPoint x="460" y="20"/>
+              <mxPoint x="1240" y="20"/>
+              <mxPoint x="1240" y="150"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_election_ballot_seal" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="election" target="ballot_seal">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="760" y="560"/>
+              <mxPoint x="760" y="300"/>
+              <mxPoint x="1140" y="300"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_ballot_seal" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;dashed=1;" edge="1" parent="1" source="user" target="ballot_seal">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="450" y="460"/>
+              <mxPoint x="450" y="300"/>
+              <mxPoint x="1140" y="300"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_result_election_seal" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERmandOne;endFill=0;strokeWidth=2;" edge="1" parent="1" source="election_result" target="election_seal">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_election_election_seal" value="1:1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERmandOne;endFill=0;strokeWidth=2;" edge="1" parent="1" source="election" target="election_seal">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="155"/>
+              <mxPoint x="800" y="20"/>
+              <mxPoint x="1400" y="20"/>
+              <mxPoint x="1400" y="150"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_election_custody" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="election" target="custody_record">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="820" y="560"/>
+              <mxPoint x="820" y="290"/>
+              <mxPoint x="1400" y="290"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_election_integrity" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="election" target="integrity_verification">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="840" y="560"/>
+              <mxPoint x="840" y="400"/>
+              <mxPoint x="1400" y="400"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_vote_ballot_seal" value="vote_references (JSON)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToMany;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=1;dashed=1;strokeColor=#d79b00;" edge="1" parent="1" source="vote" target="ballot_seal">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="820" y="700"/>
+              <mxPoint x="820" y="320"/>
+              <mxPoint x="1140" y="320"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- RELATIONSHIPS: SECURITY & FRAUD -->
+        <mxCell id="e_user_device" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;dashed=1;" edge="1" parent="1" source="user" target="device_log">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="440" y="460"/>
+              <mxPoint x="440" y="1020"/>
+              <mxPoint x="1140" y="1020"/>
+              <mxPoint x="1140" y="680"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_device_audit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="device_log" target="audit_log">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_location_audit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="location_log" target="audit_log">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_user_audit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;dashed=1;" edge="1" parent="1" source="user" target="audit_log">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="430" y="460"/>
+              <mxPoint x="430" y="1040"/>
+              <mxPoint x="1360" y="1040"/>
+              <mxPoint x="1360" y="680"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_election_audit" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;dashed=1;" edge="1" parent="1" source="election" target="audit_log">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="560"/>
+              <mxPoint x="780" y="1060"/>
+              <mxPoint x="1360" y="1060"/>
+              <mxPoint x="1360" y="680"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_device_alert" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="device_log" target="security_alert">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_location_alert" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="location_log" target="security_alert">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_user_alert" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;dashed=1;" edge="1" parent="1" source="user" target="security_alert">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="420" y="460"/>
+              <mxPoint x="420" y="1080"/>
+              <mxPoint x="1360" y="1080"/>
+              <mxPoint x="1360" y="810"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_election_alert" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;dashed=1;" edge="1" parent="1" source="election" target="security_alert">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="800" y="560"/>
+              <mxPoint x="800" y="1100"/>
+              <mxPoint x="1360" y="1100"/>
+              <mxPoint x="1360" y="810"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_alert_fraud" value="1:1 UK" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERmandOne;endFill=0;strokeWidth=2;fontStyle=1" edge="1" parent="1" source="security_alert" target="fraud_case">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_election_fraud" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;dashed=1;" edge="1" parent="1" source="election" target="fraud_case">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="860" y="560"/>
+              <mxPoint x="860" y="1120"/>
+              <mxPoint x="1140" y="1120"/>
+              <mxPoint x="1140" y="900"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- RELATIONSHIPS: NOTIFICATIONS -->
+        <mxCell id="e_template_delivery" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="notif_template" target="delivery_log">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_provider_delivery" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="comm_provider" target="delivery_log">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_user_delivery" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;dashed=1;" edge="1" parent="1" source="user" target="delivery_log">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="410" y="460"/>
+              <mxPoint x="410" y="580"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_inapp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="user" target="in_app_notif">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="400" y="460"/>
+              <mxPoint x="400" y="720"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_delivery_inapp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="delivery_log" target="in_app_notif">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- RELATIONSHIPS: USSD -->
+        <mxCell id="e_user_ussd" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;dashed=1;" edge="1" parent="1" source="user" target="ussd_session">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="390" y="460"/>
+              <mxPoint x="390" y="900"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_ussd_log" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="ussd_session" target="ussd_request_log">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <!-- RELATIONSHIPS: SYSTEM → USER -->
+        <mxCell id="e_user_institution" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=1;dashed=1;" edge="1" parent="1" source="user" target="institution_profile">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="380" y="460"/>
+              <mxPoint x="380" y="900"/>
+              <mxPoint x="670" y="900"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_setting" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=1;dashed=1;" edge="1" parent="1" source="user" target="system_setting">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="370" y="460"/>
+              <mxPoint x="370" y="920"/>
+              <mxPoint x="870" y="920"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_setting_revision" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERmandOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=2;" edge="1" parent="1" source="system_setting" target="setting_revision">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e_user_revision" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=1;dashed=1;" edge="1" parent="1" source="user" target="setting_revision">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="360" y="460"/>
+              <mxPoint x="360" y="940"/>
+              <mxPoint x="1070" y="940"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_flag" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=1;dashed=1;" edge="1" parent="1" source="user" target="feature_flag">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="350" y="460"/>
+              <mxPoint x="350" y="960"/>
+              <mxPoint x="1270" y="960"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_maintenance" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=1;dashed=1;" edge="1" parent="1" source="user" target="maintenance_state">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="340" y="460"/>
+              <mxPoint x="340" y="980"/>
+              <mxPoint x="1470" y="980"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e_user_backup" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=ERzeroToOne;startFill=0;endArrow=ERzeroToMany;endFill=0;strokeWidth=1;dashed=1;" edge="1" parent="1" source="user" target="backup_record">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="330" y="460"/>
+              <mxPoint x="330" y="1000"/>
+              <mxPoint x="1670" y="1000"/>
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- TITLE -->
+        <mxCell id="title" value="&lt;h1 style=&quot;margin:0;&quot;&gt;VoteBridge — Complete Entity-Relationship Diagram&lt;/h1&gt;&lt;p&gt;32 tables · Django ORM · Generated 2026-06-27&lt;/p&gt;" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="1040" width="600" height="50" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

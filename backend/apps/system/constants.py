@@ -8,6 +8,7 @@ SETTING_CATEGORIES = frozenset(
         "branding",
         "election_policies",
         "authentication",
+        "identity_assurance",
         "security",
         "api",
         "audit",

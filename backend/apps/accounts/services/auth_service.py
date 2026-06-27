@@ -266,6 +266,10 @@ class AuthService:
         otp_code: str,
         ip_address: str | None = None,
         user_agent: str | None = None,
+        *,
+        device_signals: dict | None = None,
+        trusted_device_token: str | None = None,
+        browser_fingerprint: str | None = None,
     ) -> dict:
         otp_request = self.otp_service.verify(
             otp_request_uuid=otp_request_uuid,
@@ -280,6 +284,78 @@ class AuthService:
                 message="User account is deactivated.",
                 code="account_deactivated",
             )
+
+        trusted_login = False
+        try:
+            from apps.biometrics.services.policy_service import biometric_policy_service
+            from apps.biometrics.services.verification_service import biometric_verification_service
+            from apps.trusted_devices.constants import RISK_ALLOW, RISK_BLOCK, RISK_REQUIRE_BIOMETRIC
+            from apps.trusted_devices.services.risk_assessment_service import risk_assessment_service
+            from apps.trusted_devices.services.trusted_device_service import trusted_device_service
+            from apps.trusted_devices.utils import build_device_context
+
+            if biometric_policy_service.requires_verification_at_login(user):
+                profile_repo = biometric_verification_service.repository
+                profile = profile_repo.get_by_user(user)
+                if profile and profile.is_active:
+                    context = build_device_context(
+                        user_agent=user_agent or "",
+                        browser_fingerprint=browser_fingerprint or "",
+                        signals=device_signals,
+                    )
+                    decision = risk_assessment_service.assess_login(
+                        user,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        context=context,
+                        trusted_device_token=trusted_device_token,
+                    )
+
+                    if decision.action == RISK_BLOCK:
+                        self.mfa_service.log(
+                            event_type=MFALog.EventType.LOGIN_FAILED,
+                            user=user,
+                            ip_address=ip_address,
+                            user_agent=user_agent,
+                            metadata={"flow": "risk_blocked", "risk_score": decision.risk_score},
+                        )
+                        raise AuthenticationError(
+                            message="Login blocked due to elevated security risk.",
+                            code="login_blocked",
+                        )
+
+                    if decision.action == RISK_ALLOW and decision.trusted_device:
+                        trusted_device_service.touch_device(
+                            decision.trusted_device,
+                            ip_address=ip_address,
+                            context=context,
+                            risk_score=decision.risk_score,
+                        )
+                        trusted_login = True
+                    elif decision.action == RISK_REQUIRE_BIOMETRIC:
+                        pending = biometric_verification_service.create_pending_auth(
+                            user=user,
+                            otp_request_uuid=str(otp_request.uuid),
+                        )
+                        self.mfa_service.log(
+                            event_type=MFALog.EventType.MFA_REQUIRED,
+                            user=user,
+                            ip_address=ip_address,
+                            user_agent=user_agent,
+                            metadata={
+                                "flow": "biometric_verification",
+                                "risk_score": decision.risk_score,
+                                "reasons": decision.reasons,
+                            },
+                        )
+                        return {
+                            "requires_biometric": True,
+                            "risk_score": decision.risk_score,
+                            "risk_reasons": decision.reasons,
+                            **pending,
+                        }
+        except ImportError:
+            pass
 
         session, tokens = self.session_service.create_session(
             user=user,
@@ -304,6 +380,7 @@ class AuthService:
             "session_uuid": str(session.uuid),
             "tokens": tokens,
             "redirect_path": self.dashboard_path_for_role(user.role.name),
+            "trusted_login": trusted_login,
         }
 
     def resend_otp(

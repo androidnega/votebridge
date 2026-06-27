@@ -11,3 +11,5 @@ export { useUssdStore } from "./ussd";
 export { useOperationsStore } from "./operations";
 export { useSystemControlStore } from "./systemControl";
 export { useAnalyticsStore } from "./analytics";
+export { useBiometricsStore } from "./biometrics";
+export { useTrustedDevicesStore } from "./trustedDevices";

@@ -21,6 +21,8 @@ from apps.accounts.permissions import IsAdminOrSuperAdmin
 from apps.accounts.services import auth_service, mfa_service, session_service
 from apps.accounts.services.token_service import TokenService
 from apps.accounts.throttles import LoginRateThrottle, OTPRateThrottle, TokenRefreshRateThrottle
+from apps.trusted_devices.constants import TRUSTED_DEVICE_COOKIE
+from apps.trusted_devices.utils import clear_trusted_device_cookie
 
 
 def _client_meta(request) -> tuple:
@@ -119,11 +121,15 @@ class OTPVerifyView(APIView):
             otp_code=serializer.validated_data["otp_code"],
             ip_address=ip_address,
             user_agent=user_agent,
+            device_signals=serializer.validated_data.get("device_signals"),
+            trusted_device_token=request.COOKIES.get(TRUSTED_DEVICE_COOKIE),
+            browser_fingerprint=request.META.get("HTTP_X_DEVICE_FINGERPRINT", ""),
         )
-        return Response(
+        response = Response(
             {"success": True, "data": AuthSuccessSerializer(result).data},
             status=status.HTTP_200_OK,
         )
+        return response
 
 
 class OTPResendView(APIView):
@@ -183,10 +189,19 @@ class LogoutView(APIView):
         except TokenError:
             pass
 
-        return Response(
+        response = Response(
             {"success": True, "data": {"message": "Logged out successfully."}},
             status=status.HTTP_200_OK,
         )
+        try:
+            from apps.trusted_devices.services.policy_service import trusted_device_policy_service
+            from apps.trusted_devices.utils import clear_trusted_device_cookie
+
+            if trusted_device_policy_service.get_policy().get("invalidate_trusted_device_on_logout"):
+                clear_trusted_device_cookie(response)
+        except ImportError:
+            pass
+        return response
 
 
 class SessionListView(APIView):

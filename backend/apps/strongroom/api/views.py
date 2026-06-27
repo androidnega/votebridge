@@ -50,6 +50,20 @@ class VerifyIntegrityView(APIView):
     permission_classes = [CanManageStrongroom]
 
     def post(self, request, election_uuid):
+        from apps.biometrics.services.policy_service import biometric_policy_service
+        from apps.biometrics.services.session_service import biometric_session_service
+
+        if biometric_policy_service.requires_step_up(request.user, "strongroom_access"):
+            token = request.data.get("high_assurance_token") or request.data.get("step_up_token")
+            if request.data.get("high_assurance_token"):
+                biometric_session_service.validate_session(request.user, token)
+                biometric_session_service.consume_session(request.user, token)
+            else:
+                from apps.system.services.step_up_service import step_up_auth_service
+
+                step_up_auth_service.validate_token(request.user, token or "")
+                step_up_auth_service.consume_token(request.user, token or "")
+
         report = integrity_verification_service.verify_full(election_uuid, actor=request.user)
         return Response({"success": True, "data": report})
 

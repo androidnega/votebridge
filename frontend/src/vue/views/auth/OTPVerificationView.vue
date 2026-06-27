@@ -57,8 +57,15 @@ async function handleVerify() {
   errors.otp_code = fieldErrors.otp_code || "";
   if (!valid) return;
 
-  try {
+    try {
     const result = await authStore.verifyOtp(otp.value);
+    if (result?.requiresBiometric) {
+      await router.replace({
+        name: "auth-biometric-verify",
+        query: route.query.redirect ? { redirect: route.query.redirect } : {},
+      });
+      return;
+    }
     toast.success("Signed in successfully");
     const redirect =
       typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")

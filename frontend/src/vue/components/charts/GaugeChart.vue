@@ -25,11 +25,11 @@ const option = computed(() => ({
         valueAnimation: true,
         formatter: "{value}%",
         fontSize: 24,
-        color: "#1E5F46",
+        color: "#1E3A6E",
         offsetCenter: [0, 0],
       },
       data: [{ value: props.value }],
-      itemStyle: { color: "#1E5F46" },
+      itemStyle: { color: "#1E3A6E" },
     },
   ],
 }));

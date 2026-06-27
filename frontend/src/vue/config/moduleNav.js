@@ -40,6 +40,8 @@ export const systemControlNav = [
   { label: "Institution", to: "/system-control/institution" },
   { label: "Election Policies", to: "/system-control/election-policies" },
   { label: "Authentication", to: "/system-control/authentication" },
+  { label: "Identity Assurance", to: "/system-control/identity-assurance" },
+  { label: "Trusted Devices", to: "/security/trusted-devices", roles: ["admin", "super_admin"] },
   { label: "Providers", to: "/system-control/providers" },
   { label: "SMS", to: "/system-control/sms" },
   { label: "USSD", to: "/system-control/ussd" },

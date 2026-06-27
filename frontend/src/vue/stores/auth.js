@@ -117,6 +117,18 @@ export const useAuthStore = defineStore("auth", {
           otp_code: otpCode.trim(),
         });
 
+        if (result.requires_biometric) {
+          const { useBiometricsStore } = await import("@/stores/biometrics");
+          const { useTrustedDevicesStore } = await import("@/stores/trustedDevices");
+          const biometricsStore = useBiometricsStore();
+          const trustedStore = useTrustedDevicesStore();
+          biometricsStore.setPendingAuth(result);
+          trustedStore.setRiskReasons(result.risk_reasons || []);
+          clearOtpChallenge();
+          this.otpChallenge = null;
+          return { requiresBiometric: true, pendingAuth: result, riskReasons: result.risk_reasons };
+        }
+
         setTokens(result.tokens.access, result.tokens.refresh);
         setSessionMeta({
           userUuid: result.user_uuid,

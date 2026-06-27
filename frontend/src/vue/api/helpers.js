@@ -64,18 +64,33 @@ export function clearOtpChallenge() {
 export function getDeviceFingerprint() {
   let fingerprint = localStorage.getItem(DEVICE_FINGERPRINT_KEY);
   if (!fingerprint) {
-    const parts = [
-      navigator.userAgent,
-      navigator.language,
-      screen.width,
-      screen.height,
-      screen.colorDepth,
-      Intl.DateTimeFormat().resolvedOptions().timeZone,
-    ];
-    fingerprint = parts.join("|");
+    fingerprint = buildDeviceFingerprintSeed();
     localStorage.setItem(DEVICE_FINGERPRINT_KEY, fingerprint);
   }
   return fingerprint;
+}
+
+function buildDeviceFingerprintSeed() {
+  const parts = [
+    navigator.userAgent,
+    navigator.language,
+    screen.width,
+    screen.height,
+    screen.colorDepth,
+    Intl.DateTimeFormat().resolvedOptions().timeZone,
+  ];
+  return parts.join("|");
+}
+
+/** Rich device signals for trusted device / risk assessment (non-invasive). */
+export function getDeviceSignals() {
+  return {
+    browser_fingerprint: getDeviceFingerprint(),
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    language: navigator.language,
+    screen_resolution: `${screen.width}x${screen.height}`,
+    platform: navigator.platform || "",
+  };
 }
 
 export function extractApiError(error) {

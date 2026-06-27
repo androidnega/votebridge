@@ -24,6 +24,7 @@ class UniversalLoginSerializer(serializers.Serializer):
 class OTPVerifySerializer(serializers.Serializer):
     otp_request_uuid = serializers.UUIDField()
     otp_code = serializers.CharField(min_length=4, max_length=10)
+    device_signals = serializers.DictField(required=False)
 
 
 class OTPResendSerializer(serializers.Serializer):
@@ -44,18 +45,29 @@ class TokenResponseSerializer(serializers.Serializer):
 
 
 class AuthOTPChallengeSerializer(serializers.Serializer):
-    requires_otp = serializers.BooleanField()
-    otp_request_uuid = serializers.UUIDField()
-    expires_at = serializers.DateTimeField()
-    channel = serializers.CharField()
+    requires_otp = serializers.BooleanField(required=False)
+    otp_request_uuid = serializers.UUIDField(required=False)
+    expires_at = serializers.DateTimeField(required=False)
+    channel = serializers.CharField(required=False)
     mfa_required = serializers.BooleanField(required=False)
+    requires_biometric = serializers.BooleanField(required=False)
+    pending_auth_token = serializers.CharField(required=False)
+    challenge = serializers.DictField(required=False)
+    expires_in_seconds = serializers.IntegerField(required=False)
 
 
 class AuthSuccessSerializer(serializers.Serializer):
-    user_uuid = serializers.UUIDField()
-    session_uuid = serializers.UUIDField()
-    tokens = TokenResponseSerializer()
-    redirect_path = serializers.CharField()
+    user_uuid = serializers.UUIDField(required=False)
+    session_uuid = serializers.UUIDField(required=False)
+    tokens = TokenResponseSerializer(required=False)
+    redirect_path = serializers.CharField(required=False)
+    requires_biometric = serializers.BooleanField(required=False)
+    pending_auth_token = serializers.CharField(required=False)
+    challenge = serializers.DictField(required=False)
+    expires_in_seconds = serializers.IntegerField(required=False)
+    risk_score = serializers.FloatField(required=False)
+    risk_reasons = serializers.ListField(child=serializers.CharField(), required=False)
+    trusted_login = serializers.BooleanField(required=False)
 
 
 class SessionSerializer(serializers.Serializer):

@@ -1,8 +1,7 @@
 <script setup>
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { VAlert, VButton, VCheckbox, VInput, VPasswordInput } from "@/components/ui";
-import { branding } from "@/config/branding";
 import { useAuthStore } from "@/stores/auth";
 import { getRememberedIdentifier, setRememberedIdentifier } from "@/utils/auth";
 import { minLength, required, validateFields } from "@/utils/validators";
@@ -19,6 +18,11 @@ const form = reactive({
 const errors = reactive({});
 const submitError = ref("");
 
+const credentialsReady = computed(() => {
+  const identity = form.identity.trim();
+  return identity.length > 0 && form.password.length >= 8;
+});
+
 onMounted(() => {
   form.identity = getRememberedIdentifier();
   form.remember = Boolean(form.identity);
@@ -26,12 +30,14 @@ onMounted(() => {
 
 function validationSchema() {
   return {
-    identity: [required("Enter your index number, username, or email address.")],
+    identity: [required("Enter your index number.")],
     password: [required("Password is required."), minLength(8)],
   };
 }
 
 async function handleSubmit() {
+  if (!credentialsReady.value) return;
+
   submitError.value = "";
   const { valid, errors: fieldErrors } = validateFields(form, validationSchema());
   Object.assign(errors, {
@@ -62,7 +68,9 @@ async function handleSubmit() {
 </script>
 
 <template>
-  <form class="space-y-input-gap" @submit.prevent="handleSubmit">
+  <form class="space-y-3" @submit.prevent="handleSubmit">
+    <h2 class="text-base font-semibold text-slate-800">Sign in</h2>
+
     <VAlert v-if="submitError" variant="error" dismissible @dismiss="submitError = ''">
       {{ submitError }}
     </VAlert>
@@ -70,9 +78,9 @@ async function handleSubmit() {
     <VInput
       id="identity"
       v-model="form.identity"
-      label="Identity"
+      label="Index number"
       autocomplete="username"
-      placeholder="Enter your Index Number, Username or Email Address"
+      placeholder="BC/ITS/24/047"
       :error="errors.identity"
       required
     />
@@ -86,29 +94,28 @@ async function handleSubmit() {
       required
     />
 
-    <div class="flex items-center justify-between gap-4">
-      <VCheckbox id="remember" v-model="form.remember" label="Remember me" />
-      <button
-        type="button"
-        class="text-sm font-medium text-brand-600 hover:text-brand-hover"
-        @click="submitError = 'Contact the election office to reset your password.'"
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0 translate-y-1"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-1"
+    >
+      <div
+        v-if="credentialsReady"
+        class="space-y-3 border-t border-border pt-3"
       >
-        Forgot password?
-      </button>
-    </div>
+        <p class="text-xs text-slate-500">
+          Credentials entered. Continue to verify your identity.
+        </p>
 
-    <VButton type="submit" block size="lg" :loading="authStore.loading">
-      Sign In
-    </VButton>
+        <VCheckbox id="remember" v-model="form.remember" label="Remember me" />
 
-    <p class="text-center text-sm text-slate-500">
-      Need help?
-      <a
-        :href="`mailto:${branding.electionOfficeEmail}`"
-        class="font-medium text-brand-600 hover:text-brand-hover"
-      >
-        Contact Election Office
-      </a>
-    </p>
+        <VButton type="submit" block :loading="authStore.loading">
+          Continue securely
+        </VButton>
+      </div>
+    </Transition>
   </form>
 </template>

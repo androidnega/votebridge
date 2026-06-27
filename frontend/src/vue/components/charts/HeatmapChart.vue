@@ -28,7 +28,7 @@ const option = computed(() => ({
     orient: "horizontal",
     left: "center",
     bottom: 0,
-    inRange: { color: ["#F5F7F9", "#1E5F46"] },
+    inRange: { color: ["#F5F7F9", "#1E3A6E"] },
   },
   series: [
     {

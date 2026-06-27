@@ -1,0 +1,11 @@
+# Optional ML dependencies for production biometric inference.
+# Install with: pip install -r requirements/biometrics.txt
+-r base.txt
+
+opencv-python-headless>=4.9,<5.0
+mediapipe>=0.10,<1.0
+onnxruntime>=1.17,<2.0
+
+# InsightFace requires separate model files placed in BIOMETRICS_MODEL_DIR:
+#   arcface.onnx  — ArcFace embedding model
+#   mini_fasnet.onnx — MiniFASNet anti-spoof model

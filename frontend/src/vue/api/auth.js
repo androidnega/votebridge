@@ -1,5 +1,5 @@
 import apiClient from "./client";
-import { getRefreshToken, getUserUuid, unwrapResponse } from "./helpers";
+import { getDeviceSignals, getRefreshToken, getUserUuid, unwrapResponse } from "./helpers";
 
 export const authApi = {
   login(credentials) {
@@ -10,7 +10,10 @@ export const authApi = {
 
   verifyOtp(payload) {
     return apiClient
-      .post("/accounts/auth/otp/verify/", payload)
+      .post("/accounts/auth/otp/verify/", {
+        ...payload,
+        device_signals: getDeviceSignals(),
+      })
       .then(unwrapResponse);
   },
 

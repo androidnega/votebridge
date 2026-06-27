@@ -10,7 +10,7 @@ Premium enterprise election platform. Mobile-first. Fully responsive.
 ## Visual rules
 
 - Flat professional colours only — **no gradients**
-- Forest green primary (`brand-*`, `#1E5F46`)
+- Civic navy primary (`brand-*`, `#1E3A6E`) — institutional, election-appropriate
 - Plenty of whitespace; 12px card radius; 10px input radius; soft shadows only
 - Inter Variable, weights 400–700 only
 - Cards must not feel crowded
@@ -19,8 +19,8 @@ Premium enterprise election platform. Mobile-first. Fully responsive.
 
 | Role | Token / Hex |
 |------|-------------|
-| Primary | `brand-*` / `#1E5F46` |
-| Primary hover | `brand-hover` / `#184C38` |
+| Primary | `brand-*` / `#1E3A6E` |
+| Primary hover | `brand-hover` / `#152E55` |
 | Secondary | `slate-700` / `#334155` |
 | Background | `surface-muted` / `#F5F7F9` |
 | Surface | `surface` / `#FFFFFF` |

@@ -1,6 +1,6 @@
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
 
-export const CHART_COLORS = ["#1E5F46", "#334155", "#2E7D32", "#0F766E", "#CA8A04", "#C62828"];
+export const CHART_COLORS = ["#1E3A6E", "#334155", "#2E7D32", "#0F766E", "#CA8A04", "#C62828"];
 
 let echartsPromise = null;
 

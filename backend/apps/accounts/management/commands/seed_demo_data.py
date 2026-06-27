@@ -237,6 +237,7 @@ class Command(BaseCommand):
         self._seed_demo_votes(closed_election, admin, now)
         self._seed_audit_logs(open_election, closed_election, student, admin, now)
         self._seed_strongroom_custody(closed_election, admin, now)
+        self._seed_biometric_profiles()
 
         call_command("seed_communication_demo")
         call_command("seed_ussd_demo")
@@ -376,3 +377,42 @@ class Command(BaseCommand):
                     "sealed_at": now - timedelta(days=53),
                 },
             )
+
+    def _seed_biometric_profiles(self):
+        """Enroll privileged demo users for biometric login (mock inference)."""
+        import base64
+        import hashlib
+
+        from django.conf import settings
+
+        settings.BIOMETRICS_INFERENCE_MODE = "mock"
+
+        from apps.biometrics.services.enrollment_service import biometric_enrollment_service
+        from apps.system.models import FeatureFlag
+
+        flag, _ = FeatureFlag.objects.get_or_create(
+            key="future_biometrics",
+            defaults={"label": "Biometrics", "description": "Biometrics", "enabled": True},
+        )
+        flag.enabled = True
+        flag.save(update_fields=["enabled"])
+
+        super_admin = User.objects.filter(role__name=Role.Name.SUPER_ADMIN).first()
+        if not super_admin:
+            return
+
+        def mock_image(seed: str) -> str:
+            return base64.b64encode(hashlib.sha256(seed.encode()).digest()).decode()
+
+        for user in User.objects.filter(role__name__in=[Role.Name.ADMIN, Role.Name.SUPER_ADMIN]):
+            images = [mock_image(f"demo-{user.username}-{i}") for i in range(10)]
+            try:
+                biometric_enrollment_service.enroll(
+                    actor=super_admin,
+                    target_user=user,
+                    images=images,
+                    ip_address="127.0.0.1",
+                )
+                self.stdout.write(f"  + biometric profile for {user.username}")
+            except Exception as exc:
+                self.stdout.write(f"  ! biometric skip {user.username}: {exc}")

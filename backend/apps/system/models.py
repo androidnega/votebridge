@@ -14,7 +14,7 @@ class InstitutionProfile(models.Model):
     logo_url = models.URLField(blank=True)
     favicon = models.ImageField(upload_to="institution/favicons/", blank=True, null=True)
     favicon_url = models.URLField(blank=True)
-    primary_color = models.CharField(max_length=7, default="#1E5F46")
+    primary_color = models.CharField(max_length=7, default="#1E3A6E")
     secondary_color = models.CharField(max_length=7, default="#334155")
     academic_year = models.CharField(max_length=20, blank=True, default="2024/2025")
     campus = models.CharField(max_length=120, blank=True, default="Main Campus")

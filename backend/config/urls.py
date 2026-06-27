@@ -152,6 +152,8 @@ urlpatterns = [
     path("api/v1/operations/", include("apps.operations.api.urls")),
     path("api/v1/system/", include("apps.system.api.urls")),
     path("api/v1/analytics/", include("apps.analytics.api.urls")),
+    path("api/v1/biometrics/", include("apps.biometrics.api.urls")),
+    path("api/v1/trusted-devices/", include("apps.trusted_devices.api.urls")),
 ]
 
 if settings.DEBUG:
