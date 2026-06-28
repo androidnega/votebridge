@@ -20,6 +20,7 @@ election_detail = ElectionViewSet.as_view(
     }
 )
 election_schedule = ElectionViewSet.as_view({"post": "schedule"})
+election_readiness = ElectionViewSet.as_view({"get": "readiness"})
 election_open = ElectionViewSet.as_view({"post": "open_election"})
 election_pause = ElectionViewSet.as_view({"post": "pause"})
 election_close = ElectionViewSet.as_view({"post": "close"})
@@ -74,6 +75,7 @@ urlpatterns = [
     path("channels/<uuid:uuid>/", channel_detail, name="channel-detail"),
     path("<uuid:uuid>/", election_detail, name="election-detail"),
     path("<uuid:uuid>/schedule/", election_schedule, name="election-schedule"),
+    path("<uuid:uuid>/readiness/", election_readiness, name="election-readiness"),
     path("<uuid:uuid>/open/", election_open, name="election-open"),
     path("<uuid:uuid>/pause/", election_pause, name="election-pause"),
     path("<uuid:uuid>/close/", election_close, name="election-close"),

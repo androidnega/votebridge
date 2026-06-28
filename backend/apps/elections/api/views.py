@@ -22,6 +22,7 @@ from apps.elections.permissions import (
     CanManageVotingChannels,
 )
 from apps.elections.services import (
+    election_readiness_service,
     election_service,
     eligibility_service,
     position_service,
@@ -145,9 +146,15 @@ class ElectionViewSet(viewsets.ViewSet):
         )
         return Response({"success": True, "data": ElectionSerializer(election).data})
 
+    @action(detail=True, methods=["get"], url_path="readiness")
+    def readiness(self, request, uuid=None):
+        election = election_service.get_election(uuid)
+        report = election_readiness_service.assess(election, actor=request.user)
+        return Response({"success": True, "data": report.to_dict()})
+
     @action(detail=True, methods=["post"], url_path="open")
     def open_election(self, request, uuid=None):
-        election = election_service.open_election(uuid)
+        election = election_service.open_election(uuid, actor=request.user)
         _log_election_monitoring(
             request,
             AuditLog.EventType.ELECTION_STATUS_CHANGED,

@@ -83,15 +83,11 @@ class ElectionService:
     def schedule_election(self, uuid) -> Election:
         return self._transition(uuid, Election.Status.SCHEDULED)
 
-    def open_election(self, uuid) -> Election:
+    def open_election(self, uuid, *, actor=None) -> Election:
         election = self.get_election(uuid)
-        try:
-            validate_election_can_be_opened(election)
-        except DjangoValidationError as exc:
-            raise ValidationError(
-                message=str(exc.message),
-                code="election_open_denied",
-            ) from exc
+        from apps.elections.services.election_readiness_service import election_readiness_service
+
+        election_readiness_service.validate_for_open(election, actor=actor)
         return self._transition(uuid, Election.Status.OPEN)
 
     def pause_election(self, uuid) -> Election:

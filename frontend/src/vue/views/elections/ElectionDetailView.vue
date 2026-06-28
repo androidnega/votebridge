@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onMounted, onUnmounted } from "vue";
+import { computed, onMounted, onUnmounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { LoadingSkeleton } from "@/components/dashboard";
+import { ElectionReadinessPanel } from "@/components/elections";
 import {
   CandidateCard,
   CountdownTimer,
@@ -79,13 +80,36 @@ const groupedCandidates = computed(() => {
   return Object.values(byPosition);
 });
 
+const showReadiness = computed(() => {
+  if (!authStore.isAdmin && !authStore.isSuperAdmin) return false;
+  return ["draft", "scheduled"].includes(liveStatus.value);
+});
+
+const canOpenElection = computed(
+  () => showReadiness.value && electionStore.readinessReport?.is_ready
+);
+
+async function loadReadiness() {
+  if (!showReadiness.value) return;
+  await electionStore.fetchReadiness(electionUuid.value).catch(() => {});
+}
+
+async function handleOpenElection() {
+  await electionStore.openElection(electionUuid.value);
+}
+
 useElectionRealtime(electionUuid);
 
 onMounted(async () => {
   await electionStore.fetchElection(electionUuid.value).catch(() => {});
+  await loadReadiness();
   await votingStore
     .fetchPreviewData(electionUuid.value, { isAdmin: authStore.isAdmin })
     .catch(() => {});
+});
+
+watch(showReadiness, (visible) => {
+  if (visible) loadReadiness();
 });
 
 onUnmounted(() => {
@@ -155,6 +179,35 @@ onUnmounted(() => {
     </section>
 
     <VAlert v-if="electionStore.error" variant="error">{{ electionStore.error }}</VAlert>
+
+    <section v-if="showReadiness" class="space-y-4">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <h3 class="text-lg font-semibold text-slate-900">Pre-open readiness</h3>
+        <div class="flex flex-wrap gap-2">
+          <VButton
+            variant="secondary"
+            size="sm"
+            :loading="electionStore.readinessLoading"
+            @click="loadReadiness"
+          >
+            Refresh checklist
+          </VButton>
+          <VButton
+            v-if="election.status === 'scheduled'"
+            size="sm"
+            :loading="electionStore.actionLoading"
+            :disabled="!canOpenElection"
+            @click="handleOpenElection"
+          >
+            Open election
+          </VButton>
+        </div>
+      </div>
+      <ElectionReadinessPanel
+        :report="electionStore.readinessReport"
+        :loading="electionStore.readinessLoading"
+      />
+    </section>
 
     <LoadingSkeleton v-if="electionStore.loading && !election.title" variant="card" />
 

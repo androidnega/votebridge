@@ -51,12 +51,54 @@
         <h3 class="text-sm font-semibold text-slate-900">Lifecycle Actions</h3>
         <div class="mt-4 flex flex-wrap gap-2">
           <button @click="transition('schedule')" class="btn-secondary" x-show="election.status === 'draft'">Schedule</button>
-          <button @click="transition('open')" class="btn-primary" x-show="election.status === 'scheduled'">Open</button>
+          <button @click="transition('open')" class="btn-primary" x-show="election.status === 'scheduled' && readiness?.is_ready" :disabled="readinessLoading">Open</button>
           <button @click="transition('pause')" class="btn-secondary" x-show="election.status === 'open'">Pause</button>
           <button @click="transition('open')" class="btn-primary" x-show="election.status === 'paused'">Resume</button>
           <button @click="transition('close')" class="btn-secondary" x-show="election.status === 'open' || election.status === 'paused'">Close</button>
           <button @click="transition('archive')" class="btn-secondary" x-show="election.status === 'closed'">Archive</button>
         </div>
+        <p x-show="election.status === 'scheduled' && readiness && !readiness.is_ready" class="mt-3 text-sm text-red-700">
+          Resolve all critical readiness checks before opening this election.
+        </p>
+      </div>
+
+      <div class="card" x-show="election.status === 'draft' || election.status === 'scheduled'">
+        <div class="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h3 class="text-sm font-semibold text-slate-900">Election Readiness</h3>
+            <p class="mt-1 text-xs text-slate-500">Pre-open validation checklist</p>
+          </div>
+          <div x-show="readiness" class="rounded-lg px-3 py-2 text-center"
+            :class="readiness?.is_ready ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'">
+            <p class="text-xs font-medium uppercase">Score</p>
+            <p class="text-xl font-bold" x-text="`${readiness?.readiness_score ?? 0}%`"></p>
+          </div>
+        </div>
+        <p x-show="readinessLoading" class="mt-4 text-sm text-slate-500">Running readiness checks…</p>
+        <template x-if="readiness && !readinessLoading">
+          <div>
+            <div class="mt-4 rounded-lg px-4 py-3 text-sm font-medium"
+              :class="readiness.is_ready ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'"
+              x-text="readiness.is_ready ? 'Election is ready to open' : 'Critical readiness issues must be resolved'">
+            </div>
+            <ul class="mt-4 space-y-2" x-show="readiness.blocking_issues?.length">
+              <template x-for="(issue, index) in readiness.blocking_issues" :key="index">
+                <li class="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700" x-text="issue"></li>
+              </template>
+            </ul>
+            <dl class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <template x-for="(check, key) in readiness.checks" :key="key">
+                <div class="rounded-lg bg-slate-50 px-3 py-2 text-sm">
+                  <dt class="font-medium text-slate-700" x-text="check.label"></dt>
+                  <dd :class="check.passed ? 'text-green-700' : 'text-red-700'"
+                    x-text="check.passed ? 'Passed' : 'Failed'"></dd>
+                  <p class="mt-1 text-xs text-slate-500" x-text="check.message"></p>
+                </div>
+              </template>
+            </dl>
+          </div>
+        </template>
+        <button @click="loadReadiness()" class="btn-secondary mt-4" :disabled="readinessLoading">Refresh checklist</button>
       </div>
     </div>
   </template>
@@ -67,25 +109,53 @@ function electionDetailPage(electionUuid) {
   return {
     electionUuid,
     election: null,
+    readiness: null,
     loading: false,
+    readinessLoading: false,
     error: null,
     async load() {
       this.loading = true;
       try {
         const result = await VoteBridgeAPI.getJson(`/elections/${this.electionUuid}/`);
         this.election = result.data;
+        if (this.election.status === "draft" || this.election.status === "scheduled") {
+          await this.loadReadiness();
+        }
       } catch (e) {
         this.error = e.message;
       } finally {
         this.loading = false;
       }
     },
+    async loadReadiness() {
+      this.readinessLoading = true;
+      try {
+        const result = await VoteBridgeAPI.getJson(`/elections/${this.electionUuid}/readiness/`);
+        this.readiness = result.data;
+      } catch (e) {
+        this.error = e.message;
+      } finally {
+        this.readinessLoading = false;
+      }
+    },
     async transition(action) {
+      if (action === "open" && this.readiness && !this.readiness.is_ready) {
+        this.error = "Election is not ready to open. Resolve all critical readiness checks.";
+        return;
+      }
       try {
         const result = await VoteBridgeAPI.postJson(`/elections/${this.electionUuid}/${action}/`, {});
         this.election = result.data;
+        if (action === "open") {
+          this.readiness = null;
+        } else if (this.election.status === "draft" || this.election.status === "scheduled") {
+          await this.loadReadiness();
+        }
       } catch (e) {
         this.error = e.message;
+        if (this.election?.status === "scheduled") {
+          await this.loadReadiness();
+        }
       }
     },
     formatDate(value) {

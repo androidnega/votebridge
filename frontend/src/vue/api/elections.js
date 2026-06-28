@@ -31,6 +31,10 @@ export const electionsApi = {
     return apiClient.post(`/elections/${uuid}/open/`).then(unwrapResponse);
   },
 
+  getReadiness(uuid) {
+    return apiClient.get(`/elections/${uuid}/readiness/`).then(unwrapResponse);
+  },
+
   pause(uuid) {
     return apiClient.post(`/elections/${uuid}/pause/`).then(unwrapResponse);
   },

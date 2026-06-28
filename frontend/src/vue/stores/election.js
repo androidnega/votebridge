@@ -6,11 +6,14 @@ export const useElectionStore = defineStore("election", {
   state: () => ({
     elections: [],
     currentElection: null,
+    readinessReport: null,
     filters: {
       search: "",
       status: "",
     },
     loading: false,
+    readinessLoading: false,
+    actionLoading: false,
     error: null,
   }),
 
@@ -60,6 +63,36 @@ export const useElectionStore = defineStore("election", {
 
     clearCurrent() {
       this.currentElection = null;
+      this.readinessReport = null;
+    },
+
+    async fetchReadiness(uuid) {
+      this.readinessLoading = true;
+      this.error = null;
+      try {
+        this.readinessReport = await electionsApi.getReadiness(uuid);
+        return this.readinessReport;
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw error;
+      } finally {
+        this.readinessLoading = false;
+      }
+    },
+
+    async openElection(uuid) {
+      this.actionLoading = true;
+      this.error = null;
+      try {
+        this.currentElection = await electionsApi.open(uuid);
+        this.readinessReport = null;
+        return this.currentElection;
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw error;
+      } finally {
+        this.actionLoading = false;
+      }
     },
   },
 });
