@@ -2,11 +2,17 @@
 Development settings.
 """
 
+from config.settings.allowed_hosts import parse_allowed_hosts
+
 from .base import *  # noqa: F401, F403
 
 DEBUG = True
 
-ALLOWED_HOSTS = ["localhost", "127.0.0.1", "[::1]"]
+ALLOWED_HOSTS = parse_allowed_hosts(
+    env("DJANGO_ALLOWED_HOSTS"),  # noqa: F405
+    debug=True,
+    include_local_defaults=True,
+)
 
 # Allow JSON browsable API in development
 REST_FRAMEWORK["DEFAULT_RENDERER_CLASSES"] = [  # noqa: F405

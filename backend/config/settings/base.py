@@ -7,6 +7,8 @@ from pathlib import Path
 
 import environ
 
+from config.settings.allowed_hosts import parse_allowed_hosts
+
 # Build paths: backend/
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 PROJECT_ROOT = BASE_DIR.parent
@@ -28,7 +30,7 @@ environ.Env.read_env(PROJECT_ROOT / ".env")
 
 SECRET_KEY = env("DJANGO_SECRET_KEY")
 DEBUG = env("DJANGO_DEBUG")
-ALLOWED_HOSTS = env("DJANGO_ALLOWED_HOSTS")
+ALLOWED_HOSTS = parse_allowed_hosts(env("DJANGO_ALLOWED_HOSTS"), debug=DEBUG)
 
 # Application definition
 DJANGO_APPS = [
