@@ -1,6 +1,7 @@
 import logging
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils import timezone
 
 from apps.elections.models import Election
 from apps.elections.repositories.election_repository import ElectionRepository
@@ -95,16 +96,16 @@ class ElectionService:
 
     def close_election(self, uuid) -> Election:
         election = self._transition(uuid, Election.Status.CLOSED)
-        self._ensure_result_pending(election)
+        self._auto_generate_results(election)
         return election
 
-    def _ensure_result_pending(self, election) -> None:
+    def _auto_generate_results(self, election: Election) -> None:
         try:
             from apps.results.services.results_service import results_generation_service
 
-            results_generation_service.ensure_pending_result(election)
+            results_generation_service.auto_generate_on_close(election)
         except Exception:
-            logger.exception("Failed to create pending result for election %s", election.uuid)
+            logger.exception("Automatic results generation failed for election %s", election.uuid)
 
     def archive_election(self, uuid) -> Election:
         return self._transition(uuid, Election.Status.ARCHIVED)
@@ -194,3 +195,169 @@ class ElectionService:
             }
 
         return {"phase": "before_election", "election": None}
+
+    def get_public_election_portal(self) -> dict:
+        """Public transparency data — no candidate rankings or vote totals while voting is open."""
+        from apps.candidates.models import Candidate
+        from apps.elections.models import Position
+        from apps.results.models import ElectionResult
+        from apps.results.repositories.election_result_repository import ElectionResultRepository
+        from apps.voting.repositories.vote_repository import VoteRepository
+
+        base = self.get_public_campus_status()
+        election_data = base.get("election")
+        if not election_data:
+            return {
+                **base,
+                "countdown": None,
+                "turnout": None,
+                "timeline": [],
+                "candidates": [],
+                "announcements": [],
+                "operational_status": "standby",
+            }
+
+        election = self.get_election(election_data["uuid"])
+        phase = base["phase"]
+        vote_repo = VoteRepository()
+        eligible = election.voter_eligibilities.filter(is_eligible=True).count()
+        participated = vote_repo.count_distinct_voters(election)
+        turnout_pct = round(participated / eligible * 100, 2) if eligible else 0.0
+
+        show_turnout = phase in {
+            "election_open",
+            "awaiting_certification",
+            "results_published",
+        } or election.status == Election.Status.CLOSED
+
+        countdown = None
+        if phase == "election_scheduled":
+            countdown = {
+                "label": "Time until voting opens",
+                "target_at": election.start_date,
+            }
+        elif phase == "election_open":
+            countdown = {
+                "label": "Time until voting closes",
+                "target_at": election.end_date,
+            }
+
+        timeline = self._build_public_timeline(election, phase, base.get("published_at"))
+
+        positions = Position.objects.filter(election=election, is_active=True).order_by("display_order")
+        candidates = []
+        for position in positions:
+            approved = Candidate.objects.filter(
+                election=election,
+                position=position,
+                status=Candidate.Status.APPROVED,
+            ).order_by("full_name")
+            candidates.append(
+                {
+                    "position_uuid": str(position.uuid),
+                    "position_title": position.title,
+                    "candidates": [
+                        {
+                            "uuid": str(c.uuid),
+                            "full_name": c.full_name,
+                            "department": c.department or "",
+                            "manifesto_excerpt": (c.manifesto or "")[:280],
+                        }
+                        for c in approved
+                    ],
+                }
+            )
+
+        announcements = self._build_public_announcements(election, phase, base.get("published_at"))
+
+        result = ElectionResultRepository().get_by_election(election)
+        operational_status = "nominal"
+        if phase == "election_open" and result and result.integrity_report:
+            if not result.integrity_report.get("is_valid", True):
+                operational_status = "monitoring"
+
+        return {
+            **base,
+            "countdown": countdown,
+            "turnout": (
+                {
+                    "percentage": turnout_pct,
+                    "participated": participated,
+                    "eligible": eligible,
+                }
+                if show_turnout
+                else None
+            ),
+            "timeline": timeline,
+            "candidates": candidates,
+            "announcements": announcements,
+            "operational_status": operational_status,
+            "result_status": result.status if result else None,
+        }
+
+    def _build_public_timeline(self, election: Election, phase: str, published_at) -> list[dict]:
+        steps = [
+            {
+                "key": "scheduled",
+                "label": "Election scheduled",
+                "at": election.start_date,
+            },
+            {
+                "key": "open",
+                "label": "Voting opens",
+                "at": election.start_date,
+            },
+            {
+                "key": "close",
+                "label": "Voting closes",
+                "at": election.end_date,
+            },
+            {
+                "key": "certification",
+                "label": "Results certification",
+                "at": None,
+            },
+            {
+                "key": "published",
+                "label": "Results published",
+                "at": published_at,
+            },
+        ]
+
+        phase_order = {
+            "before_election": 0,
+            "election_scheduled": 1,
+            "election_open": 2,
+            "awaiting_certification": 3,
+            "results_published": 4,
+        }
+        current_idx = phase_order.get(phase, 0)
+
+        timeline = []
+        for idx, step in enumerate(steps):
+            if idx < current_idx:
+                state = "completed"
+            elif idx == current_idx:
+                state = "current"
+            else:
+                state = "upcoming"
+            timeline.append({**step, "state": state, "at": step["at"]})
+        return timeline
+
+    def _build_public_announcements(self, election: Election, phase: str, published_at) -> list[dict]:
+        messages = {
+            "election_scheduled": "The election schedule has been published. Voting will open at the time shown below.",
+            "election_open": "Voting is now open. Sign in with your index number or email to cast your ballot.",
+            "awaiting_certification": "Voting has closed. Results have been generated and await certification by the Electoral Commission.",
+            "results_published": "Official results have been certified and published.",
+        }
+        body = messages.get(phase)
+        if not body:
+            return []
+        return [
+            {
+                "title": election.title,
+                "body": body,
+                "at": published_at or election.updated_at,
+            }
+        ]

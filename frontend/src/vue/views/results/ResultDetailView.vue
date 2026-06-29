@@ -32,11 +32,11 @@ const certifyNotes = ref("");
 const acknowledgeFraud = ref(false);
 const fraudNotes = ref("");
 
-const canGenerate = computed(
+const isAutoProcessing = computed(
   () =>
     authStore.isElectionOfficer &&
-    result.value &&
-    ["pending_generation", "generated"].includes(result.value.result_status)
+    result.value?.result_status === "pending_generation" &&
+    result.value?.election_status === "closed"
 );
 
 const canCertify = computed(
@@ -63,10 +63,6 @@ onMounted(() => {
 onUnmounted(() => {
   resultsStore.clearCurrent();
 });
-
-async function handleGenerate() {
-  await resultsStore.generateResults(electionUuid.value);
-}
 
 async function handleIntegrity() {
   await resultsStore.fetchIntegrity(electionUuid.value, acknowledgeFraud.value);
@@ -138,10 +134,11 @@ async function downloadReport(format) {
         />
       </section>
 
+      <VAlert v-if="isAutoProcessing" variant="info" title="Results processing">
+        Results are generated automatically when an election closes. Certification follows Strong Room review.
+      </VAlert>
+
       <section v-if="authStore.isStaff" class="flex flex-wrap gap-2">
-        <VButton v-if="canGenerate" :loading="resultsStore.actionLoading" @click="handleGenerate">
-          Generate results
-        </VButton>
         <VButton
           v-if="authStore.isElectionOfficer"
           variant="secondary"

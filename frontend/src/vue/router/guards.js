@@ -51,10 +51,6 @@ export function setupRouterGuards(router) {
       return { name: "home" };
     }
 
-    if (to.name === "landing" && authStore.isAuthenticated) {
-      return { name: "home" };
-    }
-
     return true;
   });
 

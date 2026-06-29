@@ -869,6 +869,19 @@ const router = createRouter({
       ],
     },
     {
+      path: "/observe",
+      component: PublicLayout,
+      meta: { public: true },
+      children: [
+        {
+          path: "",
+          name: "observer",
+          component: () => import("@/views/public/ObserverPortalView.vue"),
+          meta: { title: "Election Observer Portal", public: true },
+        },
+      ],
+    },
+    {
       path: "/maintenance",
       component: PublicLayout,
       meta: { public: true },

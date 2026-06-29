@@ -5,6 +5,7 @@ from apps.elections.api.views import (
     ElectionViewSet,
     PositionViewSet,
     PublicCampusStatusView,
+    PublicElectionPortalView,
     VoterEligibilityViewSet,
     VotingChannelViewSet,
 )
@@ -72,6 +73,7 @@ election_candidate_reject = CandidateViewSet.as_view({"post": "reject"})
 
 urlpatterns = [
     path("public/campus-status/", PublicCampusStatusView.as_view(), name="public-campus-status"),
+    path("public/portal/", PublicElectionPortalView.as_view(), name="public-election-portal"),
     path("", election_list, name="election-list"),
     path("channels/", channel_list, name="channel-list"),
     path("channels/<uuid:uuid>/", channel_detail, name="channel-detail"),

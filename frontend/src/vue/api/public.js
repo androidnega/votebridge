@@ -17,4 +17,8 @@ export const publicApi = {
   getCampusElectionStatus() {
     return publicClient.get("/elections/public/campus-status/").then((r) => r.data?.data ?? r.data);
   },
+
+  getElectionPortal() {
+    return publicClient.get("/elections/public/portal/").then((r) => r.data?.data ?? r.data);
+  },
 };

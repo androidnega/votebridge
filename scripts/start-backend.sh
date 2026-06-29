@@ -15,5 +15,6 @@ ulimit -n 4096 2>/dev/null || true
 
 source "$ROOT/.venv/bin/activate"
 
-echo "Starting VoteBridge backend on http://127.0.0.1:8000"
-exec python manage.py runserver 127.0.0.1:8000
+echo "Starting VoteBridge backend (ASGI + WebSockets) on http://127.0.0.1:8000"
+echo "Ensure Redis is running (docker compose up -d) for realtime channels."
+exec uvicorn config.asgi:application --reload --host 127.0.0.1 --port 8000

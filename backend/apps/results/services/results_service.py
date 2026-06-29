@@ -165,7 +165,12 @@ class ResultsGenerationService:
         )
 
     @transaction.atomic
-    def generate_results(self, election_uuid, admin_user) -> ElectionResult:
+    def auto_generate_on_close(self, election: Election) -> ElectionResult:
+        """Generate results automatically when an election closes (Phase 30)."""
+        return self.generate_results(election.uuid, actor=None, automated=True)
+
+    @transaction.atomic
+    def generate_results(self, election_uuid, actor=None, *, automated: bool = False) -> ElectionResult:
         election = self._get_election(election_uuid)
         try:
             validate_election_closed_for_results(election.status)
@@ -209,12 +214,18 @@ class ResultsGenerationService:
             eligible_voters=eligible,
             result_hash=result_hash,
             generated_at=timezone.now(),
-            generated_by=admin_user,
+            generated_by=actor,
         )
 
-        self._log_audit(admin_user, election, AuditLog.EventType.ADMIN_ACTION, "results_generated")
+        action = "results_auto_generated" if automated else "results_generated"
+        self._log_audit(actor, election, AuditLog.EventType.ADMIN_ACTION, action)
         self._broadcast_generated(result)
-        logger.info("Results generated for election %s by %s", election.uuid, admin_user.uuid)
+        logger.info(
+            "Results %s for election %s (automated=%s)",
+            "auto-generated" if automated else "generated",
+            election.uuid,
+            automated,
+        )
         return result
 
     def _aggregate_standings(self, election: Election) -> dict:

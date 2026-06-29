@@ -19,12 +19,20 @@ import { branding } from "@/config/branding";
             <p class="text-xs text-slate-500">{{ branding.institutionName }}</p>
           </div>
         </RouterLink>
-        <RouterLink
-          to="/auth/login"
-          class="inline-flex min-h-touch items-center rounded-input bg-brand-600 px-4 text-sm font-medium text-white hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
-        >
-          Sign in
-        </RouterLink>
+        <div class="flex items-center gap-4">
+          <RouterLink
+            to="/observe"
+            class="hidden min-h-touch items-center text-sm font-medium text-slate-600 hover:text-brand-700 sm:inline-flex"
+          >
+            Observer portal
+          </RouterLink>
+          <RouterLink
+            to="/auth/login"
+            class="inline-flex min-h-touch items-center rounded-input bg-brand-600 px-4 text-sm font-medium text-white hover:bg-brand-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+          >
+            Sign in
+          </RouterLink>
+        </div>
       </div>
     </header>
 

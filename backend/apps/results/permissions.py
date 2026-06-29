@@ -5,8 +5,13 @@ from apps.accounts.permissions import IsElectionAdministrator, IsSuperAdmin, _us
 from apps.results.models import ElectionResult
 
 
-class CanGenerateResults(IsElectionAdministrator):
-    message = "Election Administrator access required to generate results."
+class CanGenerateResults(BasePermission):
+    """Manual result generation removed — results are auto-generated when elections close."""
+
+    message = "Results are generated automatically when an election closes."
+
+    def has_permission(self, request, view):
+        return False
 
 
 class CanViewResultReports(IsElectionAdministrator):

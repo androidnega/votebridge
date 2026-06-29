@@ -392,3 +392,13 @@ class PublicCampusStatusView(APIView):
         data = election_service.get_public_campus_status()
         return Response({"success": True, "data": data})
 
+
+class PublicElectionPortalView(APIView):
+    """Public election portal — transparency data for landing and observer views."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        data = election_service.get_public_election_portal()
+        return Response({"success": True, "data": data})
+
