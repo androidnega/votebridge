@@ -18,7 +18,6 @@ const props = defineProps({
 const store = useSystemControlStore();
 const toast = useToast();
 const stepUp = useStepUp();
-const preview = ref(null);
 
 const items = computed(() => store.settings[props.category] || []);
 

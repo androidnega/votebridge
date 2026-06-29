@@ -7,6 +7,7 @@ import {
   ElectionCard,
   LiveTurnoutWidget,
   LoadingSkeleton,
+  PlatformHealthWidgets,
   StatCard,
 } from "@/components/dashboard";
 import { VAlert, VButton } from "@/components/ui";
@@ -65,7 +66,7 @@ onMounted(() => {
       </div>
       <div class="flex flex-wrap gap-2">
         <VButton variant="secondary" size="sm" @click="router.push('/elections')">Manage elections</VButton>
-        <VButton variant="secondary" size="sm" @click="router.push('/security')">Security</VButton>
+        <VButton variant="secondary" size="sm" @click="router.push('/reports')">Reports</VButton>
       </div>
     </div>
 
@@ -101,13 +102,6 @@ onMounted(() => {
           :loading="dashboardStore.loading"
           accent="red"
         />
-        <StatCard
-          label="Fraud cases"
-          :value="fraudSummary.open_cases ?? 0"
-          hint="Open investigations"
-          :loading="dashboardStore.loading"
-          accent="amber"
-        />
       </div>
 
       <LiveTurnoutWidget
@@ -119,6 +113,8 @@ onMounted(() => {
         :status="realtime.status.value"
       />
     </section>
+
+    <PlatformHealthWidgets />
 
     <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
       <div>

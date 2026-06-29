@@ -26,9 +26,9 @@ onUnmounted(() => store.disconnectRealtime());
 <template>
   <div class="vb-page">
     <PageHeader
-      title="Enterprise Analytics"
-      subtitle="Read-only business intelligence across the VoteBridge platform."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Analytics' }]"
+      title="Reports"
+      subtitle="Election participation, turnout, and institutional reporting."
+      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Reports' }]"
     >
       <template #actions>
         <ConnectionStatusIndicator :status="store.realtimeStatus" />

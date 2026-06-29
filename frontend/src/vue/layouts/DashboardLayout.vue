@@ -10,6 +10,21 @@ const route = useRoute();
     <template #topbar-actions>
       <slot name="topbar-actions" />
     </template>
-    <RouterView />
+    <RouterView v-slot="{ Component, route: activeRoute }">
+      <transition
+        v-if="
+          activeRoute.path.startsWith('/system-control') ||
+          activeRoute.path.startsWith('/settings') ||
+          activeRoute.path.startsWith('/reports') ||
+          activeRoute.path.startsWith('/analytics') ||
+          activeRoute.path.startsWith('/strongroom')
+        "
+        name="vb-tab"
+        mode="out-in"
+      >
+        <component :is="Component" :key="activeRoute.path" />
+      </transition>
+      <component v-else :is="Component" :key="activeRoute.path" />
+    </RouterView>
   </AppShell>
 </template>

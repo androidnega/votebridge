@@ -58,4 +58,66 @@ export const electionsApi = {
       .get(`/elections/${electionUuid}/candidates/`, { params })
       .then(unwrapPaginatedList);
   },
+
+  createPosition(electionUuid, payload) {
+    return apiClient
+      .post(`/elections/${electionUuid}/positions/`, payload)
+      .then(unwrapResponse);
+  },
+
+  updatePosition(electionUuid, positionUuid, payload) {
+    return apiClient
+      .patch(`/elections/${electionUuid}/positions/${positionUuid}/`, payload)
+      .then(unwrapResponse);
+  },
+
+  deletePosition(electionUuid, positionUuid) {
+    return apiClient.delete(`/elections/${electionUuid}/positions/${positionUuid}/`);
+  },
+
+  createCandidate(electionUuid, payload) {
+    return apiClient
+      .post(`/elections/${electionUuid}/candidates/`, payload)
+      .then(unwrapResponse);
+  },
+
+  updateCandidate(electionUuid, candidateUuid, payload) {
+    return apiClient
+      .patch(`/elections/${electionUuid}/candidates/${candidateUuid}/`, payload)
+      .then(unwrapResponse);
+  },
+
+  deleteCandidate(electionUuid, candidateUuid) {
+    return apiClient.delete(`/elections/${electionUuid}/candidates/${candidateUuid}/`);
+  },
+
+  approveCandidate(electionUuid, candidateUuid) {
+    return apiClient
+      .post(`/elections/${electionUuid}/candidates/${candidateUuid}/approve/`)
+      .then(unwrapResponse);
+  },
+
+  rejectCandidate(electionUuid, candidateUuid) {
+    return apiClient
+      .post(`/elections/${electionUuid}/candidates/${candidateUuid}/reject/`)
+      .then(unwrapResponse);
+  },
+
+  listEligibility(electionUuid, params = {}) {
+    return apiClient
+      .get(`/elections/${electionUuid}/eligibility/`, { params })
+      .then(unwrapPaginatedList);
+  },
+
+  createEligibility(electionUuid, payload) {
+    return apiClient
+      .post(`/elections/${electionUuid}/eligibility/`, payload)
+      .then(unwrapResponse);
+  },
+
+  updateEligibility(electionUuid, recordUuid, payload) {
+    return apiClient
+      .patch(`/elections/${electionUuid}/eligibility/${recordUuid}/`, payload)
+      .then(unwrapResponse);
+  },
 };

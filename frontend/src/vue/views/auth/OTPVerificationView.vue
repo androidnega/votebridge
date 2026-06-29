@@ -26,6 +26,10 @@ const channelLabel = computed(() => {
 const maskedDestination = computed(() => challenge.value?.masked_destination || "your registered contact");
 
 onMounted(() => {
+  if (authStore.isAuthenticated) {
+    router.replace(authStore.postLoginRedirect || { name: "home" });
+    return;
+  }
   if (!authStore.hasPendingOtp) {
     router.replace({ name: "auth-login" });
   }

@@ -1,0 +1,950 @@
+================================================================================
+VOTEBRIDGE ENTERPRISE SYSTEM AUDIT REPORT
+================================================================================
+Audit Type:        READ-ONLY INVENTORY (no code changes performed)
+Audit Date:        2026-06-29
+Project Path:      VoteBridge
+Scope:             Backend, Frontend, APIs, Navigation, Roles, Documentation
+================================================================================
+
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+VoteBridge is a multi-phase campus e-voting platform comprising 17 Django backend
+apps, 39 database models, ~175 REST API endpoints, a Vue 3 SPA (primary UI),
+and a parallel legacy Alpine.js + Django template frontend. The system has
+reached enterprise breadth: authentication with OTP/MFA, elections lifecycle,
+voting, results certification, strongroom integrity, fraud monitoring, operations
+center, communications, USSD, analytics, biometrics, trusted devices, and a
+Super Admin System Control Center.
+
+MATURITY ASSESSMENT: Late-stage / feature-rich beta. Core voting paths are
+implemented end-to-end. Multiple enterprise modules coexist with legacy pages,
+partial Vue coverage, sidebar/route drift, and overlapping dashboards.
+
+KEY COUNTS:
+  Backend Django apps ............................ 17
+  Backend models ................................. 39 (13 apps with models)
+  Backend service modules ........................ 55 (+1 core realtime)
+  Backend repository modules ..................... 21
+  Backend permission classes ..................... 42 (incl. aliases)
+  REST API endpoint patterns (app urls) ............ ~175
+  Legacy Django HTML templates ................... 35
+  Legacy dashboard URL routes .................... 33
+  Vue router records ............................. 79 (76 named + 3 redirects)
+  Vue view files ................................. 80
+  Vue Pinia stores ............................... 15
+  Vue API client modules ......................... 18
+  Vue reusable components ........................ 72
+  Documented phase reports ....................... 7 formal + 1 overview + 1 ERD
+  Backend TODO/FIXME markers ..................... 0
+  Frontend TODO/FIXME markers .................... 0
+
+ARCHITECTURE COMPLIANCE (summary): Predominantly compliant (Views -> Services ->
+Repositories -> Models). Documented violations: 2 USSD API views with direct ORM
+access. Several apps have no models (analytics, dashboard, operations, realtime)
+by design (aggregation/monitoring layers).
+
+DUAL-FRONTEND STATE: Vue SPA (frontend/index.html -> src/vue/) is the modern UI.
+Legacy stack (frontend/src/main.js, Alpine.js, backend/templates/) remains active
+for election CRUD, security pages, fraud pages, and voting flows accessible via
+/dashboard/* routes.
+
+
+================================================================================
+2. USER ROLE INVENTORY (PART 2)
+================================================================================
+
+DATABASE ROLES (accounts.Role):
+  - super_admin   (Super Admin)
+  - admin         (Admin)
+  - student       (Student)
+  - candidate     (Candidate)
+
+NOTE: User query listed Super Admin, Admin, Student only. Candidate exists as a
+distinct role in schema. "Election Officer" is documented as using Admin role;
+no separate election_officer role in database.
+
+--------------------------------------------------------------------------------
+2.1 SUPER ADMIN
+--------------------------------------------------------------------------------
+
+RESPONSIBILITIES (as implemented):
+  - Full platform configuration (System Control Center)
+  - Results certification, publication, archiving
+  - Voting channel management (Super Admin only write)
+  - Biometric enrollment
+  - Feature flags, backups, maintenance, institution/branding
+  - All Admin capabilities
+
+ACCESSIBLE VUE PAGES (route meta roles: super_admin OR unrestricted within auth):
+  Dashboard: /, /dashboard/super-admin
+  Elections: /elections, /elections/:uuid (manage; no vote routes)
+  Results: /results, /results/certification, /results/publication, /results/archive,
+           /results/:electionUuid
+  Strongroom: /strongroom, /strongroom/:electionUuid
+  Operations: all /operations/* (10 views; sidebar shows subset)
+  Platform logs: /platform/logs
+  Analytics: all /analytics/* (15 views)
+  Communications: all /communications/*
+  USSD: /ussd, /ussd/sessions
+  Security: /security, /security/trusted-devices
+  Fraud: /fraud (no route-level role gate)
+  Notifications: /notifications
+  System Control: all /system-control/* (17 views) + /biometrics/enroll,
+                  /biometrics/history
+  Profile: /profile
+
+SIDEBAR (superAdminNav): Command center, Elections, Results, Strongroom,
+  Operations (4 children), Platform logs, Analytics, Security center,
+  Communications (3 children), USSD, System control (7 children), Notifications
+
+KEY APIs:
+  /api/v1/system/* (exclusive)
+  /api/v1/results/*/certify, publish, archive
+  /api/v1/elections/channels/ (write)
+  /api/v1/biometrics/enrollment/
+  /api/v1/trusted-devices/<uuid>/ (revoke any via CanRevokeAnyDevice)
+  All admin-accessible endpoints below
+
+DUPLICATED PRIVILEGES vs ADMIN:
+  - Election management, candidates, positions, eligibility (identical)
+  - Operations center, analytics, communications, USSD monitoring (identical)
+  - Strongroom view/manage (identical)
+  - Fraud and security monitoring (identical)
+  - Trusted devices management page (both admin + super_admin)
+
+PRIVILEGES UNIQUE TO SUPER ADMIN:
+  - System Control Center (CanAccessSystemControlCenter)
+  - Results certification/publication/archive queues
+  - Voting channel create/update/delete
+  - Biometric enrollment
+  - Communication provider management (CanManageCommunications)
+  - Trusted device revoke-any, biometric/trusted device settings
+
+MISSING RESTRICTIONS (observations):
+  - /fraud has no meta.roles; students could navigate if URL known (guard only
+    checks requiresAuth)
+  - /security has no meta.roles; same pattern
+  - /notifications has no meta.roles; students have sidebar link
+
+--------------------------------------------------------------------------------
+2.2 ADMIN
+--------------------------------------------------------------------------------
+
+RESPONSIBILITIES:
+  - Election lifecycle management (create, schedule, open, close)
+  - Candidate/position/eligibility management
+  - Operations monitoring
+  - Analytics viewing
+  - Communications operations (not Super Admin provider config)
+  - USSD session monitoring
+  - Strongroom viewing and integrity actions
+  - Fraud case investigation
+  - Security monitoring (audit, devices, locations)
+  - Trusted devices (own devices + admin page)
+
+ACCESSIBLE VUE PAGES:
+  Same as Super Admin EXCEPT:
+  - No /system-control/*
+  - No /biometrics/enroll
+  - No /results/certification, /results/publication, /results/archive
+  - Uses /dashboard/admin instead of super-admin dashboard
+
+SIDEBAR (adminNav): Command center, Elections, Results, Strongroom, Operations,
+  Platform logs, Analytics, Security center, Communications, USSD, Notifications
+  (no System control group)
+
+KEY APIs:
+  /api/v1/elections/* (except channel write if super_admin only)
+  /api/v1/candidates/*
+  /api/v1/operations/*
+  /api/v1/analytics/* (not personal-only endpoint semantics)
+  /api/v1/fraud/*
+  /api/v1/security/monitoring/*
+  /api/v1/strongroom/*
+  /api/v1/notifications/dashboard, deliveries, queue (not CanManageCommunications)
+  /api/v1/ussd/dashboard, sessions, logs
+  /api/v1/dashboard/admin/
+
+DUPLICATED PRIVILEGES vs SUPER ADMIN:
+  - Near-complete overlap on operational/monitoring features
+  - Both can open/close elections, manage ballots setup, view analytics
+
+UNNECESSARY PRIVILEGES (observation, not recommendation):
+  - Admin has access to 10 operations sub-routes while sidebar exposes 4
+  - Admin can access full analytics suite (15 pages) while analyticsNav shows 5
+
+--------------------------------------------------------------------------------
+2.3 STUDENT
+--------------------------------------------------------------------------------
+
+RESPONSIBILITIES:
+  - Authenticate (index number + password + OTP)
+  - View elections list and detail
+  - Cast vote when election is OPEN (web channel)
+  - View vote confirmation
+  - View notifications
+  - Personal profile
+
+ACCESSIBLE VUE PAGES:
+  /, /dashboard/student, /elections, /elections/:uuid,
+  /elections/:uuid/vote, /elections/:uuid/confirmation,
+  /notifications, /profile, /auth/*, /maintenance (public), /verify (public)
+
+SIDEBAR (studentNav): Overview, Elections, Notifications
+
+KEY APIs:
+  /api/v1/accounts/auth/*
+  /api/v1/elections/ (read)
+  /api/v1/voting/elections/*/ballot, submit, my-votes
+  /api/v1/security/elections/*/svt/request, validate
+  /api/v1/notifications/center/*
+  /api/v1/dashboard/student/
+  /api/v1/analytics/personal/ (backend exists; no dedicated Vue page found)
+
+RESTRICTIONS:
+  - Cannot access admin routes with meta.roles (redirects to /forbidden)
+  - Cannot create elections
+  - Vote routes restricted to student/candidate roles
+
+MISSING RESTRICTIONS (observations):
+  - Routes without meta.roles (/fraud, /security) technically reachable if URL
+    entered; API would still enforce permissions on data fetch
+
+--------------------------------------------------------------------------------
+2.4 CANDIDATE (fourth role — present in schema)
+--------------------------------------------------------------------------------
+
+RESPONSIBILITIES: Same voting access as student (CanVote includes candidate).
+  May be registered as Candidate model linked to elections separately.
+
+ACCESSIBLE PAGES: Same as student (/dashboard/student, vote routes include
+  candidate in meta.roles).
+
+SIDEBAR: Falls through getSidebarNav to studentNav.
+
+APIS: Same student voting and read endpoints.
+
+
+================================================================================
+3. SIDEBAR INVENTORY (PART 3)
+================================================================================
+
+Classification key:
+  [C] Core  [A] Administrative  [T] Technical  [I] Investigation  [G] Configuration
+
+STUDENT SIDEBAR
+-------------------------------------------------------------------------------
+| Item          | Route           | Class | Purpose                          |
+|---------------|-----------------|-------|----------------------------------|
+| Overview      | /               | [C]   | Student dashboard hub            |
+| Elections     | /elections      | [C]   | Browse/vote elections            |
+| Notifications | /notifications  | [C]   | In-app notification center       |
+
+Backend: dashboard, elections, notifications
+APIs: /dashboard/student/, /elections/, /notifications/center/
+Frequency: High (daily use during election period)
+
+ADMIN SIDEBAR
+-------------------------------------------------------------------------------
+| Item              | Route              | Class | Backend Module    |
+|-------------------|--------------------|-------|-------------------|
+| Command center    | /                  | [C]   | dashboard         |
+| Elections         | /elections         | [C]   | elections         |
+| Results           | /results           | [A]   | results           |
+| Strongroom        | /strongroom        | [T]   | strongroom        |
+| Operations        | /operations        | [T]   | operations        |
+|  - Overview       | /operations        | [T]   | operations        |
+|  - Live activity  | /operations/activity| [T]  | operations        |
+|  - Election mon.  | /operations/elections| [T] | operations        |
+|  - System health  | /operations/health | [T]   | operations        |
+| Platform logs     | /platform/logs     | [T]   | operations+notif+ussd |
+| Analytics         | /analytics         | [A]   | analytics         |
+| Security center   | /security          | [I]   | security+fraud      |
+| Communications    | /communications    | [A]   | notifications     |
+|  - Overview       | /communications    | [A]   | notifications     |
+|  - Templates      | /communications/templates | [A] | notifications |
+|  - Providers      | /communications/providers | [G] | notifications |
+| USSD              | /ussd              | [T]   | ussd              |
+| Notifications     | /notifications     | [C]   | notifications     |
+
+Routes existing but NOT in admin sidebar:
+  /fraud, /operations/infrastructure, /operations/communications,
+  /operations/sessions, /operations/queues, /operations/performance,
+  /communications/test, /communications/queue, /security/trusted-devices,
+  /biometrics/history, all /analytics/* subpages (except via /analytics hub)
+
+SUPER ADMIN SIDEBAR (admin items + System control)
+-------------------------------------------------------------------------------
+| Item              | Route                    | Class |
+|-------------------|--------------------------|-------|
+| System control    | /system-control          | [G]   |
+|  - Overview       | /system-control          | [G]   |
+|  - Institution    | /system-control/institution | [G] |
+|  - Election pol.  | /system-control/election-policies | [G] |
+|  - Authentication | /system-control/authentication | [G] |
+|  - Maintenance    | /system-control/maintenance | [G] |
+|  - Feature flags  | /system-control/feature-flags | [G] |
+|  - Backup         | /system-control/backup   | [G]   |
+
+System control routes NOT in sidebar children (reachable via hub cards/URL):
+  branding, identity-assurance, security, api, audit, notifications, ussd,
+  providers, sms, email, storage, environment, runtime, license, about,
+  biometrics/enroll
+
+
+================================================================================
+4. PAGE INVENTORY (PART 4) — SUMMARY TABLE
+================================================================================
+
+Total Vue pages: 80 files, 76 routed (+ 4 orphan views)
+
+AUTH PAGES
+| Route | View | Roles | APIs |
+| /auth/login | LoginView | guest | POST /accounts/auth/login/ |
+| /auth/otp | OTPVerificationView | guest+OTP | POST /accounts/auth/otp/verify/ |
+| /auth/biometric-verify | BiometricVerifyView | guest+bio | POST /biometrics/verification/login/ |
+| /auth/info/* | AuthInfoPageView | guest | none (static content) |
+| /profile | ProfileView | auth | GET/PATCH accounts users |
+
+DASHBOARD PAGES
+| Route | View | Roles | APIs |
+| / | DashboardHubView | auth | role-based dashboard |
+| /dashboard/student | StudentDashboardView | student,candidate | /dashboard/student/ |
+| /dashboard/admin | AdminDashboardView | admin | /dashboard/admin/ |
+| /dashboard/super-admin | SuperAdminDashboardView | super_admin | admin+analytics+operations |
+
+ELECTION PAGES
+| Route | View | Roles | APIs |
+| /elections | ElectionListView | auth | GET /elections/ |
+| /elections/:uuid | ElectionDetailView | auth | GET /elections/:id/, readiness, preview |
+| /elections/:uuid/vote | VotingWizardView | student,candidate | ballot, submit, svt |
+| /elections/:uuid/confirmation | VoteConfirmationView | student,candidate | my-votes, svt |
+
+RESULTS PAGES (5)
+| /results | ResultsHubView | auth |
+| /results/certification | CertificationQueueView | super_admin |
+| /results/publication | PublicationCenterView | super_admin |
+| /results/archive | ArchiveManagerView | super_admin |
+| /results/:electionUuid | ResultDetailView | auth |
+
+STRONGROOM PAGES (3)
+| /strongroom | StrongroomDashboardView | admin,super_admin |
+| /strongroom/:electionUuid | StrongroomElectionView | admin,super_admin |
+| /verify | VerificationCenterView | public |
+
+OPERATIONS PAGES (10 — sidebar shows 4 + platform logs)
+All use operationsApi; roles admin,super_admin.
+OperationsLogsView.vue exists but route redirects to /platform/logs.
+
+COMMUNICATIONS PAGES (7)
+DeliveryLogsView.vue orphan (redirect to platform logs).
+Active: dashboard, providers, templates, test, queue, notification center.
+
+USSD PAGES (3)
+ActivityLogsView.vue orphan. Active: dashboard, sessions.
+
+PLATFORM PAGES (1)
+| /platform/logs | PlatformLogsView | admin,super_admin | operations+notifications+ussd logs |
+
+SYSTEM CONTROL PAGES (17)
+All super_admin; systemControlApi; SystemCategorySettingsView reused for 8 categories.
+
+ANALYTICS PAGES (15)
+All admin,super_admin; analyticsApi; ECharts components.
+
+BIOMETRICS PAGES (3)
+Enroll (super_admin), History (admin,super_admin), Verify (auth guest flow).
+
+SECURITY / FRAUD
+| /security | SecurityView | auth (no role meta) | securityApi, fraudApi |
+| /security/trusted-devices | TrustedDevicesView | admin,super_admin | trustedDevicesApi |
+| /fraud | FraudView | auth (no role meta) | fraudApi |
+
+ERROR PAGES
+/forbidden, /error, /maintenance, /not-found
+
+OVERLAPPING PAGES (observations):
+  - Operations overview vs Analytics operations vs Super Admin dashboard charts
+  - Security center vs Analytics security vs Operations health
+  - Communications dashboard vs Operations communications vs Analytics communications
+  - USSD dashboard vs Analytics USSD vs Operations (no dedicated USSD ops page)
+  - Platform logs consolidates 3 former log pages (operations, communications, ussd)
+  - Results hub vs Analytics elections vs Operations election monitor
+  - Legacy /dashboard/security/* vs Vue /security
+  - Legacy /dashboard/fraud/* vs Vue /fraud
+
+
+================================================================================
+5. FEATURE INVENTORY (PART 5)
+================================================================================
+
+| Feature | Purpose | Backend App(s) | Key APIs | Vue Pages |
+|---------|---------|----------------|----------|-----------|
+| Unified Login | Index/email + password | accounts | POST auth/login/ | LoginView |
+| OTP | Step-up identity verification | accounts | otp/verify, resend | OTPVerificationView |
+| JWT Sessions | Token auth + refresh | accounts | token/refresh, sessions | auth store |
+| MFA Logs | MFA audit trail | accounts | auth/audit-logs | — |
+| Trusted Devices | Device trust + risk | trusted_devices | /trusted-devices/* | TrustedDevicesView |
+| Biometrics | Face/liveness for staff | biometrics | /biometrics/* | Enroll, Verify, History |
+| Identity Assurance | Policy settings | system | settings/identity_assurance | SystemCategorySettingsView |
+| Election Management | CRUD + lifecycle | elections | /elections/* | ElectionList/Detail |
+| Election Readiness | Pre-open checklist | elections | /elections/:id/readiness/ | ElectionReadinessPanel |
+| Positions | Ballot positions | elections | /elections/:id/positions/ | legacy templates |
+| Candidates | Registration/approval | candidates | /candidates/*, election candidates | legacy templates |
+| Voter Eligibility | Who can vote | elections | /elections/:id/eligibility/ | legacy templates |
+| Voting Channels | Web/USSD/SMS flags | elections | /elections/channels/ | election model fields |
+| SVT | Secure voting token | security | /security/elections/*/svt/* | VotingWizardView |
+| Vote Casting | Encrypted ballot submit | voting | /voting/elections/*/submit/ | VotingWizardView |
+| Vote Verification | Confirm vote recorded | voting | /voting/votes/*/verify/ | VoteConfirmationView |
+| Results Generation | Tally after close | results | /results/elections/*/generate/ | ResultDetailView |
+| Certification | Super Admin sign-off | results | certify | CertificationQueueView |
+| Publication | Release results | results | publish | PublicationCenterView |
+| Archiving | Long-term storage | results | archive | ArchiveManagerView |
+| Strongroom | Ballot seals + custody | strongroom | /strongroom/* | Strongroom views |
+| Public Verify | External integrity check | strongroom | /strongroom/public/verify/ | VerificationCenterView |
+| Fraud Detection | Alerts + cases | fraud | /fraud/* | FraudView |
+| Security Monitoring | Audit/device/location | security | /security/monitoring/* | SecurityView |
+| Audit Logs | Event trail | security | monitoring/audit-logs | PlatformLogsView |
+| Operations Center | Live platform ops | operations | /operations/* | Operations views |
+| Communications | SMS/email delivery | notifications | /notifications/* | Communications views |
+| USSD Voting | Arkesel callback flow | ussd | /ussd/callback/, dashboard | USSD views |
+| SMS OTP | Arkesel SMS | notifications | otp_delivery_service | — |
+| In-App Notifications | User notification center | notifications | /notifications/center/ | NotificationCenterView |
+| System Control | Platform configuration | system | /system/* | System control views |
+| Feature Flags | Toggle modules | system | /system/feature-flags/ | SystemFeatureFlagsView |
+| Maintenance Mode | Downtime messaging | system | /system/maintenance/ | MaintenanceView |
+| Backup/Recovery | DB backups | system | /system/backups/ | SystemBackupView |
+| Analytics/BI | Read-only aggregation | analytics | /analytics/* | 15 analytics views |
+| Realtime WebSocket | Live feeds | realtime | ws/realtime/* | dashboard/ops stores |
+| User Management | CRUD users/roles | accounts | /accounts/users/, /roles/ | — (no Vue UI) |
+| Step-Up Auth | Sensitive setting changes | system | /system/step-up/* | StepUpModal |
+
+
+================================================================================
+6. BACKEND INVENTORY (PART 6)
+================================================================================
+
+APPS WITHOUT MODELS (by design):
+  analytics, dashboard, operations, realtime
+
+LARGEST SERVICE CONCENTRATIONS:
+  - system/services/system_service.py — 10+ service classes in one file
+    (SystemSettingsService, InstitutionService, FeatureFlagService, MaintenanceService,
+     ProviderManagementService, StorageService, BackupService, EnvironmentService,
+     SystemOverviewService, etc.)
+  - analytics/services/analytics_service.py — 12 Analytics*Service classes
+  - trusted_devices/services/ — 12 service modules (fine-grained)
+  - fraud/services/alert_service.py — multiple monitoring classes
+
+DUPLICATE / SIMILAR NAMING PATTERNS (observations):
+  - audit_service.py in biometrics, trusted_devices, notifications (3 distinct)
+  - policy_service.py in biometrics, trusted_devices
+  - session_service.py in accounts, biometrics
+  - Risk scoring: fraud/risk_scoring_service, trusted_devices/risk_score_service,
+    trusted_devices/risk_assessment_service
+  - MonitoringService (security) vs DeviceMonitoringService/LocationMonitoringService (fraud)
+  - ProviderManagementService (system) vs CommunicationService (notifications)
+  - ReportService (results) vs AnalyticsReportService (analytics)
+
+LEGACY CODE:
+  - backend/templates/ — 35 HTML pages (Alpine.js)
+  - backend/apps/*/views.py — non-API template views (elections, security, fraud)
+  - config/urls.py — 33 legacy /dashboard/* routes
+  - accounts API: separate student/admin/super-admin login endpoints (legacy) alongside
+    unified auth/login/
+
+UNUSED / LOW-TRAFFIC (observations):
+  - accounts auth/student/login, auth/admin/login, auth/super-admin/login (legacy)
+  - dashboard/permissions.py empty placeholder
+  - candidates standalone API (/api/v1/candidates/<uuid>/) — election-nested preferred
+
+ARCHITECTURE VIOLATIONS:
+  - apps/ussd/api/views.py: UssdDashboardView, UssdSessionDetailView use direct
+    CommunicationProvider.objects and USSDSession.objects queries
+
+
+================================================================================
+7. FRONTEND INVENTORY (PART 7)
+================================================================================
+
+STORES (15): auth, election, voting, security, fraud, dashboard, results,
+  strongroom, notifications, ussd, operations, systemControl, analytics,
+  biometrics, trustedDevices
+
+COMPOSABLES: useToast, useStepUp, useSidebar, useElectionRealtime,
+  useDashboardRealtime, useStepUp (system control)
+
+DUPLICATE COMPONENTS (observations):
+  - EmptyState: components/ui/EmptyState.vue AND components/dashboard/EmptyState.vue
+  - LoadingSkeleton: components/ui/ AND components/dashboard/
+  - AreaChart wraps LineChart; DonutChart wraps PieChart (0 direct imports)
+  - SystemCategorySettingsView reused for 8 system-control categories
+  - SystemProvidersView reused for providers/sms/email routes
+
+ORPHAN / UNROUTED VIEWS:
+  - views/HomeView.vue (wraps DashboardHubView)
+  - views/communications/DeliveryLogsView.vue
+  - views/operations/OperationsLogsView.vue
+  - views/ussd/ActivityLogsView.vue
+
+REUSABLE UI LIBRARY (components/ui/): 20 components — VButton, VCard, VInput,
+  VTable, PageHeader, ModuleNav, StatusBadge, LoadingSkeleton, etc.
+
+LEGACY FRONTEND (parallel stack):
+  - frontend/src/main.js (Alpine entry)
+  - frontend/src/js/api.js (VoteBridgeAPI)
+  - frontend/src/js/websocket.js
+  - vite.config.js dual entry: main + vue-app
+
+MISSING VUE COVERAGE (observations):
+  - Election create/edit UI (legacy templates only)
+  - Position/candidate/eligibility management (legacy templates)
+  - User/role management (API only)
+  - Student personal analytics page (API exists)
+
+
+================================================================================
+8. API INVENTORY (PART 8) — COMPLETE ENDPOINT LIST
+================================================================================
+
+BASE: /api/v1/
+
+ACCOUNTS (/accounts/)
+  POST   auth/login/
+  POST   auth/student/login/          [legacy — likely unused by Vue]
+  POST   auth/admin/login/            [legacy]
+  POST   auth/super-admin/login/      [legacy]
+  POST   auth/otp/verify/
+  POST   auth/otp/resend/
+  POST   auth/token/refresh/
+  POST   auth/logout/
+  GET    auth/sessions/
+  POST   auth/sessions/<uuid>/revoke/
+  GET    auth/audit-logs/
+  GET/POST users/
+  GET/PUT/PATCH/DELETE users/<uuid>/
+  PATCH  users/<uuid>/status/
+  POST   users/<uuid>/activate|deactivate|verify|unverify/
+  GET/POST roles/
+  GET/PUT/PATCH/DELETE roles/<uuid>/
+
+ELECTIONS (/elections/)
+  GET/POST /
+  GET/PUT/PATCH/DELETE <uuid>/
+  POST   <uuid>/schedule|open|pause|close|archive/
+  GET    <uuid>/readiness/
+  GET/POST channels/
+  GET/PUT/PATCH/DELETE channels/<uuid>/
+  GET/POST <election_uuid>/positions/
+  GET/PUT/PATCH/DELETE <election_uuid>/positions/<uuid>/
+  GET/POST <election_uuid>/eligibility/
+  POST   <election_uuid>/eligibility/bulk/
+  GET/PUT/PATCH/DELETE <election_uuid>/eligibility/<uuid>/
+  GET/POST <election_uuid>/candidates/
+  GET/PUT/PATCH/DELETE <election_uuid>/candidates/<uuid>/
+  POST   <election_uuid>/candidates/<uuid>/approve|reject/
+
+CANDIDATES (/candidates/)
+  GET/PUT/PATCH/DELETE <uuid>/
+  POST   <uuid>/approve|reject/
+
+VOTING (/voting/)
+  GET    elections/<election_uuid>/ballot/
+  POST   elections/<election_uuid>/submit/
+  GET    elections/<election_uuid>/my-votes/
+  GET    votes/<vote_id>/verify/
+
+SECURITY (/security/)
+  POST   elections/<election_uuid>/svt/validate|request/
+  GET    elections/<election_uuid>/svt/
+  POST   svt/verify|confirmation/
+  POST   svt/<svt_id>/revoke|reissue/
+  GET    monitoring/summary|audit-logs|devices|locations/
+
+FRAUD (/fraud/)
+  GET    alerts/, alerts/<id>/
+  POST   alerts/<id>/review|resolve|escalate/
+  GET    integrity-report/
+  GET    cases/, cases/<id>/, cases/<id>/timeline/
+  POST   cases/<id>/investigate|notes|resolve|dismiss|escalate/
+
+RESULTS (/results/)
+  GET    elections/, certification-queue/, publication-queue/, archive-queue/
+  GET    elections/<election_uuid>/
+  POST   elections/<election_uuid>/generate|certify|publish|archive/
+  GET    elections/<election_uuid>/preview|integrity/
+  GET    elections/<election_uuid>/reports/<format>/
+
+STRONGROOM (/strongroom/)
+  GET    elections/
+  GET    elections/<election_uuid>/dashboard|custody/
+  POST   elections/<election_uuid>/verify|lock/
+  POST   public/verify/
+
+NOTIFICATIONS (/notifications/)
+  GET    dashboard|deliveries|templates|providers|center/
+  POST   deliveries/<uuid>/retry/, queue/process/, providers/<uuid>/test/, test/
+  POST   center/read-all/, center/<uuid>/read|archive/
+  DELETE center/<uuid>/
+
+USSD (/ussd/)
+  POST/GET callback/
+  GET    dashboard|sessions|sessions/<uuid>|logs/
+
+DASHBOARD (/dashboard/)
+  GET    admin|student|security-feed|fraud-feed/
+
+OPERATIONS (/operations/)
+  GET    overview|activity|health|infrastructure|elections|sessions|
+         communications|queues|performance|logs/
+
+SYSTEM (/system/) [Super Admin]
+  GET    overview|branding|maintenance|institution|environment|license|runtime/
+  POST   step-up/challenge|verify/
+  GET/PATCH institution/, settings/<category>/, maintenance/control/
+  GET/POST revisions/<key>/
+  GET/PATCH feature-flags/, feature-flags/<key>/
+  GET/PATCH/POST providers/, providers/<uuid>/
+  GET/POST storage|backups/, POST backups/<uuid>/
+
+ANALYTICS (/analytics/) [Admin+]
+  GET    overview|elections|elections/<uuid>|participation|departments|faculties|
+         programmes|students|personal|security|fraud|operations|communications|
+         ussd|strongroom|historical|reports/<type>/
+
+BIOMETRICS (/biometrics/)
+  GET/POST enrollment/
+  POST   verification/login|step-up/
+  POST   challenge/
+  GET    status|settings|history/
+  POST   session/validate/
+  GET    session/status/
+
+TRUSTED DEVICES (/trusted-devices/)
+  GET    /, current/, policy/, session-status/
+  POST   reverify/
+  GET    <device_uuid>/history/
+  PATCH  <device_uuid>/rename/
+  POST   <device_uuid>/revoke|assign-university/
+  DELETE <device_uuid>/
+
+HEALTH: GET /health/
+
+ENDPOINTS WITH NO VUE CONSUMER (observations):
+  - accounts users/roles CRUD (no admin user management UI)
+  - accounts auth/student|admin|super-admin/login/
+  - analytics/personal/ (no Vue page)
+  - candidates/ standalone paths (Vue uses election-nested list)
+  - several system revision rollback endpoints
+
+
+================================================================================
+9. STRONG ROOM INVENTORY (PART 9)
+================================================================================
+
+MODELS (strongroom app):
+  BallotSeal, ElectionSeal, CustodyRecord, IntegrityVerification
+  (Note: subagent reported ElectionIntegritySnapshot, VerificationLog — verify
+   against models.py; primary audit used strongroom/models.py: 4 models listed)
+
+SERVICES:
+  StrongroomService, ElectionSealService (strongroom_service.py)
+  CustodyService (custody_service.py)
+  IntegrityVerificationService (integrity_verification_service.py)
+
+INTEGRATIONS:
+  - Post-vote signals (signals.py) create seals
+  - Election readiness checks strongroom enabled
+  - Results certification references integrity
+  - Biometric step-up for verify actions
+  - Analytics strongroom endpoint
+  - WebSocket: ws/realtime/strongroom/
+  - Public verification: /verify (Vue), POST /strongroom/public/verify/
+
+CUSTODY CHAIN:
+  CustodyRecord model + CustodyTimeline.vue + GET custody API
+
+CERTIFICATION FLOW:
+  Election close -> results pending -> certification queue (Super Admin) ->
+  strongroom verify/lock -> publish
+
+FRAUD / AUDIT / BIOMETRICS / TRUSTED DEVICES CROSS-LINKS:
+  - Fraud integrity-report API relates to election integrity
+  - Audit logs capture strongroom actions (security.AuditLog)
+  - Biometrics used for privileged verify/login step-up
+  - Trusted devices risk assessment on admin login
+  - Identity assurance settings govern biometric + device policies
+
+
+================================================================================
+10. ANALYTICS INVENTORY (PART 10)
+================================================================================
+
+PAGES (15) | CHARTS USED | PRIMARY API
+AnalyticsOverviewView | 4x Gauge, Line | GET /analytics/overview/
+AnalyticsElectionsView | Line, Bar | GET /analytics/elections/
+AnalyticsParticipationView | Bar, Heatmap | GET /analytics/participation/
+AnalyticsStudentsView | Line, Pie | GET /analytics/students/
+AnalyticsDepartmentsView | Bar, Pie | GET /analytics/departments/
+AnalyticsFacultiesView | Bar | GET /analytics/faculties/
+AnalyticsProgrammesView | Bar | GET /analytics/programmes/
+AnalyticsSecurityView | Line | GET /analytics/security/
+AnalyticsFraudView | Pie, Bar | GET /analytics/fraud/
+AnalyticsOperationsView | Line | GET /analytics/operations/
+AnalyticsCommunicationsView | Bar | GET /analytics/communications/
+AnalyticsUssdView | Gauge | GET /analytics/ussd/
+AnalyticsStrongroomView | Bar | GET /analytics/strongroom/
+AnalyticsHistoricalView | Line | GET /analytics/historical/
+AnalyticsReportsView | — | GET /analytics/reports/<type>/
+
+OVERLAPPING DASHBOARDS (observations):
+  - SuperAdminDashboardView (charts: gauge, line, pie) vs AnalyticsOverviewView
+  - OperationsOverviewView vs AnalyticsOperationsView
+  - OperationsHealthView vs analytics infrastructure metrics
+  - FraudView (live) vs AnalyticsFraudView (aggregated)
+  - SecurityView vs AnalyticsSecurityView
+  - StrongroomDashboardView vs AnalyticsStrongroomView
+
+KPIS: Defined per analytics service class in analytics_service.py (read-only
+queries across elections, voting, security, fraud, operations, etc.)
+
+WEBSOCKET: ws/realtime/analytics/ (AnalyticsConsumer)
+
+SIDEBAR analyticsNav shows 5 tabs; router has 15 analytics routes.
+
+
+================================================================================
+11. CONFIGURATION INVENTORY (PART 11)
+================================================================================
+
+SYSTEM CONTROL CENTER — SETTING CATEGORIES (system/constants.py):
+
+INSTITUTION (InstitutionProfile model, not key-value):
+  institution_name, election_office_email, election_office_phone, address, etc.
+
+BRANDING (InstitutionProfile):
+  primary_color, logo_url, auth_panel_image_url, etc.
+
+ELECTION_POLICIES (14 keys):
+  max_election_duration_days, voting_hours_start/end, allow_early_voting,
+  require_svt_for_voting, require_otp_for_voting, min_candidates_per_position,
+  max_candidates_per_position, allow_abstain, show_candidate_photos,
+  allow_vote_changes, grace_period_minutes, auto_close_elections,
+  allow_ussd_voting_default, allow_web_voting_default
+
+AUTHENTICATION (11 keys):
+  jwt_access_minutes, jwt_refresh_days, otp_length, otp_expiry_minutes,
+  otp_max_attempts, login_lockout_threshold, login_lockout_minutes,
+  session_lifetime_days, password_min_length, require_mfa_admin,
+  require_mfa_super_admin
+
+IDENTITY_ASSURANCE (38 keys):
+  biometrics_enabled, face_match_threshold, liveness_threshold,
+  challenge_types, trusted_devices_enabled, risk_score_thresholds,
+  step_up_policies, impossible_travel settings, etc.
+
+SECURITY (8 keys):
+  allowed_domains, cors_origins, rate_limit_*, ip_allowlist,
+  encryption_key_id
+
+API (6 keys):
+  rest_enabled, websocket_enabled, webhook_url, api_version,
+  cors_enabled, health_check_path
+
+AUDIT (4 keys):
+  retention_days, log_level, export_enabled, archive_after_days
+
+NOTIFICATIONS (5 keys):
+  queue_limit, retry_attempts, election_reminder_hours,
+  result_notification_enabled, etc.
+
+RUNTIME (2 keys):
+  deployment_mode, environment_name
+
+USSD (6 keys):
+  short_code, service_name, callback_url, session_timeout,
+  rate_limit, voting_enabled
+
+FEATURE FLAGS (11):
+  fraud_detection, strongroom, realtime, ussd, sms, analytics,
+  notifications, monitoring, future_ai, future_face_verification,
+  future_biometrics
+
+MAINTENANCE: MaintenanceState model (is_enabled, message, scheduled windows)
+
+BACKUP: BackupRecord model + create/verify APIs
+
+COMMUNICATION PROVIDERS: system providers API + notifications providers
+  (potential dual configuration surface)
+
+SENSITIVE CATEGORIES (require step-up OTP to save):
+  authentication, identity_assurance, security (per frontend props)
+
+
+================================================================================
+12. TECHNICAL DEBT (PART 14)
+================================================================================
+
+DUPLICATE CODE:
+  - Dual frontend stacks (Vue + Alpine/templates)
+  - Duplicate EmptyState and LoadingSkeleton components
+  - Multiple *AuditService classes across apps
+  - Multiple risk scoring implementations
+  - Provider config in system + notifications apps
+  - AreaChart/DonutChart thin wrappers unused
+
+DEAD CODE / ORPHAN:
+  - HomeView.vue (unrouted)
+  - DeliveryLogsView, OperationsLogsView, ActivityLogsView (replaced by PlatformLogsView)
+  - Legacy login API endpoints (student/admin/super-admin)
+  - dashboard/permissions.py placeholder
+
+LEGACY PAGES (35 templates + 33 dashboard routes):
+  Full election management, voting, security, fraud UIs in Django templates
+
+TEMPORARY / PARTIAL IMPLEMENTATIONS:
+  - future_ai, future_biometrics, future_face_verification feature flags (reserved)
+  - Vue election list without create form (creation via legacy only)
+  - analytics/personal endpoint without Vue page
+  - Election Officer role documented but not in schema
+
+MOCK / STUB:
+  - biometrics/inference/ package (may use stub inference — verify env)
+  - Liveness/face services may run in dev stub mode
+
+UNFINISHED MODULES (observations):
+  - User management UI (API complete, no Vue admin page)
+  - Candidate role distinct from student (minimal differentiation in UI)
+  - Fraud sidebar link removed from admin nav but /fraud route remains
+
+TODO/FIXME: 0 in backend and frontend source (no tracked TODO markers)
+
+INFRASTRUCTURE DEBT (runtime, not code):
+  - Dev Postgres connection exhaustion documented in prior session (CONN_MAX_AGE)
+
+
+================================================================================
+13. ARCHITECTURE COMPLIANCE (PART 12)
+================================================================================
+
+STANDARD PATTERN: API Views -> Services -> Repositories -> Models
+
+COMPLIANT MODULES: accounts, elections, candidates, voting, results, security,
+  fraud, strongroom, notifications, system, biometrics, trusted_devices,
+  analytics, operations, dashboard (mostly)
+
+VIOLATIONS FOUND:
+  1. apps/ussd/api/views.py — direct ORM in UssdDashboardView, UssdSessionDetailView
+
+GRAY AREAS:
+  - realtime/consumers.py — consumers call services but also handle WS protocol
+  - fraud/alert_service.py contains AuditLogService writing audit data (cross-app)
+  - elections/api/views.py imports AuditLog.EventType constants (not ORM)
+  - Large system_service.py mixes many service classes (organizational, not layer violation)
+
+BUSINESS LOGIC IN VUE (observations — minimal):
+  - Router guards handle auth routing
+  - OTP/biometric flow orchestration in stores
+  - Election readiness display logic in ElectionDetailView computed props
+  - No heavy business rules in components (uses stores/API)
+
+ELECTION INTEGRITY RULE:
+  Architecture rule: no rankings/vote totals/winners exposed while OPEN.
+  analytics validators.py and voting serializers implement sanitization (present).
+
+
+================================================================================
+14. DOCUMENTATION AUDIT (PART 13)
+================================================================================
+
+COMPLETED PHASE REPORTS (docs/):
+
+| Phase | File | Introduced |
+|-------|------|------------|
+| UI-X | PHASE-UI-X-REPORT.md | Enterprise Vue design system, layouts, components, auth UX |
+| 13 EOC | PHASE-13-EOC-REPORT.md | Operations Center app, 10 REST endpoints, WS feed |
+| 14 SCC | PHASE-14-SCC-REPORT.md | System Control Center, settings, flags, backups |
+| 15 ABI | PHASE-15-ABI-REPORT.md | Analytics app, 16 endpoints, ECharts, 15 views |
+| 21 Bio | PHASE-21-BIOMETRICS-REPORT.md | Biometrics enrollment/verification for privileged users |
+| 22 USSD | PHASE-22-USSD-SMS-REPORT.md | USSD/SMS production validation, Arkesel integration |
+| RC2 | PHASE-RC2-ELECTION-READINESS-REPORT.md | Election readiness gate before open |
+
+OTHER DOCS:
+  - VOTEBRIDGE-PROJECT-OVERVIEW.txt — comprehensive status snapshot (June 2025)
+  - VoteBridge-ERD.drawio — entity relationship diagram
+  - backend/PHASE_UI-X_REPORT.md — duplicate/overlapping UI-X report (palette differs)
+  - .cursor/rules/votebridge-phase-reports.mdc — A-J report template rule
+  - README.md — setup, stack, tunnel docs (apps table incomplete vs current 17 apps)
+
+PHASES NOT FOUND AS FORMAL REPORTS IN docs/:
+  Early phases (accounts, elections, voting, security, fraud, results, strongroom,
+  core foundation) — covered only in PROJECT-OVERVIEW.txt
+
+POTENTIALLY OUTDATED DOCUMENTATION (observations):
+  - README lists Alpine.js as primary frontend; Vue is now primary
+  - README apps table missing: operations, system, analytics, biometrics,
+    trusted_devices, realtime
+  - PROJECT-OVERVIEW.txt dated June 2025; predates biometrics, trusted devices UI
+  - backend/PHASE_UI-X_REPORT.md uses forest-green palette; tailwind now civic navy
+  - VOTEBRIDGE-PROJECT-OVERVIEW notes election_officer as non-DB role (still true)
+  - ERD may not include biometrics, trusted_devices, system models (verify against
+    current 39 models)
+
+
+================================================================================
+15. OBSERVATIONS (PART 14 — NO RECOMMENDATIONS)
+================================================================================
+
+1. The platform implements a full election lifecycle from draft through archive
+   with integrity controls (SVT, strongroom, readiness gate, result certification).
+
+2. Super Admin and Admin roles overlap substantially on operational features;
+   differentiation is mainly System Control, results certification, and channel mgmt.
+
+3. Navigation has been streamlined in sidebar (Phase UI-X / super admin consolidation)
+   but router still registers many pages not linked from sidebar (analytics subpages,
+   operations subpages, system-control subpages).
+
+4. Two parallel frontends coexist: Vue SPA for dashboards/monitoring; Django
+   templates for election setup and some security/fraud pages.
+
+5. Platform logs consolidation (PlatformLogsView) replaced three log views in
+   router but orphan Vue files remain.
+
+6. Feature flags include 3 "future_*" reserved flags still togglable in UI.
+
+7. Zero TODO/FIXME markers in codebase despite known gaps (user mgmt UI, personal
+   analytics page, Vue election create).
+
+8. Analytics module is read-only with no models — consistent architecture for BI layer.
+
+9. Trusted devices and biometrics add significant identity assurance surface area
+   with 12+ trusted device services and 7 biometrics services.
+
+10. system_service.py concentration (10 classes) is the largest single-file service
+    bundle in the project.
+
+11. Student role has minimal sidebar (3 items) aligned with voting use case.
+
+12. Candidate role exists in DB; UI treats candidates like students for voting.
+
+13. Public verification (/verify) and maintenance (/maintenance) are the only
+    significant public-facing Vue routes outside auth.
+
+14. WebSocket realtime is used across dashboard, operations, security, fraud,
+    analytics, strongroom, and election feeds.
+
+15. Configuration is extensive: 88+ individual setting keys across 11 categories
+    plus 11 feature flags and institution profile fields.
+
+
+================================================================================
+END OF AUDIT REPORT
+================================================================================
+No code was modified during this audit.
+No recommendations were made per audit charter.
+Await further instructions before any refactoring or consolidation work.

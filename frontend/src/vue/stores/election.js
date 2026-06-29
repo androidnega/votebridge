@@ -94,5 +94,20 @@ export const useElectionStore = defineStore("election", {
         this.actionLoading = false;
       }
     },
+
+    async createElection(payload) {
+      this.actionLoading = true;
+      this.error = null;
+      try {
+        const election = await electionsApi.create(payload);
+        this.elections = [election, ...this.elections];
+        return election;
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw error;
+      } finally {
+        this.actionLoading = false;
+      }
+    },
   },
 });

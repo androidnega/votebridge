@@ -1,4 +1,4 @@
-/** Sub-navigation definitions for multi-page modules. */
+/** In-page module navigation — Phase 23 consolidated workspaces. */
 
 export const resultsNav = [
   { label: "Overview", to: "/results", exact: true },
@@ -7,64 +7,24 @@ export const resultsNav = [
   { label: "Archive", to: "/results/archive", roles: ["super_admin"] },
 ];
 
-export const communicationsNav = [
-  { label: "Dashboard", to: "/communications", exact: true },
-  { label: "Delivery logs", to: "/communications/logs" },
-  { label: "Queue monitor", to: "/communications/queue" },
-  { label: "Providers", to: "/communications/providers" },
-  { label: "Templates", to: "/communications/templates" },
-  { label: "Test center", to: "/communications/test" },
+export const electionManagementNav = [
+  { label: "Elections", to: "/elections", exact: true },
+  { label: "Candidates", to: "/election-management/candidates" },
+  { label: "Positions", to: "/election-management/positions" },
+  { label: "Voter eligibility", to: "/election-management/eligibility" },
 ];
 
-export const ussdNav = [
-  { label: "Dashboard", to: "/ussd", exact: true },
-  { label: "Sessions", to: "/ussd/sessions" },
-  { label: "Activity logs", to: "/ussd/logs" },
+export const reportsNav = [
+  { label: "Overview", to: "/reports", exact: true },
+  { label: "Participation", to: "/reports/participation" },
+  { label: "Turnout", to: "/reports/turnout" },
+  { label: "Results", to: "/reports/results" },
+  { label: "Historical trends", to: "/reports/historical" },
+  { label: "Export reports", to: "/reports/export" },
 ];
 
-export const operationsNav = [
-  { label: "Overview", to: "/operations", exact: true },
-  { label: "Live Activity", to: "/operations/activity" },
-  { label: "System Health", to: "/operations/health" },
-  { label: "Infrastructure", to: "/operations/infrastructure" },
-  { label: "Election Monitor", to: "/operations/elections" },
-  { label: "Communications", to: "/operations/communications" },
-  { label: "Users & Sessions", to: "/operations/sessions" },
-  { label: "Queues", to: "/operations/queues" },
-  { label: "Performance", to: "/operations/performance" },
-  { label: "Logs", to: "/operations/logs" },
-];
-
-export const systemControlNav = [
-  { label: "Overview", to: "/system-control", exact: true },
-  { label: "Institution", to: "/system-control/institution" },
-  { label: "Election Policies", to: "/system-control/election-policies" },
-  { label: "Authentication", to: "/system-control/authentication" },
-  { label: "Identity Assurance", to: "/system-control/identity-assurance" },
-  { label: "Trusted Devices", to: "/security/trusted-devices", roles: ["admin", "super_admin"] },
-  { label: "Providers", to: "/system-control/providers" },
-  { label: "SMS", to: "/system-control/sms" },
-  { label: "USSD", to: "/system-control/ussd" },
-  { label: "Email", to: "/system-control/email" },
-  { label: "Notifications", to: "/system-control/notifications" },
-  { label: "Security", to: "/system-control/security" },
-  { label: "Feature Flags", to: "/system-control/feature-flags" },
-  { label: "Branding", to: "/system-control/branding" },
-  { label: "API", to: "/system-control/api" },
-  { label: "Maintenance", to: "/system-control/maintenance" },
-  { label: "Storage", to: "/system-control/storage" },
-  { label: "Backup", to: "/system-control/backup" },
-  { label: "Audit", to: "/system-control/audit" },
-  { label: "Environment", to: "/system-control/environment" },
-  { label: "Runtime", to: "/system-control/runtime" },
-  { label: "License", to: "/system-control/license" },
-  { label: "About", to: "/system-control/about" },
-];
-
-export const analyticsNav = [
-  { label: "Overview", to: "/analytics", exact: true },
-  { label: "Elections", to: "/analytics/elections" },
-  { label: "Participation", to: "/analytics/participation" },
+/** Advanced analytics — drill-down from Reports overview. */
+export const reportsAdvancedNav = [
   { label: "Students", to: "/analytics/students" },
   { label: "Departments", to: "/analytics/departments" },
   { label: "Faculties", to: "/analytics/faculties" },
@@ -74,9 +34,62 @@ export const analyticsNav = [
   { label: "Operations", to: "/analytics/operations" },
   { label: "Communications", to: "/analytics/communications" },
   { label: "USSD", to: "/analytics/ussd" },
-  { label: "Strongroom", to: "/analytics/strongroom" },
-  { label: "Historical", to: "/analytics/historical" },
-  { label: "Reports", to: "/analytics/reports" },
+  { label: "Strong room", to: "/analytics/strongroom" },
+];
+
+export const strongRoomNav = [
+  { label: "Vote integrity", to: "/strongroom", exact: true },
+  { label: "Certification", to: "/strongroom/certification", roles: ["super_admin"] },
+  { label: "Audit trail", to: "/strongroom/audit" },
+  { label: "Fraud investigation", to: "/strongroom/fraud" },
+  { label: "Chain of custody", to: "/strongroom/custody" },
+  { label: "Identity assurance", to: "/strongroom/identity" },
+  { label: "Trusted devices", to: "/strongroom/trusted-devices" },
+  { label: "Security timeline", to: "/strongroom/security" },
+  { label: "Evidence export", to: "/strongroom/export" },
+];
+
+export const settingsNav = [
+  { label: "Overview", to: "/settings", exact: true },
+  { label: "Institution", to: "/settings/institution" },
+  { label: "Authentication", to: "/settings/authentication" },
+  { label: "Communication providers", to: "/settings/providers" },
+  { label: "Voting channels", to: "/settings/voting-channels" },
+  { label: "Maintenance", to: "/settings/maintenance" },
+  { label: "Feature flags", to: "/settings/feature-flags" },
+  { label: "Backup", to: "/settings/backup" },
+  { label: "System configuration", to: "/settings/system" },
+  { label: "Identity assurance", to: "/settings/identity-assurance" },
+  { label: "Security policies", to: "/settings/security" },
+  { label: "API & integrations", to: "/settings/api" },
+];
+
+/** Legacy nav exports — kept for backward-compatible deep links. */
+export const analyticsNav = reportsNav;
+export const systemControlNav = settingsNav;
+export const communicationsNav = [
+  { label: "Overview", to: "/communications", exact: true },
+  { label: "Templates", to: "/communications/templates" },
+  { label: "Providers", to: "/communications/providers" },
+  { label: "Platform logs", to: "/platform/logs?tab=communications" },
+];
+export const ussdNav = [
+  { label: "Dashboard", to: "/ussd", exact: true },
+  { label: "Sessions", to: "/ussd/sessions" },
+  { label: "Platform logs", to: "/platform/logs?tab=ussd" },
+];
+export const operationsNav = [
+  { label: "Overview", to: "/operations", exact: true },
+  { label: "Live activity", to: "/operations/activity" },
+  { label: "Election monitor", to: "/operations/elections" },
+  { label: "System health", to: "/operations/health" },
+  { label: "Platform logs", to: "/platform/logs?tab=operations" },
+];
+export const platformLogsNav = [
+  { label: "All logs", to: "/platform/logs", exact: true },
+  { label: "Operations", to: "/platform/logs?tab=operations" },
+  { label: "Communications", to: "/platform/logs?tab=communications" },
+  { label: "USSD", to: "/platform/logs?tab=ussd" },
 ];
 
 export function filterNavByRole(items, role) {

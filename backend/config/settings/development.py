@@ -29,6 +29,19 @@ STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 # Email — console backend for development
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 
+# In-memory cache for dev — avoids Redis connection churn from DRF throttling and
+# debug toolbar, which can exhaust macOS soft file-descriptor limits on long runs.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "votebridge-dev",
+    }
+}
+
+# Close DB connections after each request in dev — prevents idle pool buildup from
+# runserver autoreload and long sessions exhausting local Postgres slots.
+DATABASES["default"]["CONN_MAX_AGE"] = 0  # noqa: F405
+
 # Optional debug toolbar (installed via development requirements)
 try:
     import debug_toolbar  # noqa: F401

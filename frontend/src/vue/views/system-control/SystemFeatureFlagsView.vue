@@ -1,25 +1,50 @@
 <script setup>
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
+import OnOffRadioToggle from "@/components/system-control/OnOffRadioToggle.vue";
 import StepUpModal from "@/components/system-control/StepUpModal.vue";
 import { systemControlNav } from "@/config/moduleNav";
 import { useStepUp } from "@/composables/useStepUp";
 import { useToast } from "@/composables/useToast";
-import { LoadingSkeleton, ModuleNav, PageHeader, StatusBadge, VAlert, VButton, VCard } from "@/components/ui";
+import { LoadingSkeleton, ModuleNav, PageHeader, VAlert, VCard } from "@/components/ui";
 import { useSystemControlStore } from "@/stores/systemControl";
 
 const store = useSystemControlStore();
 const toast = useToast();
 const stepUp = useStepUp();
+const pendingKey = ref(null);
 
 onMounted(() => store.fetchFeatureFlags().catch(() => {}));
 
-function toggleFlag(flag) {
-  stepUp.requireStepUp(() =>
-    store
-      .toggleFeatureFlag(flag.key, !flag.enabled)
-      .then(() => toast.success(`${flag.name} updated.`))
+function formatChangedAt(value) {
+  if (!value) return null;
+  return new Date(value).toLocaleString();
+}
+
+function changeSummary(flag) {
+  const parts = [];
+  if (flag.last_changed_by) parts.push(flag.last_changed_by);
+  const when = formatChangedAt(flag.last_changed_at);
+  if (when) parts.push(when);
+  return parts.length ? parts.join(" · ") : null;
+}
+
+function onFlagChange(flag, enabled) {
+  if (flag.enabled === enabled) return;
+
+  stepUp.requireStepUp(() => {
+    pendingKey.value = flag.key;
+    return store
+      .toggleFeatureFlag(flag.key, enabled)
+      .then(() => toast.success(`${flag.name} ${enabled ? "enabled" : "disabled"}.`))
       .catch(() => {})
-  );
+      .finally(() => {
+        pendingKey.value = null;
+      });
+  });
+}
+
+function isFlagLoading(flag) {
+  return store.actionLoading && pendingKey.value === flag.key;
 }
 </script>
 
@@ -34,14 +59,28 @@ function toggleFlag(flag) {
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <LoadingSkeleton v-if="store.loading && !store.featureFlags.length" variant="list" :rows="8" />
 
-    <div v-else class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <VCard v-for="flag in store.featureFlags" :key="flag.key" :title="flag.name">
-        <p class="text-sm text-slate-600">{{ flag.description }}</p>
-        <div class="mt-3 flex items-center justify-between">
-          <StatusBadge :status="flag.enabled ? 'open' : 'closed'" />
-          <VButton size="sm" variant="secondary" @click="toggleFlag(flag)">Toggle</VButton>
+    <div v-else class="grid grid-cols-1 gap-3 lg:grid-cols-2">
+      <VCard v-for="flag in store.featureFlags" :key="flag.key" padding="sm" class="!shadow-sm">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <h3 class="truncate text-sm font-semibold text-slate-900">{{ flag.name }}</h3>
+            <p class="mt-0.5 line-clamp-2 text-xs leading-relaxed text-slate-600">
+              {{ flag.description }}
+            </p>
+            <p v-if="changeSummary(flag)" class="mt-1.5 text-[0.6875rem] text-slate-400">
+              Last changed: {{ changeSummary(flag) }}
+            </p>
+          </div>
+
+          <OnOffRadioToggle
+            compact
+            :model-value="flag.enabled"
+            :label="flag.name"
+            :loading="isFlagLoading(flag)"
+            :disabled="Boolean(pendingKey && pendingKey !== flag.key)"
+            @update:model-value="onFlagChange(flag, $event)"
+          />
         </div>
-        <p class="mt-2 text-xs text-slate-500">Last changed: {{ flag.last_changed_by || '—' }}</p>
       </VCard>
     </div>
 

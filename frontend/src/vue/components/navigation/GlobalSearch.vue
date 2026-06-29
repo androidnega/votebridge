@@ -16,7 +16,7 @@ const searchItems = computed(() => {
   const role = authStore.role;
   const items = [
     { label: "Overview", to: "/", keywords: "dashboard home" },
-    { label: "Elections", to: "/elections", keywords: "vote ballot" },
+    { label: "Elections", to: "/elections", keywords: "vote ballot create" },
     { label: "Results", to: "/results", keywords: "outcome standings" },
     { label: "Profile", to: "/profile", keywords: "account settings" },
     { label: "Notifications", to: "/notifications", keywords: "alerts messages" },
@@ -24,20 +24,23 @@ const searchItems = computed(() => {
 
   if (["admin", "super_admin"].includes(role)) {
     items.push(
-      { label: "Strongroom", to: "/strongroom", keywords: "integrity seal custody" },
-      { label: "Communications", to: "/communications", keywords: "sms email" },
-      { label: "Delivery logs", to: "/communications/logs", keywords: "messages" },
-      { label: "USSD", to: "/ussd", keywords: "mobile phone" },
-      { label: "Fraud dashboard", to: "/fraud", keywords: "integrity cases" },
-      { label: "Security center", to: "/security", keywords: "alerts monitoring" }
+      { label: "Candidates", to: "/election-management/candidates", keywords: "nominees" },
+      { label: "Positions", to: "/election-management/positions", keywords: "ballot roles" },
+      { label: "Voter eligibility", to: "/election-management/eligibility", keywords: "voters register" },
+      { label: "Reports", to: "/reports", keywords: "analytics turnout participation export" },
+      { label: "Operations health", to: "/operations/health", keywords: "monitor system" },
+      { label: "Communications", to: "/communications", keywords: "sms email templates" },
+      { label: "USSD", to: "/ussd", keywords: "mobile phone voting channel" }
     );
   }
 
   if (role === "super_admin") {
     items.push(
-      { label: "Certification queue", to: "/results/certification", keywords: "results certify" },
-      { label: "Publication center", to: "/results/publication", keywords: "publish results" },
-      { label: "Archive manager", to: "/results/archive", keywords: "archive results" }
+      { label: "Strong room", to: "/strongroom", keywords: "integrity seal custody fraud audit" },
+      { label: "Settings", to: "/settings", keywords: "configuration institution providers" },
+      { label: "Voting channels", to: "/settings/voting-channels", keywords: "web ussd sms" },
+      { label: "Certification queue", to: "/strongroom/certification", keywords: "results certify" },
+      { label: "Audit trail", to: "/strongroom/audit", keywords: "platform logs" }
     );
   }
 
@@ -119,23 +122,18 @@ onUnmounted(() => {
         ref="searchRef"
         v-model="query"
         type="search"
-        placeholder="Search…"
-        class="h-10 w-36 rounded-input border border-border bg-surface-muted pl-9 pr-3 text-sm text-slate-800 transition-all duration-200 placeholder:text-slate-400 focus:w-52 focus:border-brand-600 focus:bg-white focus:outline-none focus:ring-2 focus:ring-brand-600/20 lg:w-44 lg:focus:w-64"
+        placeholder="Search pages (⌘K)"
+        class="w-64 rounded-input border border-border bg-surface py-2 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 lg:w-72"
         autocomplete="off"
         @focus="openSearch"
-        @keydown="onKeydown"
         @blur="onBlur"
+        @keydown="onKeydown"
       />
-      <kbd
-        class="pointer-events-none absolute right-2 top-1/2 hidden -translate-y-1/2 rounded border border-border bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-400 lg:inline"
-      >
-        ⌘K
-      </kbd>
     </div>
 
     <div
       v-if="open && filtered.length"
-      class="absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-card border border-border bg-white shadow-card"
+      class="absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-xl border border-border bg-surface shadow-lg lg:w-80"
       role="listbox"
     >
       <ul>
@@ -147,12 +145,8 @@ onUnmounted(() => {
         >
           <button
             type="button"
-            class="flex min-h-touch w-full items-center px-4 text-left text-sm transition duration-200"
-            :class="
-              index === selectedIndex
-                ? 'bg-brand-50 text-brand-700'
-                : 'text-slate-700 hover:bg-surface-muted'
-            "
+            class="flex w-full items-center px-4 py-2.5 text-left text-sm transition"
+            :class="index === selectedIndex ? 'bg-surface-muted text-slate-900' : 'text-slate-700 hover:bg-surface-muted'"
             @mousedown.prevent="navigate(item)"
           >
             {{ item.label }}

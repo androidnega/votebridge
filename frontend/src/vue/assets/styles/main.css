@@ -53,8 +53,8 @@
     @apply mx-auto w-full max-w-content;
   }
 
-  .vb-slide-in {
-    animation: vbSlideIn 0.2s ease-out;
+  .vb-tab-panel {
+    animation: vbTabPanel 0.22s ease-out;
   }
 }
 
@@ -78,4 +78,26 @@
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+@keyframes vbTabPanel {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.vb-tab-enter-active,
+.vb-tab-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.vb-tab-enter-from,
+.vb-tab-leave-to {
+  opacity: 0;
+  transform: translateY(6px);
 }

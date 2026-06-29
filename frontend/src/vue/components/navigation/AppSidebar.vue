@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import VIcon from "@/components/ui/VIcon.vue";
 import VTooltip from "@/components/ui/VTooltip.vue";
+import { getSidebarNav } from "@/config/sidebarNav";
 import { useSidebar } from "@/composables/useSidebar";
 import { useAuthStore } from "@/stores/auth";
 
@@ -15,112 +16,24 @@ const router = useRouter();
 const authStore = useAuthStore();
 const { toggleGroup, isGroupExpanded } = useSidebar();
 
-const navItems = [
-  { name: "Overview", to: "/", icon: "home" },
-  { name: "Elections", to: "/elections", icon: "elections" },
-  {
-    name: "Results",
-    to: "/results",
-    icon: "results",
-    key: "results",
-    children: [
-      { name: "Overview", to: "/results", exact: true },
-      { name: "Certification", to: "/results/certification", roles: ["super_admin"] },
-      { name: "Publication", to: "/results/publication", roles: ["super_admin"] },
-      { name: "Archive", to: "/results/archive", roles: ["super_admin"] },
-    ],
-  },
-  { name: "Strongroom", to: "/strongroom", icon: "strongroom", roles: ["admin", "super_admin"] },
-  {
-    name: "Communications",
-    to: "/communications",
-    icon: "communications",
-    key: "communications",
-    roles: ["admin", "super_admin"],
-    children: [
-      { name: "Dashboard", to: "/communications", exact: true },
-      { name: "Delivery logs", to: "/communications/logs" },
-      { name: "Queue monitor", to: "/communications/queue" },
-      { name: "Providers", to: "/communications/providers" },
-      { name: "Templates", to: "/communications/templates" },
-      { name: "Test center", to: "/communications/test" },
-    ],
-  },
-  {
-    name: "USSD",
-    to: "/ussd",
-    icon: "ussd",
-    key: "ussd",
-    roles: ["admin", "super_admin"],
-    children: [
-      { name: "Dashboard", to: "/ussd", exact: true },
-      { name: "Sessions", to: "/ussd/sessions" },
-      { name: "Activity logs", to: "/ussd/logs" },
-    ],
-  },
-  {
-    name: "Operations",
-    to: "/operations",
-    icon: "operations",
-    key: "operations",
-    roles: ["admin", "super_admin"],
-    children: [
-      { name: "Overview", to: "/operations", exact: true },
-      { name: "Live Activity", to: "/operations/activity" },
-      { name: "System Health", to: "/operations/health" },
-      { name: "Infrastructure", to: "/operations/infrastructure" },
-      { name: "Election Monitor", to: "/operations/elections" },
-      { name: "Communications", to: "/operations/communications" },
-      { name: "Users & Sessions", to: "/operations/sessions" },
-      { name: "Queues", to: "/operations/queues" },
-      { name: "Performance", to: "/operations/performance" },
-      { name: "Logs", to: "/operations/logs" },
-    ],
-  },
-  {
-    name: "System Control",
-    to: "/system-control",
-    icon: "settings",
-    key: "system-control",
-    roles: ["super_admin"],
-    children: [
-      { name: "Overview", to: "/system-control", exact: true },
-      { name: "Institution", to: "/system-control/institution" },
-      { name: "Election Policies", to: "/system-control/election-policies" },
-      { name: "Authentication", to: "/system-control/authentication" },
-      { name: "Providers", to: "/system-control/providers" },
-      { name: "Maintenance", to: "/system-control/maintenance" },
-      { name: "Feature Flags", to: "/system-control/feature-flags" },
-      { name: "Backup", to: "/system-control/backup" },
-      { name: "Environment", to: "/system-control/environment" },
-    ],
-  },
-  {
-    name: "Analytics",
-    to: "/analytics",
-    icon: "analytics",
-    key: "analytics",
-    roles: ["admin", "super_admin"],
-    children: [
-      { name: "Overview", to: "/analytics", exact: true },
-      { name: "Elections", to: "/analytics/elections" },
-      { name: "Participation", to: "/analytics/participation" },
-      { name: "Reports", to: "/analytics/reports" },
-    ],
-  },
-  { name: "Notifications", to: "/notifications", icon: "notifications" },
-  { name: "Fraud", to: "/fraud", icon: "fraud", roles: ["admin", "super_admin"] },
-  { name: "Security", to: "/security", icon: "security", roles: ["admin", "super_admin"] },
-];
-
-function filterByRole(items) {
-  return items.filter((item) => !item.roles || item.roles.includes(authStore.role));
-}
-
-const visibleItems = computed(() => filterByRole(navItems));
+const visibleItems = computed(() => getSidebarNav(authStore.role));
 
 function isActive(item) {
   if (item.to === "/") return route.path === "/";
+  if (item.key === "election-management") {
+    return (
+      route.path.startsWith("/elections") || route.path.startsWith("/election-management")
+    );
+  }
+  if (item.to === "/reports") {
+    return route.path.startsWith("/reports") || route.path.startsWith("/analytics");
+  }
+  if (item.to === "/settings") {
+    return route.path.startsWith("/settings") || route.path.startsWith("/system-control");
+  }
+  if (item.to === "/strongroom") {
+    return route.path.startsWith("/strongroom");
+  }
   return route.path === item.to || route.path.startsWith(`${item.to}/`);
 }
 
@@ -131,7 +44,7 @@ function isChildActive(child) {
 
 function visibleChildren(item) {
   if (!item.children) return [];
-  return filterByRole(item.children);
+  return item.children;
 }
 
 function groupIsActive(item) {
@@ -227,33 +140,6 @@ async function handleLogout() {
     </ul>
 
     <div class="mt-auto border-t border-slate-700 pt-4">
-      <VTooltip v-if="collapsed" label="Profile" position="right">
-        <router-link
-          to="/profile"
-          class="flex min-h-touch items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium transition duration-200"
-          :class="
-            route.path === '/profile'
-              ? 'bg-brand-600 text-white'
-              : 'text-slate-300 hover:bg-slate-700 hover:text-white'
-          "
-        >
-          <VIcon name="profile" class="h-5 w-5 shrink-0" />
-        </router-link>
-      </VTooltip>
-      <router-link
-        v-else
-        to="/profile"
-        class="flex min-h-touch items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition duration-200"
-        :class="
-          route.path === '/profile'
-            ? 'bg-brand-600 text-white'
-            : 'text-slate-300 hover:bg-slate-700 hover:text-white'
-        "
-      >
-        <VIcon name="profile" class="h-5 w-5 shrink-0" />
-        <span>Profile</span>
-      </router-link>
-
       <VTooltip v-if="collapsed" label="Sign out" position="right">
         <button
           type="button"
