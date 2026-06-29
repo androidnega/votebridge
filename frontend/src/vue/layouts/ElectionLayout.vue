@@ -28,7 +28,7 @@ const canVote = computed(() => {
 });
 
 const adminTabs = computed(() => {
-  if (!authStore.isAdmin) return [];
+  if (!authStore.isElectionOfficer) return [];
   return getElectionWorkspaceNav(electionUuid.value, liveStatus.value);
 });
 
@@ -43,7 +43,7 @@ const studentTabs = computed(() => {
 });
 
 const breadcrumbs = computed(() => {
-  const root = authStore.isAdmin
+  const root = authStore.isElectionOfficer
     ? [{ label: "Election workspace", to: "/elections" }]
     : [{ label: "Elections", to: "/elections" }];
   return [...root, { label: electionTitle.value }];

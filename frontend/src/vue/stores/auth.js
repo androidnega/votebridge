@@ -35,7 +35,9 @@ export const useAuthStore = defineStore("auth", {
       if (!state.user) return "";
       return [state.user.first_name, state.user.last_name].filter(Boolean).join(" ");
     },
-    isAdmin: (state) => ["admin", "super_admin"].includes(state.user?.role?.name),
+    isElectionOfficer: (state) => state.user?.role?.name === "admin",
+    isStaff: (state) => ["admin", "super_admin"].includes(state.user?.role?.name),
+    isAdmin: (state) => state.user?.role?.name === "admin",
     isSuperAdmin: (state) => state.user?.role?.name === "super_admin",
     isStudent: (state) => ["student", "candidate"].includes(state.user?.role?.name),
     hasPendingOtp: (state) => Boolean(state.otpChallenge?.otp_request_uuid),

@@ -25,7 +25,7 @@ onMounted(() => {
 
 function openElection(row) {
   if (!row.uuid) return;
-  if (authStore.isAdmin) {
+  if (authStore.isElectionOfficer) {
     router.push(`/elections/${row.uuid}`);
     return;
   }
@@ -36,14 +36,14 @@ function openElection(row) {
 <template>
   <div class="vb-page">
     <PageHeader
-      :title="authStore.isAdmin ? 'Election workspace' : 'Elections'"
+      :title="authStore.isElectionOfficer ? 'Election workspace' : 'Elections'"
       :subtitle="
-        authStore.isAdmin
+        authStore.isElectionOfficer
           ? 'Create and manage elections from a single workspace.'
           : 'Browse campus elections and cast your vote.'
       "
     >
-      <template v-if="authStore.isAdmin" #actions>
+      <template v-if="authStore.isElectionOfficer" #actions>
         <VButton @click="router.push('/elections/create')">Create election</VButton>
       </template>
     </PageHeader>
@@ -56,7 +56,7 @@ function openElection(row) {
       <div class="border-b border-border p-card">
         <h3 class="text-base font-semibold text-slate-800">All elections</h3>
         <p class="mt-1 text-sm text-slate-500">
-          {{ authStore.isAdmin ? "Select an election to open its workspace." : "Tap an election to view details." }}
+          {{ authStore.isElectionOfficer ? "Select an election to open its workspace." : "Tap an election to view details." }}
         </p>
       </div>
 
@@ -74,10 +74,10 @@ function openElection(row) {
 
       <EmptyState
         v-else-if="!electionStore.error"
-        v-bind="authStore.isAdmin ? emptyStates.electionsAdmin : emptyStates.elections"
+        v-bind="authStore.isElectionOfficer ? emptyStates.electionsAdmin : emptyStates.elections"
         class="p-card"
       >
-        <template v-if="authStore.isAdmin" #action>
+        <template v-if="authStore.isElectionOfficer" #action>
           <VButton @click="router.push('/elections/create')">Create election</VButton>
         </template>
       </EmptyState>

@@ -23,19 +23,19 @@ const resultsStore = useResultsStore();
 
 const title = computed(() => {
   if (authStore.isSuperAdmin) return "Results command center";
-  if (authStore.isAdmin) return "Election results";
+  if (authStore.isElectionOfficer) return "Election results";
   return "Published results";
 });
 
 const subtitle = computed(() => {
   if (authStore.isStudent) return "Official results for completed elections.";
-  if (authStore.isAdmin) return "Generate, preview, and verify election results.";
+  if (authStore.isElectionOfficer) return "Generate, preview, and verify election results.";
   return "Certify, publish, and archive official results.";
 });
 
 onMounted(() => {
   resultsStore.fetchResults().catch(() => {});
-  if (authStore.isAdmin || authStore.isSuperAdmin) {
+  if (authStore.isStaff) {
     resultsStore.fetchQueues().catch(() => {});
     resultsStore.connectRealtime();
   }
@@ -53,7 +53,7 @@ onUnmounted(() => {
       :subtitle="subtitle"
       :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Results' }]"
     >
-      <template v-if="authStore.isAdmin || authStore.isSuperAdmin" #actions>
+      <template v-if="authStore.isStaff" #actions>
         <ConnectionStatusIndicator :status="resultsStore.realtimeStatus" />
       </template>
     </PageHeader>

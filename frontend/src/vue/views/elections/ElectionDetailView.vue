@@ -36,7 +36,7 @@ const alreadyVoted = computed(
 );
 
 const previewCandidates = computed(() => {
-  if (votingStore.previewPositions.length && authStore.isAdmin) {
+  if (votingStore.previewPositions.length && authStore.isElectionOfficer) {
     return votingStore.previewCandidates.slice(0, 6);
   }
   return votingStore.previewCandidates.slice(0, 6);
@@ -55,7 +55,7 @@ const positionsSummary = computed(() => {
 });
 
 const groupedCandidates = computed(() => {
-  if (!authStore.isAdmin) {
+  if (!authStore.isElectionOfficer) {
     return votingStore.previewPositions.map((position) => ({
       position,
       candidates: (position.candidates || []).slice(0, 3),
@@ -81,7 +81,7 @@ const groupedCandidates = computed(() => {
 });
 
 const showReadiness = computed(() => {
-  if (!authStore.isAdmin && !authStore.isSuperAdmin) return false;
+  if (!authStore.isElectionOfficer) return false;
   return ["draft", "scheduled"].includes(liveStatus.value);
 });
 
@@ -104,7 +104,7 @@ onMounted(async () => {
   await electionStore.fetchElection(electionUuid.value).catch(() => {});
   await loadReadiness();
   await votingStore
-    .fetchPreviewData(electionUuid.value, { isAdmin: authStore.isAdmin })
+    .fetchPreviewData(electionUuid.value, { isAdmin: authStore.isElectionOfficer })
     .catch(() => {});
 });
 

@@ -3,7 +3,6 @@ import { computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import {
   ConnectionStatusIndicator,
-  ElectionCard,
   LiveSecurityFeed,
   LoadingSkeleton,
   StatCard,
@@ -26,7 +25,6 @@ const realtime = useDashboardRealtime("super-admin");
 const overview = computed(() => dashboardStore.adminOverview || {});
 const alertSummary = computed(() => overview.value.security_alerts || {});
 const healthStatus = computed(() => operationsStore.overview?.system_health?.status || "unknown");
-
 const securityFeedItems = computed(() => securityStore.alertsFeed.slice(0, 5));
 
 onMounted(() => {
@@ -42,31 +40,29 @@ onMounted(() => {
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <div class="flex flex-wrap items-center gap-3">
-          <h2 class="text-2xl font-bold text-slate-900">Election command center</h2>
+          <h2 class="text-2xl font-bold text-slate-900">Platform governance center</h2>
           <ConnectionStatusIndicator :status="realtime.status.value" :label="realtime.label.value" />
         </div>
-        <p class="mt-1 text-sm text-slate-500">Active elections, certifications, and platform health.</p>
+        <p class="mt-1 text-sm text-slate-500">
+          Certification queue, strong room oversight, and platform health — election operations are managed by Election Administrators.
+        </p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <VButton variant="secondary" size="sm" @click="router.push('/elections')">Election workspace</VButton>
+        <VButton variant="secondary" size="sm" @click="router.push('/strongroom')">Strong room</VButton>
         <VButton variant="secondary" size="sm" @click="router.push('/results/certification')">Certification</VButton>
+        <VButton variant="secondary" size="sm" @click="router.push('/results/publication')">Publication</VButton>
       </div>
     </div>
 
     <VAlert v-if="dashboardStore.error" variant="error">{{ dashboardStore.error }}</VAlert>
     <LoadingSkeleton v-if="dashboardStore.loading && !dashboardStore.adminOverview" variant="stats" :rows="4" />
 
-    <section v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    <section v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       <StatCard
         label="Open elections"
         :value="operationsStore.overview?.elections?.open ?? overview.active_elections ?? 0"
+        hint="Monitored by election officers"
         accent="green"
-      />
-      <StatCard
-        label="Students voted"
-        :value="overview.total_votes_cast ?? 0"
-        :hint="`${overview.turnout_percentage ?? 0}% turnout`"
-        accent="brand"
       />
       <StatCard
         label="Certifications waiting"
@@ -80,18 +76,6 @@ onMounted(() => {
           View details
         </VButton>
       </VCard>
-    </section>
-
-    <section>
-      <h3 class="mb-4 text-lg font-semibold text-slate-900">Open elections</h3>
-      <div v-if="dashboardStore.openElectionsList.length" class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <ElectionCard
-          v-for="election in dashboardStore.openElectionsList"
-          :key="election.uuid"
-          :election="election"
-        />
-      </div>
-      <p v-else class="text-sm text-slate-500">No elections are currently open.</p>
     </section>
 
     <LiveSecurityFeed

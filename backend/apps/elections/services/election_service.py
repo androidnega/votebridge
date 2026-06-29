@@ -145,3 +145,52 @@ class ElectionService:
                 )
         except Exception:
             logger.exception("Failed to broadcast election status change for %s", election.uuid)
+
+    def get_public_campus_status(self) -> dict:
+        """Non-sensitive election phase for the public landing page."""
+        from apps.results.models import ElectionResult
+        from apps.results.repositories.election_result_repository import ElectionResultRepository
+
+        def _serialize(election: Election) -> dict:
+            return {
+                "uuid": str(election.uuid),
+                "title": election.title,
+                "status": election.status,
+                "start_date": election.start_date,
+                "end_date": election.end_date,
+            }
+
+        active = (
+            self.repository.search(status=Election.Status.OPEN).order_by("-start_date").first()
+            or self.repository.search(status=Election.Status.PAUSED).order_by("-start_date").first()
+        )
+        if active:
+            return {"phase": "election_open", "election": _serialize(active)}
+
+        scheduled = self.repository.search(status=Election.Status.SCHEDULED).order_by("start_date").first()
+        if scheduled:
+            return {"phase": "election_scheduled", "election": _serialize(scheduled)}
+
+        result_repo = ElectionResultRepository()
+        pending = (
+            result_repo.list_certification_queue()
+            .select_related("election")
+            .order_by("-created_at")
+            .first()
+        )
+        if pending:
+            return {"phase": "awaiting_certification", "election": _serialize(pending.election)}
+
+        published = (
+            result_repo.list_filtered(status=ElectionResult.Status.PUBLISHED)
+            .order_by("-published_at")
+            .first()
+        )
+        if published:
+            return {
+                "phase": "results_published",
+                "election": _serialize(published.election),
+                "published_at": published.published_at,
+            }
+
+        return {"phase": "before_election", "election": None}

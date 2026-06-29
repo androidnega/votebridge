@@ -34,7 +34,7 @@ const fraudNotes = ref("");
 
 const canGenerate = computed(
   () =>
-    authStore.isAdmin &&
+    authStore.isElectionOfficer &&
     result.value &&
     ["pending_generation", "generated"].includes(result.value.result_status)
 );
@@ -138,12 +138,12 @@ async function downloadReport(format) {
         />
       </section>
 
-      <section v-if="authStore.isAdmin || authStore.isSuperAdmin" class="flex flex-wrap gap-2">
+      <section v-if="authStore.isStaff" class="flex flex-wrap gap-2">
         <VButton v-if="canGenerate" :loading="resultsStore.actionLoading" @click="handleGenerate">
           Generate results
         </VButton>
         <VButton
-          v-if="authStore.isAdmin"
+          v-if="authStore.isElectionOfficer"
           variant="secondary"
           :loading="resultsStore.actionLoading"
           @click="handleIntegrity"
@@ -151,7 +151,7 @@ async function downloadReport(format) {
           Run integrity check
         </VButton>
         <VButton
-          v-if="authStore.isAdmin && showStandings"
+          v-if="authStore.isElectionOfficer && showStandings"
           variant="secondary"
           @click="downloadReport('csv')"
         >
@@ -174,7 +174,7 @@ async function downloadReport(format) {
       </section>
 
       <IntegrityReportPanel
-        v-if="authStore.isAdmin || authStore.isSuperAdmin"
+        v-if="authStore.isStaff"
         :report="resultsStore.integrityReport || result.integrity_report"
         :loading="resultsStore.actionLoading"
       />

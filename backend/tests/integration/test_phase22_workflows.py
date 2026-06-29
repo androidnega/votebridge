@@ -5,6 +5,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from apps.accounts.models import Role, User
 from apps.security.models import SVTToken
 from apps.ussd.models import USSDSession
 from apps.ussd.services.ussd_flow_service import UssdFlowService
@@ -135,9 +136,14 @@ class StrongroomWorkflowTests(TestCase):
         ensure_voting_channels()
         roles = create_roles()
         self.admin, self.student = create_test_users(roles)
+        self.super_admin = User.objects.create_user(
+            email="phase22-super@test.local",
+            username="phase22-super",
+            password="TestPass123!",
+            role=roles[Role.Name.SUPER_ADMIN],
+        )
         self.election, self.position = create_open_ussd_election(admin=self.admin, student=self.student)
         self.client = APIClient()
-        self.client.force_authenticate(user=self.admin)
 
     def test_strongroom_dashboard_after_vote(self):
         from apps.security.services.svt_service import svt_service
@@ -157,6 +163,7 @@ class StrongroomWorkflowTests(TestCase):
             selections=[{"position_uuid": str(self.position.uuid), "candidate_uuids": [candidate_uuid]}],
             channel_name="web",
         )
+        self.client.force_authenticate(user=self.super_admin)
         url = reverse("strongroom:strongroom-dashboard", kwargs={"election_uuid": self.election.uuid})
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)

@@ -108,7 +108,7 @@ const router = createRouter({
           path: "elections/create",
           name: "election-create",
           component: () => import("@/views/elections/ElectionCreateView.vue"),
-          meta: { title: "Create Election", roles: ["admin", "super_admin"] },
+          meta: { title: "Create Election", roles: ["admin"] },
         },
         {
           path: "election-management/candidates",
@@ -856,6 +856,19 @@ const router = createRouter({
       ],
     },
     {
+      path: "/welcome",
+      component: PublicLayout,
+      meta: { public: true },
+      children: [
+        {
+          path: "",
+          name: "landing",
+          component: () => import("@/views/public/LandingView.vue"),
+          meta: { title: "Welcome", public: true },
+        },
+      ],
+    },
+    {
       path: "/maintenance",
       component: PublicLayout,
       meta: { public: true },
@@ -896,31 +909,31 @@ const router = createRouter({
           path: "positions",
           name: "election-workspace-positions",
           component: () => import("@/views/elections/workspace/ElectionWorkspacePositions.vue"),
-          meta: { title: "Positions", roles: ["admin", "super_admin"] },
+          meta: { title: "Positions", roles: ["admin"] },
         },
         {
           path: "candidates",
           name: "election-workspace-candidates",
           component: () => import("@/views/elections/workspace/ElectionWorkspaceCandidates.vue"),
-          meta: { title: "Candidates", roles: ["admin", "super_admin"] },
+          meta: { title: "Candidates", roles: ["admin"] },
         },
         {
           path: "eligibility",
           name: "election-workspace-eligibility",
           component: () => import("@/views/elections/workspace/ElectionWorkspaceEligibility.vue"),
-          meta: { title: "Eligibility", roles: ["admin", "super_admin"] },
+          meta: { title: "Eligibility", roles: ["admin"] },
         },
         {
           path: "readiness",
           name: "election-workspace-readiness",
           component: () => import("@/views/elections/workspace/ElectionWorkspaceReadiness.vue"),
-          meta: { title: "Readiness", roles: ["admin", "super_admin"] },
+          meta: { title: "Readiness", roles: ["admin"] },
         },
         {
           path: "monitor",
           name: "election-workspace-monitor",
           component: () => import("@/views/elections/workspace/ElectionWorkspaceMonitor.vue"),
-          meta: { title: "Monitor", roles: ["admin", "super_admin"] },
+          meta: { title: "Control Room", roles: ["admin"] },
         },
         {
           path: "vote",

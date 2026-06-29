@@ -11,7 +11,7 @@ export function getElectionWorkspaceNav(electionUuid, status) {
   ];
 
   if (["open", "paused"].includes(status)) {
-    tabs.push({ label: "Monitor", to: `${base}/monitor` });
+    tabs.push({ label: "Control room", to: `${base}/monitor` });
   }
 
   return tabs;

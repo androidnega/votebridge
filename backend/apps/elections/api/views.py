@@ -2,7 +2,9 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from apps.elections.api.serializers import (
     BulkEligibilitySerializer,
@@ -379,3 +381,14 @@ class VoterEligibilityViewSet(viewsets.ViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class PublicCampusStatusView(APIView):
+    """Public election phase summary — no vote totals or rankings."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        data = election_service.get_public_campus_status()
+        return Response({"success": True, "data": data})
+

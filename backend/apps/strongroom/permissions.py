@@ -1,11 +1,9 @@
-from rest_framework.permissions import BasePermission
-
-from apps.accounts.permissions import IsAdminOrSuperAdmin
+from apps.accounts.permissions import IsSuperAdmin
 
 
-class CanViewStrongroom(IsAdminOrSuperAdmin):
-    message = "Admin access required to view strongroom data."
+class CanViewStrongroom(IsSuperAdmin):
+    message = "Super Admin access required to view strong room data."
 
 
-class CanManageStrongroom(IsAdminOrSuperAdmin):
-    message = "Admin access required to manage strongroom operations."
+class CanManageStrongroom(IsSuperAdmin):
+    message = "Super Admin access required to manage strong room operations."

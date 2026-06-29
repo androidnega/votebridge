@@ -26,6 +26,15 @@ class IsAdminOrSuperAdmin(BasePermission):
         return role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}
 
 
+class IsElectionAdministrator(BasePermission):
+    """Election Officer (admin) — operational election management only."""
+
+    message = "Election Administrator access required."
+
+    def has_permission(self, request, view):
+        return _user_role_name(request.user) == Role.Name.ADMIN
+
+
 class CanManageUsers(BasePermission):
     """Admin and Super Admin can manage users; others can only read their own profile."""
 

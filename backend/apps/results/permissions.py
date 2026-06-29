@@ -1,16 +1,16 @@
 from rest_framework.permissions import BasePermission
 
 from apps.accounts.models import Role
-from apps.accounts.permissions import IsAdminOrSuperAdmin, IsSuperAdmin, _user_role_name
+from apps.accounts.permissions import IsElectionAdministrator, IsSuperAdmin, _user_role_name
 from apps.results.models import ElectionResult
 
 
-class CanGenerateResults(IsAdminOrSuperAdmin):
-    message = "Admin access required to generate results."
+class CanGenerateResults(IsElectionAdministrator):
+    message = "Election Administrator access required to generate results."
 
 
-class CanViewResultReports(IsAdminOrSuperAdmin):
-    message = "Admin access required to view result reports."
+class CanViewResultReports(IsElectionAdministrator):
+    message = "Election Administrator access required to view result reports."
 
 
 class CanCertifyResults(IsSuperAdmin):
@@ -26,7 +26,7 @@ class CanArchiveResults(IsSuperAdmin):
 
 
 class CanViewPublishedResults(BasePermission):
-    """Students may view published results; admins may view all non-pending states."""
+    """Students may view published results; election admins and super admins may view all states."""
 
     message = "You do not have permission to view these results."
 

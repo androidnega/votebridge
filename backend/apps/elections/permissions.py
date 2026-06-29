@@ -1,13 +1,13 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 from apps.accounts.models import Role
-from apps.accounts.permissions import _user_role_name
+from apps.accounts.permissions import IsElectionAdministrator, _user_role_name
 
 
 class CanManageElections(BasePermission):
-    """Admin and Super Admin can manage elections; authenticated users can read."""
+    """Election Administrators manage elections; authenticated users may read."""
 
-    message = "Admin or Super Admin access required to manage elections."
+    message = "Election Administrator access required to manage elections."
 
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
@@ -21,13 +21,13 @@ class CanManageElections(BasePermission):
         if action in ("list", "retrieve", None) and request.method in SAFE_METHODS:
             return True
 
-        return role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}
+        return role == Role.Name.ADMIN
 
 
 class CanManageCandidates(BasePermission):
-    """Admin and Super Admin manage candidates; others read only."""
+    """Election Administrators manage candidates; others read only."""
 
-    message = "Admin or Super Admin access required to manage candidates."
+    message = "Election Administrator access required to manage candidates."
 
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
@@ -37,7 +37,7 @@ class CanManageCandidates(BasePermission):
         if request.method in SAFE_METHODS:
             return True
 
-        return role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}
+        return role == Role.Name.ADMIN
 
 
 class CanManageVotingChannels(BasePermission):
@@ -54,7 +54,7 @@ class CanManageVotingChannels(BasePermission):
 
 
 class CanManagePositions(BasePermission):
-    message = "Admin or Super Admin access required to manage positions."
+    message = "Election Administrator access required to manage positions."
 
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
@@ -63,11 +63,11 @@ class CanManagePositions(BasePermission):
         role = _user_role_name(request.user)
         if request.method in SAFE_METHODS:
             return True
-        return role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}
+        return role == Role.Name.ADMIN
 
 
 class CanManageVoterEligibility(BasePermission):
-    message = "Admin or Super Admin access required to manage voter eligibility."
+    message = "Election Administrator access required to manage voter eligibility."
 
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
@@ -76,4 +76,8 @@ class CanManageVoterEligibility(BasePermission):
         role = _user_role_name(request.user)
         if request.method in SAFE_METHODS:
             return role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}
-        return role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}
+        return role == Role.Name.ADMIN
+
+
+# Re-export for convenience in other apps
+IsElectionOfficer = IsElectionAdministrator

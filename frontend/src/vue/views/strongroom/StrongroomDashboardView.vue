@@ -13,7 +13,7 @@ const strongroomStore = useStrongroomStore();
 
 onMounted(() => {
   strongroomStore.fetchElections().catch(() => {});
-  if (authStore.isAdmin) {
+  if (authStore.isSuperAdmin) {
     strongroomStore.connectRealtime();
   }
 });
@@ -30,7 +30,7 @@ onUnmounted(() => {
         <div class="flex flex-wrap items-center gap-3">
           <h2 class="text-2xl font-bold text-slate-900">Strong room overview</h2>
           <ConnectionStatusIndicator
-            v-if="authStore.isAdmin"
+            v-if="authStore.isSuperAdmin"
             :status="strongroomStore.realtimeStatus"
           />
         </div>

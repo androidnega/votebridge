@@ -1,4 +1,4 @@
-/** Primary sidebar navigation — Phase 25 election workspace UX. */
+/** Primary sidebar navigation — Phase 29 governance separation. */
 
 const studentNav = [
   { name: "Dashboard", to: "/", icon: "home" },
@@ -17,7 +17,6 @@ const adminNav = [
 
 const superAdminNav = [
   { name: "Dashboard", to: "/", icon: "home" },
-  { name: "Election workspace", to: "/elections", icon: "elections" },
   { name: "Results", to: "/results", icon: "results" },
   { name: "Reports", to: "/reports", icon: "analytics" },
   { name: "Strong room", to: "/strongroom", icon: "strongroom", roles: ["super_admin"] },

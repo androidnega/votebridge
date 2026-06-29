@@ -21,7 +21,7 @@ const dashboard = computed(() => strongroomStore.dashboard);
 
 onMounted(() => {
   strongroomStore.fetchDashboard(electionUuid.value).catch(() => {});
-  if (authStore.isAdmin) {
+  if (authStore.isSuperAdmin) {
     strongroomStore.connectRealtime();
   }
 });
@@ -66,7 +66,7 @@ async function lockElection() {
         />
       </section>
 
-      <section v-if="authStore.isAdmin" class="flex flex-wrap gap-2">
+      <section v-if="authStore.isSuperAdmin" class="flex flex-wrap gap-2">
         <VButton :loading="strongroomStore.actionLoading" @click="runVerification">
           Run integrity verification
         </VButton>
