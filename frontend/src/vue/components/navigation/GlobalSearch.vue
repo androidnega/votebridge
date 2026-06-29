@@ -16,31 +16,18 @@ const searchItems = computed(() => {
   const role = authStore.role;
   const items = [
     { label: "Overview", to: "/", keywords: "dashboard home" },
-    { label: "Elections", to: "/elections", keywords: "vote ballot create" },
-    { label: "Results", to: "/results", keywords: "outcome standings" },
+    { label: "Election workspace", to: "/elections", keywords: "vote ballot create positions candidates" },
+    { label: "Results", to: "/results", keywords: "outcome standings certify publish" },
+    { label: "Reports", to: "/reports", keywords: "turnout participation export" },
     { label: "Profile", to: "/profile", keywords: "account settings" },
     { label: "Notifications", to: "/notifications", keywords: "alerts messages" },
   ];
 
-  if (["admin", "super_admin"].includes(role)) {
-    items.push(
-      { label: "Candidates", to: "/election-management/candidates", keywords: "nominees" },
-      { label: "Positions", to: "/election-management/positions", keywords: "ballot roles" },
-      { label: "Voter eligibility", to: "/election-management/eligibility", keywords: "voters register" },
-      { label: "Reports", to: "/reports", keywords: "analytics turnout participation export" },
-      { label: "Operations health", to: "/operations/health", keywords: "monitor system" },
-      { label: "Communications", to: "/communications", keywords: "sms email templates" },
-      { label: "USSD", to: "/ussd", keywords: "mobile phone voting channel" }
-    );
-  }
-
   if (role === "super_admin") {
     items.push(
-      { label: "Strong room", to: "/strongroom", keywords: "integrity seal custody fraud audit" },
-      { label: "Settings", to: "/settings", keywords: "configuration institution providers" },
-      { label: "Voting channels", to: "/settings/voting-channels", keywords: "web ussd sms" },
-      { label: "Certification queue", to: "/strongroom/certification", keywords: "results certify" },
-      { label: "Audit trail", to: "/strongroom/audit", keywords: "platform logs" }
+      { label: "Strong room", to: "/strongroom", keywords: "integrity investigation fraud audit" },
+      { label: "Certification", to: "/results/certification", keywords: "certify results" },
+      { label: "Settings", to: "/settings", keywords: "configuration institution voting security" }
     );
   }
 
@@ -77,7 +64,6 @@ function navigate(item) {
 
 function onKeydown(event) {
   if (!open.value) return;
-
   if (event.key === "ArrowDown") {
     event.preventDefault();
     selectedIndex.value = Math.min(selectedIndex.value + 1, filtered.value.length - 1);
@@ -100,23 +86,15 @@ function onGlobalKeydown(event) {
   }
 }
 
-onMounted(() => {
-  document.addEventListener("keydown", onGlobalKeydown);
-});
-
-onUnmounted(() => {
-  document.removeEventListener("keydown", onGlobalKeydown);
-});
+onMounted(() => document.addEventListener("keydown", onGlobalKeydown));
+onUnmounted(() => document.removeEventListener("keydown", onGlobalKeydown));
 </script>
 
 <template>
   <div class="relative hidden sm:block">
     <label class="sr-only" for="global-search">Search pages</label>
     <div class="relative">
-      <VIcon
-        name="search"
-        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400"
-      />
+      <VIcon name="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
       <input
         id="global-search"
         ref="searchRef"
@@ -130,19 +108,12 @@ onUnmounted(() => {
         @keydown="onKeydown"
       />
     </div>
-
     <div
       v-if="open && filtered.length"
       class="absolute right-0 z-50 mt-2 w-72 overflow-hidden rounded-xl border border-border bg-surface shadow-lg lg:w-80"
-      role="listbox"
     >
       <ul>
-        <li
-          v-for="(item, index) in filtered"
-          :key="item.to"
-          role="option"
-          :aria-selected="index === selectedIndex"
-        >
+        <li v-for="(item, index) in filtered" :key="item.to">
           <button
             type="button"
             class="flex w-full items-center px-4 py-2.5 text-left text-sm transition"

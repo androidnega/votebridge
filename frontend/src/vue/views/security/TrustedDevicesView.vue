@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
+import { useRoute } from "vue-router";
 import CurrentDeviceCard from "@/components/trusted-devices/CurrentDeviceCard.vue";
 import DeviceRenameDialog from "@/components/trusted-devices/DeviceRenameDialog.vue";
 import {
@@ -20,6 +21,18 @@ import { useAuthStore } from "@/stores/auth";
 const store = useTrustedDevicesStore();
 const auth = useAuthStore();
 const toast = useToast();
+const route = useRoute();
+
+const isStrongroom = computed(() => route.path.startsWith("/strongroom"));
+const breadcrumbs = computed(() =>
+  isStrongroom.value
+    ? [
+        { label: "Strong room", to: "/strongroom" },
+        { label: "Investigations", to: "/strongroom/investigations" },
+        { label: "Trusted devices" },
+      ]
+    : [{ label: "Security", to: "/security" }, { label: "Trusted devices" }]
+);
 
 const renameOpen = ref(false);
 const revokeOpen = ref(false);
@@ -111,7 +124,7 @@ async function handleForceReverify() {
     <PageHeader
       title="Trusted devices"
       subtitle="Manage browsers recognized for streamlined administrator sign-in."
-      :breadcrumbs="[{ label: 'Security', to: '/security' }, { label: 'Trusted devices' }]"
+      :breadcrumbs="breadcrumbs"
     />
 
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

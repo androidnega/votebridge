@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onMounted, onUnmounted } from "vue";
+import { computed, onMounted, onUnmounted, watch } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
-import { PageHeader } from "@/components/ui";
+import { ModuleNav, PageHeader } from "@/components/ui";
+import { getElectionWorkspaceNav } from "@/config/electionWorkspaceNav";
 import { useAuthStore } from "@/stores/auth";
 import { useElectionStore } from "@/stores/election";
 import { useVotingStore } from "@/stores/voting";
@@ -14,7 +15,7 @@ const votingStore = useVotingStore();
 const electionUuid = computed(() => route.params.uuid);
 
 const electionTitle = computed(
-  () => electionStore.currentElection?.title || "Election Workspace"
+  () => electionStore.currentElection?.title || "Election workspace"
 );
 
 const liveStatus = computed(
@@ -26,35 +27,35 @@ const canVote = computed(() => {
   return ["open", "paused"].includes(liveStatus.value);
 });
 
-const tabs = computed(() => {
+const adminTabs = computed(() => {
+  if (!authStore.isAdmin) return [];
+  return getElectionWorkspaceNav(electionUuid.value, liveStatus.value);
+});
+
+const studentTabs = computed(() => {
+  if (!authStore.isStudent && !authStore.isCandidate) return [];
   const uuid = electionUuid.value;
-  if (!uuid) return [];
   return [
-    { label: "Overview", to: `/elections/${uuid}`, name: "election-detail" },
-    {
-      label: "Vote",
-      to: `/elections/${uuid}/vote`,
-      name: "election-vote",
-      disabled: !canVote.value,
-    },
-    {
-      label: "Confirmation",
-      to: `/elections/${uuid}/confirmation`,
-      name: "election-confirmation",
-      disabled: !authStore.isStudent,
-    },
+    { label: "Overview", to: `/elections/${uuid}`, exact: true },
+    { label: "Vote", to: `/elections/${uuid}/vote`, disabled: !canVote.value },
+    { label: "Confirmation", to: `/elections/${uuid}/confirmation` },
   ];
 });
 
-function isActiveTab(tab) {
-  return route.name === tab.name;
+const breadcrumbs = computed(() => {
+  const root = authStore.isAdmin
+    ? [{ label: "Election workspace", to: "/elections" }]
+    : [{ label: "Elections", to: "/elections" }];
+  return [...root, { label: electionTitle.value }];
+});
+
+async function loadElection() {
+  if (!electionUuid.value) return;
+  await electionStore.fetchElection(electionUuid.value).catch(() => {});
 }
 
-onMounted(() => {
-  if (electionUuid.value) {
-    electionStore.fetchElection(electionUuid.value).catch(() => {});
-  }
-});
+onMounted(loadElection);
+watch(electionUuid, loadElection);
 
 onUnmounted(() => {
   electionStore.clearCurrent();
@@ -64,32 +65,33 @@ onUnmounted(() => {
 
 <template>
   <div class="min-h-screen bg-surface-muted">
-    <header class="border-b border-border bg-white shadow-sm">
+    <header class="border-b border-border bg-surface shadow-sm">
       <div class="mx-auto max-w-content px-4 py-4 sm:px-page">
-        <PageHeader
-          :title="electionTitle"
-          :breadcrumbs="[
-            { label: 'Elections', to: '/elections' },
-            { label: electionTitle },
-          ]"
+        <PageHeader :title="electionTitle" :breadcrumbs="breadcrumbs" />
+
+        <ModuleNav
+          v-if="adminTabs.length"
+          class="mt-4"
+          :items="adminTabs"
+          aria-label="Election workspace"
         />
 
         <nav
-          v-if="tabs.length"
+          v-else-if="studentTabs.length"
           class="mt-4 flex flex-wrap gap-2"
           aria-label="Election sections"
         >
           <RouterLink
-            v-for="tab in tabs"
+            v-for="tab in studentTabs"
             :key="tab.to"
             :to="tab.disabled ? route.path : tab.to"
             class="inline-flex min-h-touch items-center rounded-input px-3 py-2 text-sm font-medium transition duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
             :class="
-              isActiveTab(tab)
+              route.path === tab.to || (tab.exact && route.path === tab.to)
                 ? 'bg-brand-600 text-white'
                 : tab.disabled
                   ? 'cursor-not-allowed bg-surface-muted text-slate-400'
-                  : 'bg-white text-slate-700 ring-1 ring-border hover:bg-surface-muted'
+                  : 'bg-surface text-slate-700 ring-1 ring-border hover:bg-surface-muted'
             "
             :aria-disabled="tab.disabled ? 'true' : undefined"
           >

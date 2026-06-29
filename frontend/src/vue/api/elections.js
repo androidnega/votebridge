@@ -120,4 +120,44 @@ export const electionsApi = {
       .patch(`/elections/${electionUuid}/eligibility/${recordUuid}/`, payload)
       .then(unwrapResponse);
   },
+
+  deleteEligibility(electionUuid, recordUuid) {
+    return apiClient.delete(`/elections/${electionUuid}/eligibility/${recordUuid}/`);
+  },
+
+  bulkEligibility(electionUuid, payload) {
+    return apiClient
+      .post(`/elections/${electionUuid}/eligibility/bulk/`, payload)
+      .then(unwrapResponse);
+  },
+
+  createCandidateWithImage(electionUuid, payload, imageFile) {
+    const form = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        form.append(key, value);
+      }
+    });
+    if (imageFile) form.append("image", imageFile);
+    return apiClient
+      .post(`/elections/${electionUuid}/candidates/`, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then(unwrapResponse);
+  },
+
+  updateCandidateWithImage(electionUuid, candidateUuid, payload, imageFile) {
+    const form = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== "") {
+        form.append(key, value);
+      }
+    });
+    if (imageFile) form.append("image", imageFile);
+    return apiClient
+      .patch(`/elections/${electionUuid}/candidates/${candidateUuid}/`, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then(unwrapResponse);
+  },
 };

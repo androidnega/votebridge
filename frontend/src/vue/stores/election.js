@@ -14,6 +14,7 @@ export const useElectionStore = defineStore("election", {
     loading: false,
     readinessLoading: false,
     actionLoading: false,
+    pendingLifecycleAction: null,
     error: null,
   }),
 
@@ -102,6 +103,60 @@ export const useElectionStore = defineStore("election", {
         const election = await electionsApi.create(payload);
         this.elections = [election, ...this.elections];
         return election;
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw error;
+      } finally {
+        this.actionLoading = false;
+      }
+    },
+
+    async updateElection(uuid, payload) {
+      this.actionLoading = true;
+      this.error = null;
+      try {
+        const election = await electionsApi.update(uuid, payload);
+        this.currentElection = election;
+        return election;
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw error;
+      } finally {
+        this.actionLoading = false;
+      }
+    },
+
+    async scheduleElection(uuid) {
+      return this._lifecycle(uuid, () => electionsApi.schedule(uuid));
+    },
+
+    async pauseElection(uuid) {
+      return this._lifecycle(uuid, () => electionsApi.pause(uuid));
+    },
+
+    async closeElection(uuid) {
+      return this._lifecycle(uuid, () => electionsApi.close(uuid));
+    },
+
+    async archiveElection(uuid) {
+      return this._lifecycle(uuid, () => electionsApi.archive(uuid));
+    },
+
+    setPendingLifecycleAction(action) {
+      this.pendingLifecycleAction = action;
+    },
+
+    clearPendingLifecycleAction() {
+      this.pendingLifecycleAction = null;
+    },
+
+    async _lifecycle(uuid, fn) {
+      this.actionLoading = true;
+      this.error = null;
+      try {
+        this.currentElection = await fn();
+        this.readinessReport = null;
+        return this.currentElection;
       } catch (error) {
         this.error = extractApiError(error);
         throw error;

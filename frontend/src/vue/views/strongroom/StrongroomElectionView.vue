@@ -83,7 +83,13 @@ async function lockElection() {
           variant="secondary"
           @click="router.push({ path: '/verify', query: { election: electionUuid, hash: dashboard.verification_hash } })"
         >
-          Public verify
+          Export verification
+        </VButton>
+        <VButton variant="secondary" @click="router.push('/reports/export')">
+          Export reports
+        </VButton>
+        <VButton variant="secondary" @click="router.push({ name: 'strongroom-audit' })">
+          View audit trail
         </VButton>
       </section>
 

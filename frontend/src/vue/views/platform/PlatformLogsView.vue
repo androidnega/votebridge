@@ -2,11 +2,9 @@
 import { computed, onMounted, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { DeliveryLogTable } from "@/components/communications";
-import { platformLogsNav } from "@/config/moduleNav";
 import {
   EmptyState,
   LoadingSkeleton,
-  ModuleNav,
   PageHeader,
   VAlert,
   VButton,
@@ -98,6 +96,18 @@ const tabError = computed(() => {
   return ussdStore.error;
 });
 
+const isStrongroomAudit = computed(() => route.name === "strongroom-audit");
+const pageTitle = computed(() => (isStrongroomAudit.value ? "Audit trail" : "Platform logs"));
+const breadcrumbs = computed(() =>
+  isStrongroomAudit.value
+    ? [
+        { label: "Strong room", to: "/strongroom" },
+        { label: "Investigations", to: "/strongroom/investigations" },
+        { label: "Audit trail" },
+      ]
+    : [{ label: "Overview", to: "/" }, { label: "Platform logs" }]
+);
+
 onMounted(() => loadTab());
 watch(activeTab, (tab) => loadTab(tab));
 </script>
@@ -105,12 +115,10 @@ watch(activeTab, (tab) => loadTab(tab));
 <template>
   <div class="vb-page">
     <PageHeader
-      title="Platform logs"
+      :title="pageTitle"
       subtitle="Operations audit, communications delivery, and USSD activity in one place."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Platform logs' }]"
+      :breadcrumbs="breadcrumbs"
     />
-
-    <ModuleNav :items="platformLogsNav" aria-label="Platform logs navigation" />
 
     <div
       class="flex flex-wrap gap-2 border-b border-border pb-4"

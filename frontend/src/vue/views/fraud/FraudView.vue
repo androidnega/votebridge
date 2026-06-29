@@ -1,10 +1,23 @@
 <script setup>
-import { onMounted, onUnmounted } from "vue";
+import { computed, onMounted, onUnmounted } from "vue";
+import { useRoute } from "vue-router";
 import { LiveFraudFeed, StatCard } from "@/components/dashboard";
 import { LoadingSkeleton, PageHeader, VAlert } from "@/components/ui";
 import { useFraudStore } from "@/stores/fraud";
 
+const route = useRoute();
 const fraudStore = useFraudStore();
+
+const isStrongroom = computed(() => route.path.startsWith("/strongroom"));
+const breadcrumbs = computed(() =>
+  isStrongroom.value
+    ? [
+        { label: "Strong room", to: "/strongroom" },
+        { label: "Investigations", to: "/strongroom/investigations" },
+        { label: "Fraud" },
+      ]
+    : [{ label: "Overview", to: "/" }, { label: "Fraud" }]
+);
 
 onMounted(() => {
   fraudStore.fetchIntegrityReport().catch(() => {});
@@ -20,9 +33,9 @@ onUnmounted(() => {
 <template>
   <div class="vb-page">
     <PageHeader
-      title="Fraud Dashboard"
-      subtitle="Live fraud investigations and integrity metrics."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Fraud' }]"
+      title="Fraud investigation"
+      subtitle="Live fraud cases and integrity signals."
+      :breadcrumbs="breadcrumbs"
     />
 
     <VAlert v-if="fraudStore.error" variant="error">{{ fraudStore.error }}</VAlert>

@@ -1,10 +1,26 @@
 <script setup>
-import { onMounted } from "vue";
+import { computed, onMounted } from "vue";
+import { useRoute } from "vue-router";
 import BiometricStatusCard from "@/components/biometrics/BiometricStatusCard.vue";
 import { EmptyState, LoadingSkeleton, PageHeader, VAlert, VTable } from "@/components/ui";
 import { useBiometricsStore } from "@/stores/biometrics";
 
+const route = useRoute();
 const store = useBiometricsStore();
+
+const isStrongroom = computed(() => route.path.startsWith("/strongroom"));
+const breadcrumbs = computed(() =>
+  isStrongroom.value
+    ? [
+        { label: "Strong room", to: "/strongroom" },
+        { label: "Investigations", to: "/strongroom/investigations" },
+        { label: "Identity investigations" },
+      ]
+    : [
+        { label: "Security", to: "/security" },
+        { label: "Biometric history" },
+      ]
+);
 
 onMounted(async () => {
   await Promise.all([store.fetchStatus(), store.fetchHistory()]);
@@ -22,11 +38,8 @@ const columns = [
 <template>
   <div class="vb-page">
     <PageHeader
-      title="Biometric history"
-      :breadcrumbs="[
-        { label: 'Security', to: '/security' },
-        { label: 'Biometric history' },
-      ]"
+      :title="isStrongroom ? 'Identity investigations' : 'Biometric history'"
+      :breadcrumbs="breadcrumbs"
     />
 
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

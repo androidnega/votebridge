@@ -1,4 +1,4 @@
-/** In-page module navigation — Phase 23 consolidated workspaces. */
+/** In-page module navigation — Phase 25 consolidated workspaces. */
 
 export const resultsNav = [
   { label: "Overview", to: "/results", exact: true },
@@ -7,89 +7,71 @@ export const resultsNav = [
   { label: "Archive", to: "/results/archive", roles: ["super_admin"] },
 ];
 
-export const electionManagementNav = [
-  { label: "Elections", to: "/elections", exact: true },
-  { label: "Candidates", to: "/election-management/candidates" },
-  { label: "Positions", to: "/election-management/positions" },
-  { label: "Voter eligibility", to: "/election-management/eligibility" },
-];
-
 export const reportsNav = [
   { label: "Overview", to: "/reports", exact: true },
   { label: "Participation", to: "/reports/participation" },
-  { label: "Turnout", to: "/reports/turnout" },
-  { label: "Results", to: "/reports/results" },
+  { label: "Turnout & results", to: "/reports/turnout" },
   { label: "Historical trends", to: "/reports/historical" },
-  { label: "Export reports", to: "/reports/export" },
+  { label: "Export", to: "/reports/export" },
 ];
 
-/** Advanced analytics — drill-down from Reports overview. */
 export const reportsAdvancedNav = [
-  { label: "Students", to: "/analytics/students" },
-  { label: "Departments", to: "/analytics/departments" },
-  { label: "Faculties", to: "/analytics/faculties" },
-  { label: "Programmes", to: "/analytics/programmes" },
-  { label: "Security", to: "/analytics/security" },
-  { label: "Fraud", to: "/analytics/fraud" },
-  { label: "Operations", to: "/analytics/operations" },
-  { label: "Communications", to: "/analytics/communications" },
-  { label: "USSD", to: "/analytics/ussd" },
-  { label: "Strong room", to: "/analytics/strongroom" },
+  { label: "By students", to: "/reports/explore/students" },
+  { label: "By departments", to: "/reports/explore/departments" },
+  { label: "By faculties", to: "/reports/explore/faculties" },
+  { label: "By programmes", to: "/reports/explore/programmes" },
+  { label: "Security", to: "/reports/explore/security" },
+  { label: "Fraud", to: "/reports/explore/fraud" },
+  { label: "Communications", to: "/reports/explore/communications" },
+  { label: "USSD", to: "/reports/explore/ussd" },
 ];
 
 export const strongRoomNav = [
-  { label: "Vote integrity", to: "/strongroom", exact: true },
-  { label: "Certification", to: "/strongroom/certification", roles: ["super_admin"] },
-  { label: "Audit trail", to: "/strongroom/audit" },
-  { label: "Fraud investigation", to: "/strongroom/fraud" },
-  { label: "Chain of custody", to: "/strongroom/custody" },
-  { label: "Identity assurance", to: "/strongroom/identity" },
-  { label: "Trusted devices", to: "/strongroom/trusted-devices" },
-  { label: "Security timeline", to: "/strongroom/security" },
-  { label: "Evidence export", to: "/strongroom/export" },
+  { label: "Overview", to: "/strongroom", exact: true },
+  { label: "Certification", to: "/results/certification", roles: ["super_admin"] },
+  { label: "Investigations", to: "/strongroom/investigations" },
+  { label: "Election integrity", to: "/strongroom/integrity" },
+];
+
+export const strongRoomInvestigationsNav = [
+  { label: "Fraud", to: "/strongroom/investigations/fraud", exact: true },
+  { label: "Audit trail", to: "/strongroom/investigations/audit" },
+  { label: "Security timeline", to: "/strongroom/investigations/security" },
+  { label: "Identity investigations", to: "/strongroom/investigations/identity" },
+  { label: "Trusted devices", to: "/strongroom/investigations/trusted-devices" },
+];
+
+export const strongRoomIntegrityNav = [
+  { label: "Overview", to: "/strongroom/integrity", exact: true },
+  { label: "Chain of custody", to: "/strongroom/integrity/custody" },
 ];
 
 export const settingsNav = [
   { label: "Overview", to: "/settings", exact: true },
-  { label: "Institution", to: "/settings/institution" },
-  { label: "Authentication", to: "/settings/authentication" },
-  { label: "Communication providers", to: "/settings/providers" },
-  { label: "Voting channels", to: "/settings/voting-channels" },
-  { label: "Maintenance", to: "/settings/maintenance" },
-  { label: "Feature flags", to: "/settings/feature-flags" },
-  { label: "Backup", to: "/settings/backup" },
-  { label: "System configuration", to: "/settings/system" },
-  { label: "Identity assurance", to: "/settings/identity-assurance" },
-  { label: "Security policies", to: "/settings/security" },
-  { label: "API & integrations", to: "/settings/api" },
+  { label: "Institution", to: "/settings/institution-hub" },
+  { label: "Voting", to: "/settings/voting-hub" },
+  { label: "Security", to: "/settings/security-hub" },
+  { label: "Advanced", to: "/settings/advanced-hub" },
 ];
 
-/** Legacy nav exports — kept for backward-compatible deep links. */
 export const analyticsNav = reportsNav;
 export const systemControlNav = settingsNav;
+export const electionManagementNav = [];
+
 export const communicationsNav = [
   { label: "Overview", to: "/communications", exact: true },
   { label: "Templates", to: "/communications/templates" },
   { label: "Providers", to: "/communications/providers" },
-  { label: "Platform logs", to: "/platform/logs?tab=communications" },
 ];
 export const ussdNav = [
   { label: "Dashboard", to: "/ussd", exact: true },
   { label: "Sessions", to: "/ussd/sessions" },
-  { label: "Platform logs", to: "/platform/logs?tab=ussd" },
 ];
 export const operationsNav = [
   { label: "Overview", to: "/operations", exact: true },
   { label: "Live activity", to: "/operations/activity" },
   { label: "Election monitor", to: "/operations/elections" },
   { label: "System health", to: "/operations/health" },
-  { label: "Platform logs", to: "/platform/logs?tab=operations" },
-];
-export const platformLogsNav = [
-  { label: "All logs", to: "/platform/logs", exact: true },
-  { label: "Operations", to: "/platform/logs?tab=operations" },
-  { label: "Communications", to: "/platform/logs?tab=communications" },
-  { label: "USSD", to: "/platform/logs?tab=ussd" },
 ];
 
 export function filterNavByRole(items, role) {

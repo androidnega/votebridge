@@ -1,10 +1,23 @@
 <script setup>
-import { onMounted, onUnmounted } from "vue";
+import { computed, onMounted, onUnmounted } from "vue";
+import { useRoute } from "vue-router";
 import { LiveSecurityFeed, StatCard } from "@/components/dashboard";
 import { LoadingSkeleton, PageHeader, VAlert } from "@/components/ui";
 import { useSecurityStore } from "@/stores/security";
 
+const route = useRoute();
 const securityStore = useSecurityStore();
+
+const isStrongroom = computed(() => route.path.startsWith("/strongroom"));
+const breadcrumbs = computed(() =>
+  isStrongroom.value
+    ? [
+        { label: "Strong room", to: "/strongroom" },
+        { label: "Investigations", to: "/strongroom/investigations" },
+        { label: "Security timeline" },
+      ]
+    : [{ label: "Overview", to: "/" }, { label: "Security" }]
+);
 
 onMounted(() => {
   securityStore.fetchSummary().catch(() => {});
@@ -20,9 +33,9 @@ onUnmounted(() => {
 <template>
   <div class="vb-page">
     <PageHeader
-      title="Security Center"
+      title="Security timeline"
       subtitle="Live security alerts and monitoring activity."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Security' }]"
+      :breadcrumbs="breadcrumbs"
     />
 
     <VAlert v-if="securityStore.error" variant="error">{{ securityStore.error }}</VAlert>

@@ -20,10 +20,8 @@ const visibleItems = computed(() => getSidebarNav(authStore.role));
 
 function isActive(item) {
   if (item.to === "/") return route.path === "/";
-  if (item.key === "election-management") {
-    return (
-      route.path.startsWith("/elections") || route.path.startsWith("/election-management")
-    );
+  if (item.to === "/elections") {
+    return route.path.startsWith("/elections") || route.path.startsWith("/election-management");
   }
   if (item.to === "/reports") {
     return route.path.startsWith("/reports") || route.path.startsWith("/analytics");

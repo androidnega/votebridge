@@ -27,7 +27,7 @@ onUnmounted(() => {
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <div class="flex flex-wrap items-center gap-3">
-          <h2 class="text-2xl font-bold text-slate-900">Strongroom dashboard</h2>
+          <h2 class="text-2xl font-bold text-slate-900">Strong room overview</h2>
           <ConnectionStatusIndicator
             v-if="authStore.isAdmin"
             :status="strongroomStore.realtimeStatus"

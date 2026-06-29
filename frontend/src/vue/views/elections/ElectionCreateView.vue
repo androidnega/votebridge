@@ -2,20 +2,16 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import {
-  ModuleNav,
   PageHeader,
   VAlert,
   VButton,
   VCard,
   VInput,
 } from "@/components/ui";
-import { electionManagementNav } from "@/config/moduleNav";
 import { useElectionStore } from "@/stores/election";
-import { useAuthStore } from "@/stores/auth";
 
 const router = useRouter();
 const electionStore = useElectionStore();
-const authStore = useAuthStore();
 
 const form = ref({
   title: "",
@@ -63,12 +59,10 @@ async function submit() {
       title="Create election"
       subtitle="Set up a new campus election. Positions and candidates can be added after creation."
       :breadcrumbs="[
-        { label: 'Election management', to: '/elections' },
+        { label: 'Election workspace', to: '/elections' },
         { label: 'Create' },
       ]"
     />
-
-    <ModuleNav v-if="authStore.isAdmin" :items="electionManagementNav" />
 
     <VAlert v-if="localError" variant="error">{{ localError }}</VAlert>
 

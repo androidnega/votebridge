@@ -56,7 +56,7 @@ async function completeEnrollment() {
       title="Biometric enrollment"
       :breadcrumbs="[
         { label: 'System', to: '/system-control' },
-        { label: 'Identity Assurance', to: '/system-control/identity-assurance' },
+        { label: 'Identity configuration', to: '/settings/identity-assurance' },
         { label: 'Enroll' },
       ]"
     />
