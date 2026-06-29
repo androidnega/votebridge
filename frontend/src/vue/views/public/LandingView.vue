@@ -2,9 +2,9 @@
 import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import PublicElectionPortalContent from "@/components/public/PublicElectionPortalContent.vue";
+import { VButton } from "@/components/ui";
 import { publicApi } from "@/api/public";
 import { branding } from "@/config/branding";
-import { VButton } from "@/components/ui";
 
 const router = useRouter();
 const institutionBranding = ref(null);
@@ -35,8 +35,8 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="space-y-section">
-    <section class="overflow-hidden rounded-card bg-brand-700 px-6 py-10 text-white sm:px-10 sm:py-14">
+  <div class="vb-page">
+    <section class="vb-portal-hero">
       <div class="max-w-2xl">
         <div class="flex items-center gap-3">
           <img
@@ -51,18 +51,21 @@ onMounted(async () => {
           </div>
         </div>
         <p class="mt-4 text-lg text-brand-100">{{ branding.tagline }}</p>
+        <p class="mt-2 text-sm text-brand-100/90">
+          Official election information portal — status, timeline, candidates, and verification.
+        </p>
         <div class="mt-6 flex flex-wrap gap-3">
           <VButton @click="router.push('/auth/login')">Sign in to vote</VButton>
           <VButton
             variant="secondary"
-            class="!bg-white/10 !text-white !ring-white/30 hover:!bg-white/20"
+            class="!border-white/20 !bg-white/10 !text-white hover:!bg-white/20"
             @click="router.push('/observe')"
           >
             Observer portal
           </VButton>
           <VButton
             variant="secondary"
-            class="!bg-white/10 !text-white !ring-white/30 hover:!bg-white/20"
+            class="!border-white/20 !bg-white/10 !text-white hover:!bg-white/20"
             @click="router.push('/verify')"
           >
             Verify results
@@ -74,19 +77,19 @@ onMounted(async () => {
     <PublicElectionPortalContent />
 
     <section class="grid gap-4 md:grid-cols-3">
-      <article class="rounded-card border border-border bg-surface p-card shadow-sm">
+      <article class="vb-surface-panel">
         <h3 class="font-semibold text-slate-900">Secure voting</h3>
         <p class="mt-2 text-sm text-slate-600">
           Ballots are encrypted end-to-end. Candidate rankings stay hidden while voting is open.
         </p>
       </article>
-      <article class="rounded-card border border-border bg-surface p-card shadow-sm">
+      <article class="vb-surface-panel">
         <h3 class="font-semibold text-slate-900">Automated results</h3>
         <p class="mt-2 text-sm text-slate-600">
           Results are generated when voting closes, then certified before publication.
         </p>
       </article>
-      <article class="rounded-card border border-border bg-surface p-card shadow-sm">
+      <article class="vb-surface-panel">
         <h3 class="font-semibold text-slate-900">Strong-room integrity</h3>
         <p class="mt-2 text-sm text-slate-600">
           Cryptographic verification supports independent audit of published outcomes.
@@ -94,8 +97,8 @@ onMounted(async () => {
       </article>
     </section>
 
-    <section class="rounded-card border border-border bg-surface p-card shadow-sm">
-      <h2 class="text-lg font-semibold text-slate-900">Platform security</h2>
+    <section class="vb-surface-panel">
+      <h2 class="vb-section-title">Platform security</h2>
       <ul class="mt-3 space-y-2 text-sm text-slate-600">
         <li>Separation of duties between election officers and electoral commissioners</li>
         <li>Trusted device registration and risk-based authentication</li>
@@ -104,8 +107,8 @@ onMounted(async () => {
       </ul>
     </section>
 
-    <section class="rounded-card border border-border bg-surface p-card shadow-sm">
-      <h2 class="text-lg font-semibold text-slate-900">Frequently asked questions</h2>
+    <section class="vb-surface-panel">
+      <h2 class="vb-section-title">Frequently asked questions</h2>
       <dl class="mt-4 space-y-4">
         <div v-for="item in faqs" :key="item.q">
           <dt class="font-medium text-slate-800">{{ item.q }}</dt>
@@ -115,7 +118,7 @@ onMounted(async () => {
     </section>
 
     <section class="rounded-card bg-surface-muted p-card text-center">
-      <h2 class="text-lg font-semibold text-slate-900">Need help?</h2>
+      <h2 class="vb-section-title">Need help?</h2>
       <p class="mt-2 text-sm text-slate-600">
         Contact the Electoral Commission office at
         <a class="text-brand-700 underline" :href="`mailto:${branding.electionOfficeEmail}`">{{ branding.electionOfficeEmail }}</a>

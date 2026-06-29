@@ -36,7 +36,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-8">
+  <div class="vb-page">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
         <div class="flex flex-wrap items-center gap-3">

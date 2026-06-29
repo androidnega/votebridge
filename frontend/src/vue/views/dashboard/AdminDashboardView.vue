@@ -10,7 +10,8 @@ import {
   LoadingSkeleton,
   StatCard,
 } from "@/components/dashboard";
-import { VAlert, VButton, VCard } from "@/components/ui";
+import { ElectionContextBanner } from "@/components/elections";
+import { VAlert, VButton, VCard, PageHeader } from "@/components/ui";
 import { emptyStates } from "@/config/emptyStates";
 import { useDashboardRealtime } from "@/composables/useDashboardRealtime";
 import { useDashboardStore } from "@/stores/dashboard";
@@ -23,7 +24,29 @@ const realtime = useDashboardRealtime("admin");
 
 const overview = computed(() => dashboardStore.adminOverview || {});
 const alertSummary = computed(() => overview.value.security_alerts || {});
-const pendingCertification = computed(() => resultsStore.certificationQueue?.length ?? 0);
+
+const primaryElection = computed(() => dashboardStore.openElectionsList[0] || null);
+
+const electionHealthLevel = computed(() => {
+  if (alertSummary.value.open > 0) return "critical";
+  const status = primaryElection.value?.status || primaryElection.value?.election_status;
+  if (status === "paused") return "attention";
+  return "healthy";
+});
+
+const nextAction = computed(() => {
+  const election = primaryElection.value;
+  if (!election) return null;
+  const uuid = election.uuid || election.election_uuid;
+  const status = election.status || election.election_status;
+  if (status === "open") {
+    return { label: "Open control room", route: `/elections/${uuid}/monitor` };
+  }
+  if (status === "paused") {
+    return { label: "Review election", route: `/elections/${uuid}` };
+  }
+  return { label: "Manage election", route: `/elections/${uuid}` };
+});
 
 const taskItems = computed(() => {
   const items = [];
@@ -33,6 +56,16 @@ const taskItems = computed(() => {
       title: `${alertSummary.value.open} security alerts`,
       description: "Review in Reports or contact the super admin.",
     });
+  }
+  if (primaryElection.value) {
+    const status = primaryElection.value.status || primaryElection.value.election_status;
+    if (status === "paused") {
+      items.push({
+        id: "paused",
+        title: "Election is paused",
+        description: "Resume voting when ready from the election workspace.",
+      });
+    }
   }
   return items;
 });
@@ -44,62 +77,69 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="space-y-8">
-    <div class="flex flex-wrap items-start justify-between gap-4">
-      <div>
-        <div class="flex flex-wrap items-center gap-3">
-          <h2 class="text-2xl font-bold text-slate-900">Election officer dashboard</h2>
-          <ConnectionStatusIndicator :status="realtime.status.value" :label="realtime.label.value" />
-        </div>
-        <p class="mt-1 text-sm text-slate-500">What you are managing right now.</p>
-      </div>
-      <div class="flex flex-wrap gap-2">
+  <div class="vb-page">
+    <PageHeader title="Election officer dashboard" subtitle="Active election context and operational health.">
+      <template #actions>
+        <ConnectionStatusIndicator :status="realtime.status.value" :label="realtime.label.value" />
         <VButton @click="router.push('/elections/create')">Create election</VButton>
-        <VButton variant="secondary" size="sm" @click="router.push('/elections')">Election workspace</VButton>
-      </div>
-    </div>
+        <VButton variant="secondary" size="sm" @click="router.push('/elections')">All elections</VButton>
+      </template>
+    </PageHeader>
 
     <VAlert v-if="dashboardStore.error" variant="error">{{ dashboardStore.error }}</VAlert>
     <LoadingSkeleton v-if="dashboardStore.loading && !dashboardStore.adminOverview" variant="stats" :rows="3" />
 
-    <section v-else class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-      <StatCard
-        label="Open elections"
-        :value="overview.active_elections ?? 0"
-        hint="Currently open or paused"
-        accent="green"
+    <template v-else>
+      <ElectionContextBanner
+        v-if="primaryElection"
+        :election="primaryElection"
+        :turnout-percentage="overview.turnout_percentage"
+        :health-level="electionHealthLevel"
+        :next-action="nextAction"
       />
-      <LiveTurnoutWidget
-        :percentage="dashboardStore.turnoutPercentage"
-        :votes-cast="dashboardStore.totalVotesCast"
-        :registered-voters="dashboardStore.registeredVoters"
-        :loading="dashboardStore.loading"
-        :live="realtime.isLive.value"
-        :status="realtime.status.value"
-      />
-      <VCard title="Tasks requiring attention" padding="compact">
-        <ul v-if="taskItems.length" class="space-y-2 text-sm text-slate-700">
-          <li v-for="item in taskItems" :key="item.id">{{ item.title }}</li>
-        </ul>
-        <p v-else class="text-sm text-slate-500">No urgent tasks — you're up to date.</p>
-      </VCard>
-    </section>
 
-    <section>
-      <h3 class="mb-4 text-lg font-semibold text-slate-900">Open elections</h3>
-      <LoadingSkeleton v-if="dashboardStore.loading" variant="card" />
-      <div v-else-if="dashboardStore.openElectionsList.length" class="grid grid-cols-1 gap-4 md:grid-cols-2">
-        <ElectionCard
-          v-for="election in dashboardStore.openElectionsList"
-          :key="election.uuid"
-          :election="election"
+      <section class="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <StatCard
+          label="Open elections"
+          :value="overview.active_elections ?? 0"
+          hint="Currently open or paused"
+          accent="green"
         />
-      </div>
-      <EmptyState v-else v-bind="emptyStates.openElections">
-        <template #action>
-          <VButton @click="router.push('/elections/create')">Create election</VButton>
-        </template>
-      </EmptyState>
-    </section>
+        <LiveTurnoutWidget
+          :percentage="dashboardStore.turnoutPercentage"
+          :votes-cast="dashboardStore.totalVotesCast"
+          :registered-voters="dashboardStore.registeredVoters"
+          :loading="dashboardStore.loading"
+          :live="realtime.isLive.value"
+          :status="realtime.status.value"
+        />
+        <VCard title="Next required actions" padding="sm">
+          <ul v-if="taskItems.length" class="space-y-3 text-sm text-slate-700">
+            <li v-for="item in taskItems" :key="item.id">
+              <p class="font-medium text-slate-900">{{ item.title }}</p>
+              <p class="mt-0.5 text-slate-500">{{ item.description }}</p>
+            </li>
+          </ul>
+          <p v-else class="text-sm text-slate-500">No urgent tasks — you're up to date.</p>
+        </VCard>
+      </section>
+
+      <section>
+        <h3 class="vb-section-title mb-4">Open elections</h3>
+        <LoadingSkeleton v-if="dashboardStore.loading" variant="card" />
+        <div v-else-if="dashboardStore.openElectionsList.length" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ElectionCard
+            v-for="election in dashboardStore.openElectionsList"
+            :key="election.uuid"
+            :election="election"
+          />
+        </div>
+        <EmptyState v-else v-bind="emptyStates.openElections">
+          <template #action>
+            <VButton @click="router.push('/elections/create')">Create election</VButton>
+          </template>
+        </EmptyState>
+      </section>
+    </template>
   </div>
 </template>

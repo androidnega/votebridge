@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { publicApi } from "@/api/public";
+import { LoadingSkeleton } from "@/components/ui";
 
 const props = defineProps({
   compact: { type: Boolean, default: false },
@@ -72,26 +73,20 @@ onUnmounted(() => {
 
 <template>
   <div class="space-y-section">
-    <section class="rounded-card border border-border bg-surface p-card shadow-sm">
+    <section class="vb-surface-panel">
       <div class="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Current election phase</p>
+          <p class="vb-caption font-semibold uppercase tracking-wide">Current election phase</p>
           <h2 class="mt-1 text-xl font-semibold text-slate-900">
             {{ portal.election?.title || "Campus elections" }}
           </h2>
         </div>
-        <span
-          class="inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset"
-          :class="phaseMeta.class"
-        >
+        <span class="vb-status-pill" :class="phaseMeta.class">
           {{ phaseMeta.badge }}
         </span>
       </div>
 
-      <div v-if="loading" class="mt-4 space-y-2">
-        <div class="h-4 w-2/3 animate-pulse rounded bg-slate-200" />
-        <div class="h-4 w-1/2 animate-pulse rounded bg-slate-200" />
-      </div>
+      <LoadingSkeleton v-if="loading" class="mt-4" variant="list" :rows="2" />
       <template v-else>
         <div v-if="portal.countdown" class="mt-4 rounded-input border border-border bg-surface-muted p-4">
           <p class="text-xs uppercase tracking-wide text-slate-500">{{ portal.countdown.label }}</p>
@@ -122,8 +117,8 @@ onUnmounted(() => {
       </template>
     </section>
 
-    <section v-if="!loading && portal.timeline.length" class="rounded-card border border-border bg-surface p-card shadow-sm">
-      <h3 class="text-lg font-semibold text-slate-900">Election timeline</h3>
+    <section v-if="!loading && portal.timeline.length" class="vb-surface-panel">
+      <h3 class="vb-section-title">Election timeline</h3>
       <ol class="mt-4 space-y-3">
         <li
           v-for="step in portal.timeline"
@@ -152,11 +147,8 @@ onUnmounted(() => {
       </ol>
     </section>
 
-    <section
-      v-if="!loading && portal.announcements.length"
-      class="rounded-card border border-border bg-surface p-card shadow-sm"
-    >
-      <h3 class="text-lg font-semibold text-slate-900">Public announcements</h3>
+    <section v-if="!loading && portal.announcements.length" class="vb-surface-panel">
+      <h3 class="vb-section-title">Public announcements</h3>
       <ul class="mt-4 space-y-3">
         <li
           v-for="(item, idx) in portal.announcements"
@@ -170,11 +162,8 @@ onUnmounted(() => {
       </ul>
     </section>
 
-    <section
-      v-if="!loading && portal.candidates.length && !compact"
-      class="rounded-card border border-border bg-surface p-card shadow-sm"
-    >
-      <h3 class="text-lg font-semibold text-slate-900">Candidates</h3>
+    <section v-if="!loading && portal.candidates.length && !compact" class="vb-surface-panel">
+      <h3 class="vb-section-title">Candidates</h3>
       <p class="mt-1 text-sm text-slate-500">Approved candidates — vote totals are hidden while voting is open.</p>
       <div class="mt-4 space-y-6">
         <div v-for="group in portal.candidates" :key="group.position_uuid">

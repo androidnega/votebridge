@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { VButton } from "@/components/ui";
+import StatusBadge from "@/components/ui/StatusBadge.vue";
 
 const props = defineProps({
   election: {
@@ -16,21 +17,8 @@ const props = defineProps({
 
 const router = useRouter();
 
-const statusClasses = computed(() => {
-  const map = {
-    draft: "bg-slate-100 text-slate-700",
-    scheduled: "bg-blue-50 text-blue-700",
-    open: "bg-green-50 text-green-700",
-    paused: "bg-amber-50 text-amber-700",
-    closed: "bg-slate-200 text-slate-700",
-    archived: "bg-slate-100 text-slate-500",
-  };
-  const status = props.election.election_status || props.election.status;
-  return map[status] || map.draft;
-});
-
-const statusLabel = computed(
-  () => props.election.election_status || props.election.status || "unknown"
+const status = computed(
+  () => props.election.election_status || props.election.status || "draft"
 );
 
 const title = computed(
@@ -58,7 +46,7 @@ function formatDate(value) {
 </script>
 
 <template>
-  <article class="flex flex-col rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-900/5 transition hover:shadow-md">
+  <article class="vb-surface-panel transition hover:shadow-md">
     <div class="flex items-start justify-between gap-3">
       <div class="min-w-0 flex-1">
         <h3 class="truncate text-base font-semibold text-slate-900">{{ title }}</h3>
@@ -67,12 +55,7 @@ function formatDate(value) {
           <span v-if="election.end_date"> — {{ formatDate(election.end_date) }}</span>
         </p>
       </div>
-      <span
-        class="inline-flex shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium capitalize"
-        :class="statusClasses"
-      >
-        {{ statusLabel }}
-      </span>
+      <StatusBadge :status="status" size="sm" />
     </div>
 
     <p

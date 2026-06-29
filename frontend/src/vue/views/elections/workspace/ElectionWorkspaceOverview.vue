@@ -101,7 +101,7 @@ onMounted(refresh);
   <div class="space-y-section">
     <VAlert v-if="electionStore.error" variant="error">{{ electionStore.error }}</VAlert>
 
-    <section class="overflow-hidden rounded-card bg-brand-800 p-card text-white shadow-card">
+    <section class="vb-election-hero">
       <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div class="min-w-0 flex-1">
           <ElectionStatusBadge :status="election.status" :label="election.status_display" size="lg" />
