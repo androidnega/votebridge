@@ -1,0 +1,3040 @@
+openapi: 3.0.3
+info:
+  title: VoteBridge API
+  version: 1.0.0-rc1
+  description: Secure campus e-voting platform — REST API v1
+paths:
+  /api/v1/accounts/auth/admin/login/:
+    post:
+      operationId: accounts_auth_admin_login_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/auth/audit-logs/:
+    get:
+      operationId: accounts_auth_audit_logs_retrieve
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/auth/login/:
+    post:
+      operationId: accounts_auth_login_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/auth/logout/:
+    post:
+      operationId: accounts_auth_logout_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/auth/otp/resend/:
+    post:
+      operationId: accounts_auth_otp_resend_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/auth/otp/verify/:
+    post:
+      operationId: accounts_auth_otp_verify_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/auth/sessions/:
+    get:
+      operationId: accounts_auth_sessions_retrieve
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/auth/sessions/{uuid}/revoke/:
+    post:
+      operationId: accounts_auth_sessions_revoke_create
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/auth/student/login/:
+    post:
+      operationId: accounts_auth_student_login_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/auth/super-admin/login/:
+    post:
+      operationId: accounts_auth_super_admin_login_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/auth/token/refresh/:
+    post:
+      operationId: accounts_auth_token_refresh_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/roles/:
+    get:
+      operationId: accounts_roles_retrieve
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: accounts_roles_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: No response body
+  /api/v1/accounts/roles/{uuid}/:
+    get:
+      operationId: accounts_roles_retrieve_2
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: accounts_roles_update
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: accounts_roles_partial_update
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: accounts_roles_destroy
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/accounts/users/:
+    get:
+      operationId: accounts_users_retrieve
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: accounts_users_create
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: No response body
+  /api/v1/accounts/users/{uuid}/:
+    get:
+      operationId: accounts_users_retrieve_2
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: accounts_users_update
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: accounts_users_partial_update
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: accounts_users_destroy
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/accounts/users/{uuid}/activate/:
+    post:
+      operationId: accounts_users_activate_create
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/users/{uuid}/deactivate/:
+    post:
+      operationId: accounts_users_deactivate_create
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/users/{uuid}/status/:
+    patch:
+      operationId: accounts_users_status_partial_update
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/users/{uuid}/unverify/:
+    post:
+      operationId: accounts_users_unverify_create
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/accounts/users/{uuid}/verify/:
+    post:
+      operationId: accounts_users_verify_create
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - accounts
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/communications/:
+    get:
+      operationId: analytics_communications_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/departments/:
+    get:
+      operationId: analytics_departments_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/elections/:
+    get:
+      operationId: analytics_elections_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/elections/{election_uuid}/:
+    get:
+      operationId: analytics_elections_retrieve_2
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/faculties/:
+    get:
+      operationId: analytics_faculties_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/fraud/:
+    get:
+      operationId: analytics_fraud_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/historical/:
+    get:
+      operationId: analytics_historical_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/operations/:
+    get:
+      operationId: analytics_operations_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/overview/:
+    get:
+      operationId: analytics_overview_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/participation/:
+    get:
+      operationId: analytics_participation_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/personal/:
+    get:
+      operationId: analytics_personal_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/programmes/:
+    get:
+      operationId: analytics_programmes_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/reports/{report_type}/:
+    get:
+      operationId: analytics_reports_retrieve
+      parameters:
+      - in: path
+        name: report_type
+        schema:
+          type: string
+        required: true
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/security/:
+    get:
+      operationId: analytics_security_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/strongroom/:
+    get:
+      operationId: analytics_strongroom_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/students/:
+    get:
+      operationId: analytics_students_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/analytics/ussd/:
+    get:
+      operationId: analytics_ussd_retrieve
+      tags:
+      - analytics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/biometrics/challenge/:
+    post:
+      operationId: biometrics_challenge_create
+      tags:
+      - biometrics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/biometrics/enrollment/:
+    get:
+      operationId: biometrics_enrollment_retrieve
+      tags:
+      - biometrics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: biometrics_enrollment_create
+      tags:
+      - biometrics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/biometrics/history/:
+    get:
+      operationId: biometrics_history_retrieve
+      tags:
+      - biometrics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/biometrics/session/status/:
+    get:
+      operationId: biometrics_session_status_retrieve
+      tags:
+      - biometrics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/biometrics/session/validate/:
+    post:
+      operationId: biometrics_session_validate_create
+      tags:
+      - biometrics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/biometrics/settings/:
+    get:
+      operationId: biometrics_settings_retrieve
+      tags:
+      - biometrics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/biometrics/status/:
+    get:
+      operationId: biometrics_status_retrieve
+      tags:
+      - biometrics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/biometrics/verification/login/:
+    post:
+      operationId: biometrics_verification_login_create
+      tags:
+      - biometrics
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/biometrics/verification/step-up/:
+    post:
+      operationId: biometrics_verification_step_up_create
+      tags:
+      - biometrics
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/candidates/{uuid}/:
+    get:
+      operationId: candidates_retrieve
+      description: Candidate operations without election prefix in URL.
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - candidates
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: candidates_update
+      description: Candidate operations without election prefix in URL.
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - candidates
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: candidates_partial_update
+      description: Candidate operations without election prefix in URL.
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - candidates
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: candidates_destroy
+      description: Candidate operations without election prefix in URL.
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - candidates
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/candidates/{uuid}/approve/:
+    post:
+      operationId: candidates_approve_create
+      description: Candidate operations without election prefix in URL.
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - candidates
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/candidates/{uuid}/reject/:
+    post:
+      operationId: candidates_reject_create
+      description: Candidate operations without election prefix in URL.
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - candidates
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/dashboard/admin/:
+    get:
+      operationId: dashboard_admin_retrieve
+      tags:
+      - dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/dashboard/fraud-feed/:
+    get:
+      operationId: dashboard_fraud_feed_retrieve
+      tags:
+      - dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/dashboard/security-feed/:
+    get:
+      operationId: dashboard_security_feed_retrieve
+      tags:
+      - dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/dashboard/student/:
+    get:
+      operationId: dashboard_student_retrieve
+      tags:
+      - dashboard
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/elections/:
+    get:
+      operationId: elections_retrieve
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: elections_create
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: No response body
+  /api/v1/elections/{election_uuid}/candidates/:
+    get:
+      operationId: elections_candidates_retrieve
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: elections_candidates_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: No response body
+  /api/v1/elections/{election_uuid}/candidates/{uuid}/:
+    get:
+      operationId: elections_candidates_retrieve_2
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: elections_candidates_update
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: elections_candidates_partial_update
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: elections_candidates_destroy
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/elections/{election_uuid}/candidates/{uuid}/approve/:
+    post:
+      operationId: elections_candidates_approve_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/elections/{election_uuid}/candidates/{uuid}/reject/:
+    post:
+      operationId: elections_candidates_reject_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/elections/{election_uuid}/eligibility/:
+    get:
+      operationId: elections_eligibility_retrieve
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: elections_eligibility_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: No response body
+  /api/v1/elections/{election_uuid}/eligibility/{uuid}/:
+    get:
+      operationId: elections_eligibility_retrieve_2
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: elections_eligibility_update
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: elections_eligibility_partial_update
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: elections_eligibility_destroy
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/elections/{election_uuid}/eligibility/bulk/:
+    post:
+      operationId: elections_eligibility_bulk_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/elections/{election_uuid}/positions/:
+    get:
+      operationId: elections_positions_retrieve
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: elections_positions_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: No response body
+  /api/v1/elections/{election_uuid}/positions/{uuid}/:
+    get:
+      operationId: elections_positions_retrieve_2
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: elections_positions_update
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: elections_positions_partial_update
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: elections_positions_destroy
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/elections/{uuid}/:
+    get:
+      operationId: elections_retrieve_2
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: elections_update
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: elections_partial_update
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: elections_destroy
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/elections/{uuid}/archive/:
+    post:
+      operationId: elections_archive_create
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/elections/{uuid}/close/:
+    post:
+      operationId: elections_close_create
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/elections/{uuid}/open/:
+    post:
+      operationId: elections_open_create
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/elections/{uuid}/pause/:
+    post:
+      operationId: elections_pause_create
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/elections/{uuid}/readiness/:
+    get:
+      operationId: elections_readiness_retrieve
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/elections/{uuid}/schedule/:
+    post:
+      operationId: elections_schedule_create
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/elections/channels/:
+    get:
+      operationId: elections_channels_retrieve
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: elections_channels_create
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          description: No response body
+  /api/v1/elections/channels/{uuid}/:
+    get:
+      operationId: elections_channels_retrieve_2
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    put:
+      operationId: elections_channels_update
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: elections_channels_partial_update
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    delete:
+      operationId: elections_channels_destroy
+      parameters:
+      - in: path
+        name: uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - elections
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/fraud/alerts/:
+    get:
+      operationId: fraud_alerts_retrieve
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/alerts/{alert_id}/:
+    get:
+      operationId: fraud_alerts_retrieve_2
+      parameters:
+      - in: path
+        name: alert_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/alerts/{alert_id}/escalate/:
+    post:
+      operationId: fraud_alerts_escalate_create
+      parameters:
+      - in: path
+        name: alert_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/alerts/{alert_id}/resolve/:
+    post:
+      operationId: fraud_alerts_resolve_create
+      parameters:
+      - in: path
+        name: alert_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/alerts/{alert_id}/review/:
+    post:
+      operationId: fraud_alerts_review_create
+      parameters:
+      - in: path
+        name: alert_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/cases/:
+    get:
+      operationId: fraud_cases_retrieve
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/cases/{fraud_case_id}/:
+    get:
+      operationId: fraud_cases_retrieve_2
+      parameters:
+      - in: path
+        name: fraud_case_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/cases/{fraud_case_id}/dismiss/:
+    post:
+      operationId: fraud_cases_dismiss_create
+      parameters:
+      - in: path
+        name: fraud_case_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/cases/{fraud_case_id}/escalate/:
+    post:
+      operationId: fraud_cases_escalate_create
+      parameters:
+      - in: path
+        name: fraud_case_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/cases/{fraud_case_id}/investigate/:
+    post:
+      operationId: fraud_cases_investigate_create
+      parameters:
+      - in: path
+        name: fraud_case_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/cases/{fraud_case_id}/notes/:
+    post:
+      operationId: fraud_cases_notes_create
+      parameters:
+      - in: path
+        name: fraud_case_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/cases/{fraud_case_id}/resolve/:
+    post:
+      operationId: fraud_cases_resolve_create
+      parameters:
+      - in: path
+        name: fraud_case_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/cases/{fraud_case_id}/timeline/:
+    get:
+      operationId: fraud_cases_timeline_retrieve
+      parameters:
+      - in: path
+        name: fraud_case_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/fraud/integrity-report/:
+    get:
+      operationId: fraud_integrity_report_retrieve
+      tags:
+      - fraud
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/center/:
+    get:
+      operationId: notifications_center_retrieve
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/center/{notification_uuid}/:
+    delete:
+      operationId: notifications_center_destroy
+      parameters:
+      - in: path
+        name: notification_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/notifications/center/{notification_uuid}/archive/:
+    post:
+      operationId: notifications_center_archive_create
+      parameters:
+      - in: path
+        name: notification_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/center/{notification_uuid}/read/:
+    post:
+      operationId: notifications_center_read_create
+      parameters:
+      - in: path
+        name: notification_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/center/read-all/:
+    post:
+      operationId: notifications_center_read_all_create
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/dashboard/:
+    get:
+      operationId: notifications_dashboard_retrieve
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/deliveries/:
+    get:
+      operationId: notifications_deliveries_retrieve
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/deliveries/{log_uuid}/retry/:
+    post:
+      operationId: notifications_deliveries_retry_create
+      parameters:
+      - in: path
+        name: log_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/providers/:
+    get:
+      operationId: notifications_providers_retrieve
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/providers/{provider_uuid}/test/:
+    post:
+      operationId: notifications_providers_test_create
+      parameters:
+      - in: path
+        name: provider_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/queue/process/:
+    post:
+      operationId: notifications_queue_process_create
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/templates/:
+    get:
+      operationId: notifications_templates_retrieve
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/notifications/test/:
+    post:
+      operationId: notifications_test_create
+      tags:
+      - notifications
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/operations/activity/:
+    get:
+      operationId: operations_activity_retrieve
+      tags:
+      - operations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/operations/communications/:
+    get:
+      operationId: operations_communications_retrieve
+      tags:
+      - operations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/operations/elections/:
+    get:
+      operationId: operations_elections_retrieve
+      tags:
+      - operations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/operations/health/:
+    get:
+      operationId: operations_health_retrieve
+      tags:
+      - operations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/operations/infrastructure/:
+    get:
+      operationId: operations_infrastructure_retrieve
+      tags:
+      - operations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/operations/logs/:
+    get:
+      operationId: operations_logs_retrieve
+      tags:
+      - operations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/operations/overview/:
+    get:
+      operationId: operations_overview_retrieve
+      tags:
+      - operations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/operations/performance/:
+    get:
+      operationId: operations_performance_retrieve
+      tags:
+      - operations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/operations/queues/:
+    get:
+      operationId: operations_queues_retrieve
+      tags:
+      - operations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/operations/sessions/:
+    get:
+      operationId: operations_sessions_retrieve
+      tags:
+      - operations
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/archive-queue/:
+    get:
+      operationId: results_archive_queue_retrieve
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/certification-queue/:
+    get:
+      operationId: results_certification_queue_retrieve
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/elections/:
+    get:
+      operationId: results_elections_retrieve
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/elections/{election_uuid}/:
+    get:
+      operationId: results_elections_retrieve_2
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/elections/{election_uuid}/archive/:
+    post:
+      operationId: results_elections_archive_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/elections/{election_uuid}/certify/:
+    post:
+      operationId: results_elections_certify_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/elections/{election_uuid}/generate/:
+    post:
+      operationId: results_elections_generate_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/elections/{election_uuid}/integrity/:
+    get:
+      operationId: results_elections_integrity_retrieve
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/elections/{election_uuid}/preview/:
+    get:
+      operationId: results_elections_preview_retrieve
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/elections/{election_uuid}/publish/:
+    post:
+      operationId: results_elections_publish_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/elections/{election_uuid}/reports/{report_format}/:
+    get:
+      operationId: results_elections_reports_retrieve
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      - in: path
+        name: report_format
+        schema:
+          type: string
+        required: true
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/results/publication-queue/:
+    get:
+      operationId: results_publication_queue_retrieve
+      tags:
+      - results
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/security/elections/{election_uuid}/svt/:
+    get:
+      operationId: security_elections_svt_retrieve
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/security/elections/{election_uuid}/svt/request/:
+    post:
+      operationId: security_elections_svt_request_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/security/elections/{election_uuid}/svt/validate/:
+    post:
+      operationId: security_elections_svt_validate_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/security/monitoring/audit-logs/:
+    get:
+      operationId: security_monitoring_audit_logs_retrieve
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/security/monitoring/devices/:
+    get:
+      operationId: security_monitoring_devices_retrieve
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/security/monitoring/locations/:
+    get:
+      operationId: security_monitoring_locations_retrieve
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/security/monitoring/summary/:
+    get:
+      operationId: security_monitoring_summary_retrieve
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/security/svt/{svt_id}/reissue/:
+    post:
+      operationId: security_svt_reissue_create
+      parameters:
+      - in: path
+        name: svt_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/security/svt/{svt_id}/revoke/:
+    post:
+      operationId: security_svt_revoke_create
+      parameters:
+      - in: path
+        name: svt_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/security/svt/confirmation/:
+    post:
+      operationId: security_svt_confirmation_create
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/security/svt/verify/:
+    post:
+      operationId: security_svt_verify_create
+      tags:
+      - security
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/strongroom/elections/:
+    get:
+      operationId: strongroom_elections_retrieve
+      tags:
+      - strongroom
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/strongroom/elections/{election_uuid}/custody/:
+    get:
+      operationId: strongroom_elections_custody_retrieve
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - strongroom
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/strongroom/elections/{election_uuid}/dashboard/:
+    get:
+      operationId: strongroom_elections_dashboard_retrieve
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - strongroom
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/strongroom/elections/{election_uuid}/lock/:
+    post:
+      operationId: strongroom_elections_lock_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - strongroom
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/strongroom/elections/{election_uuid}/verify/:
+    post:
+      operationId: strongroom_elections_verify_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - strongroom
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/strongroom/public/verify/:
+    post:
+      operationId: strongroom_public_verify_create
+      tags:
+      - strongroom
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/backups/:
+    get:
+      operationId: system_backups_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: system_backups_create
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/backups/{backup_uuid}/:
+    post:
+      operationId: system_backups_create_2
+      parameters:
+      - in: path
+        name: backup_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/branding/:
+    get:
+      operationId: system_branding_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/environment/:
+    get:
+      operationId: system_environment_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/feature-flags/:
+    get:
+      operationId: system_feature_flags_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: system_feature_flags_partial_update
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/feature-flags/{key}/:
+    get:
+      operationId: system_feature_flags_retrieve_2
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: system_feature_flags_partial_update_2
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/institution/:
+    get:
+      operationId: system_institution_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: system_institution_partial_update
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/license/:
+    get:
+      operationId: system_license_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/maintenance/:
+    get:
+      operationId: system_maintenance_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/maintenance/control/:
+    get:
+      operationId: system_maintenance_control_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: system_maintenance_control_partial_update
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/overview/:
+    get:
+      operationId: system_overview_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/providers/:
+    get:
+      operationId: system_providers_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/providers/{provider_uuid}/:
+    post:
+      operationId: system_providers_create
+      parameters:
+      - in: path
+        name: provider_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: system_providers_partial_update
+      parameters:
+      - in: path
+        name: provider_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/revisions/{key}/:
+    get:
+      operationId: system_revisions_retrieve
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: system_revisions_create
+      parameters:
+      - in: path
+        name: key
+        schema:
+          type: string
+        required: true
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/runtime/:
+    get:
+      operationId: system_runtime_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/settings/{category}/:
+    get:
+      operationId: system_settings_retrieve
+      parameters:
+      - in: path
+        name: category
+        schema:
+          type: string
+        required: true
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    patch:
+      operationId: system_settings_partial_update
+      parameters:
+      - in: path
+        name: category
+        schema:
+          type: string
+        required: true
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/step-up/challenge/:
+    post:
+      operationId: system_step_up_challenge_create
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/step-up/verify/:
+    post:
+      operationId: system_step_up_verify_create
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/system/storage/:
+    get:
+      operationId: system_storage_retrieve
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: system_storage_create
+      tags:
+      - system
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/trusted-devices/:
+    get:
+      operationId: trusted_devices_retrieve
+      tags:
+      - trusted-devices
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/trusted-devices/{device_uuid}/:
+    delete:
+      operationId: trusted_devices_destroy
+      parameters:
+      - in: path
+        name: device_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - trusted-devices
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/trusted-devices/{device_uuid}/assign-university/:
+    post:
+      operationId: trusted_devices_assign_university_create
+      parameters:
+      - in: path
+        name: device_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - trusted-devices
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/trusted-devices/{device_uuid}/history/:
+    get:
+      operationId: trusted_devices_history_retrieve
+      parameters:
+      - in: path
+        name: device_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - trusted-devices
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/trusted-devices/{device_uuid}/rename/:
+    patch:
+      operationId: trusted_devices_rename_partial_update
+      parameters:
+      - in: path
+        name: device_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - trusted-devices
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/trusted-devices/{device_uuid}/revoke/:
+    post:
+      operationId: trusted_devices_revoke_create
+      parameters:
+      - in: path
+        name: device_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - trusted-devices
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/trusted-devices/current/:
+    get:
+      operationId: trusted_devices_current_retrieve
+      tags:
+      - trusted-devices
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/trusted-devices/policy/:
+    get:
+      operationId: trusted_devices_policy_retrieve
+      tags:
+      - trusted-devices
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/trusted-devices/reverify/:
+    post:
+      operationId: trusted_devices_reverify_create
+      description: Mark current session for mandatory biometric on next login.
+      tags:
+      - trusted-devices
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/trusted-devices/session-status/:
+    get:
+      operationId: trusted_devices_session_status_retrieve
+      tags:
+      - trusted-devices
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/ussd/callback/:
+    get:
+      operationId: ussd_callback_retrieve
+      description: Arkesel USSD webhook — form POST or JSON.
+      tags:
+      - ussd
+      responses:
+        '200':
+          description: No response body
+    post:
+      operationId: ussd_callback_create
+      description: Arkesel USSD webhook — form POST or JSON.
+      tags:
+      - ussd
+      responses:
+        '200':
+          description: No response body
+  /api/v1/ussd/dashboard/:
+    get:
+      operationId: ussd_dashboard_retrieve
+      tags:
+      - ussd
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/ussd/logs/:
+    get:
+      operationId: ussd_logs_retrieve
+      tags:
+      - ussd
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/ussd/sessions/:
+    get:
+      operationId: ussd_sessions_retrieve
+      tags:
+      - ussd
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/ussd/sessions/{session_uuid}/:
+    get:
+      operationId: ussd_sessions_retrieve_2
+      parameters:
+      - in: path
+        name: session_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - ussd
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/voting/elections/{election_uuid}/ballot/:
+    get:
+      operationId: voting_elections_ballot_retrieve
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - voting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/voting/elections/{election_uuid}/my-votes/:
+    get:
+      operationId: voting_elections_my_votes_retrieve
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - voting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/voting/elections/{election_uuid}/submit/:
+    post:
+      operationId: voting_elections_submit_create
+      parameters:
+      - in: path
+        name: election_uuid
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - voting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /api/v1/voting/votes/{vote_id}/verify/:
+    get:
+      operationId: voting_votes_verify_retrieve
+      parameters:
+      - in: path
+        name: vote_id
+        schema:
+          type: string
+          format: uuid
+        required: true
+      tags:
+      - voting
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          description: No response body
+  /health/:
+    get:
+      operationId: health_retrieve
+      tags:
+      - health
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          description: No response body
+components:
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+tags:
+- name: accounts
+  description: Authentication, users, roles
+- name: elections
+  description: Election lifecycle and configuration
+- name: voting
+  description: Ballot and vote submission
+- name: security
+  description: SVT, audit, monitoring
+- name: results
+  description: Results generation and publication
+- name: strongroom
+  description: Election integrity and custody
+- name: ussd
+  description: USSD callback and monitoring
+- name: system
+  description: Platform configuration

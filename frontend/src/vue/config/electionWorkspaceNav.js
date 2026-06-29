@@ -16,5 +16,3 @@ export function getElectionWorkspaceNav(electionUuid, status) {
 
   return tabs;
 }
-
-export const electionWorkspaceNav = [];

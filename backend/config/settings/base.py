@@ -44,6 +44,7 @@ DJANGO_APPS = [
 
 THIRD_PARTY_APPS = [
     "rest_framework",
+    "drf_spectacular",
     "channels",
     "django_vite",
 ]
@@ -181,6 +182,29 @@ REST_FRAMEWORK = {
         "vote_cast": "20/hour",
         "svt_request": "10/hour",
     },
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "VoteBridge API",
+    "DESCRIPTION": "Secure campus e-voting platform — REST API v1",
+    "VERSION": "1.0.0-rc1",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": r"/api/v1",
+    "AUTHENTICATION_WHITELIST": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ],
+    "TAGS": [
+        {"name": "accounts", "description": "Authentication, users, roles"},
+        {"name": "elections", "description": "Election lifecycle and configuration"},
+        {"name": "voting", "description": "Ballot and vote submission"},
+        {"name": "security", "description": "SVT, audit, monitoring"},
+        {"name": "results", "description": "Results generation and publication"},
+        {"name": "strongroom", "description": "Election integrity and custody"},
+        {"name": "ussd", "description": "USSD callback and monitoring"},
+        {"name": "system", "description": "Platform configuration"},
+    ],
 }
 
 # JWT authentication

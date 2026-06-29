@@ -1,9 +1,5 @@
 /** Primary sidebar navigation — Phase 25 election workspace UX. */
 
-function filterByRole(items, role) {
-  return items.filter((item) => !item.roles || item.roles.includes(role));
-}
-
 const studentNav = [
   { name: "Dashboard", to: "/", icon: "home" },
   { name: "Elections", to: "/elections", icon: "elections" },
@@ -33,8 +29,4 @@ export function getSidebarNav(role) {
   if (role === "super_admin") return superAdminNav;
   if (role === "admin") return adminNav;
   return studentNav;
-}
-
-export function filterSidebarByRole(items, role) {
-  return filterByRole(items, role);
 }

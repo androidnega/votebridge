@@ -56,7 +56,6 @@ export const settingsNav = [
 
 export const analyticsNav = reportsNav;
 export const systemControlNav = settingsNav;
-export const electionManagementNav = [];
 
 export const communicationsNav = [
   { label: "Overview", to: "/communications", exact: true },

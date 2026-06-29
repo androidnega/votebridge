@@ -10,6 +10,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
+from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
+
 from apps.dashboard.views import dashboard_index, login_page
 from apps.elections.views import (
     candidate_create_page,
@@ -55,6 +57,8 @@ urlpatterns = [
     path("health/", health_check, name="health-check"),
     path("", dashboard_index, name="dashboard-index"),
     path("auth/login/", login_page, name="auth-login"),
+    # DEPRECATED (v1.0): Legacy Django dashboard pages — use Vue SPA routes instead.
+    # See docs/DEPRECATED.md. Block at Nginx in production if not required.
     path("dashboard/elections/", election_list_page, name="election-list-page"),
     path("dashboard/elections/create/", election_create_page, name="election-create-page"),
     path("dashboard/elections/<uuid:uuid>/", election_detail_page, name="election-detail-page"),
@@ -154,6 +158,9 @@ urlpatterns = [
     path("api/v1/analytics/", include("apps.analytics.api.urls")),
     path("api/v1/biometrics/", include("apps.biometrics.api.urls")),
     path("api/v1/trusted-devices/", include("apps.trusted_devices.api.urls")),
+    path("api/schema/", SpectacularAPIView.as_view(), name="api-schema"),
+    path("api/docs/", SpectacularSwaggerView.as_view(url_name="api-schema"), name="api-swagger"),
+    path("api/redoc/", SpectacularRedocView.as_view(url_name="api-schema"), name="api-redoc"),
 ]
 
 if settings.DEBUG:
