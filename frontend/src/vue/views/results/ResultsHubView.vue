@@ -14,6 +14,7 @@ import {
   VCard,
 } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth";
+import { emptyStates } from "@/config/emptyStates";
 import { useResultsStore } from "@/stores/results";
 
 const router = useRouter();
@@ -70,9 +71,7 @@ onUnmounted(() => {
     <VCard v-else padding="none">
       <EmptyState
         v-if="!resultsStore.results.length"
-        title="No results available"
-        description="Results will appear here once elections are closed and processed."
-        icon="results"
+        v-bind="emptyStates.results"
         class="m-card"
       />
       <ul v-else class="divide-y divide-border">

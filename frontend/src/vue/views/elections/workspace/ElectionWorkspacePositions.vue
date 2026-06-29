@@ -1,11 +1,15 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
-import { VAlert, VButton, VCard, VInput, VTable } from "@/components/ui";
+import { EmptyState, LoadingSkeleton, VAlert, VButton, VCard, VInput, VTable } from "@/components/ui";
+import { emptyStates } from "@/config/emptyStates";
+import { toastMessages } from "@/config/toastMessages";
+import { useToast } from "@/composables/useToast";
 import { electionsApi } from "@/api/elections";
 import { extractApiError } from "@/api/helpers";
 
 const route = useRoute();
+const toast = useToast();
 const electionUuid = computed(() => route.params.uuid);
 
 const positions = ref([]);
@@ -47,9 +51,11 @@ async function addPosition() {
   try {
     await electionsApi.createPosition(electionUuid.value, form.value);
     form.value = { title: "", description: "", max_votes_allowed: 1, display_order: 0, is_active: true };
+    toast.success(toastMessages.position.added);
     await loadPositions();
   } catch (err) {
     error.value = extractApiError(err);
+    toast.error(extractApiError(err));
   } finally {
     saving.value = false;
   }
@@ -73,7 +79,7 @@ onMounted(loadPositions);
           <VInput v-model.number="form.max_votes_allowed" label="Max votes allowed" type="number" min="1" required />
           <VInput v-model.number="form.display_order" label="Display order" type="number" min="0" />
         </div>
-        <label class="flex items-center gap-2 text-sm text-slate-700">
+        <label class="flex min-h-touch items-center gap-2 text-sm text-slate-700">
           <input v-model="form.is_active" type="checkbox" class="rounded border-border text-brand-600" />
           Active
         </label>
@@ -81,10 +87,14 @@ onMounted(loadPositions);
       </form>
     </VCard>
 
-    <VCard padding="none">
-      <VTable :columns="columns" :rows="positions" :loading="loading" empty-text="No positions yet.">
+    <LoadingSkeleton v-if="loading && !positions.length" variant="list" :rows="4" />
+
+    <VCard v-else-if="positions.length" padding="none">
+      <VTable :columns="columns" :rows="positions" :loading="loading">
         <template #cell-is_active="{ row }">{{ row.is_active ? "Yes" : "No" }}</template>
       </VTable>
     </VCard>
+
+    <EmptyState v-else v-bind="emptyStates.positions" />
   </div>
 </template>

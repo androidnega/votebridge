@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import ElectionLifecycleBar from "@/components/elections/ElectionLifecycleBar.vue";
 import { CountdownTimer, ElectionStatusBadge } from "@/components/voting";
 import { LoadingSkeleton, VAlert, VButton, VCard, VInput, VModal } from "@/components/ui";
+import { toastMessages } from "@/config/toastMessages";
 import { useToast } from "@/composables/useToast";
 import { useElectionStore } from "@/stores/election";
 
@@ -79,7 +80,7 @@ async function saveEdit() {
       start_date: new Date(editForm.value.start_date).toISOString(),
       end_date: new Date(editForm.value.end_date).toISOString(),
     });
-    toast.success("Election updated.");
+    toast.success(toastMessages.election.updated);
     showEdit.value = false;
     await refresh();
   } catch {

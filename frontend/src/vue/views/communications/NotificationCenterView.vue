@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { EmptyState, LoadingSkeleton } from "@/components/dashboard";
 import { VAlert, VButton } from "@/components/ui";
+import { emptyStates } from "@/config/emptyStates";
 import { useNotificationsStore } from "@/stores/notifications";
 
 const route = useRoute();
@@ -67,9 +68,7 @@ async function handleDelete(uuid) {
 
     <EmptyState
       v-else-if="!store.notifications.length"
-      :title="showArchived ? 'No archived notifications' : 'No notifications yet'"
-      description="System events such as election updates and vote confirmations appear here."
-      icon="🔔"
+      v-bind="showArchived ? emptyStates.notificationsArchived : emptyStates.notifications"
     />
 
     <ul v-else class="space-y-3">

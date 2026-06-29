@@ -3,6 +3,7 @@ import { onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { ConnectionStatusIndicator, EmptyState, LoadingSkeleton } from "@/components/dashboard";
 import { VAlert, VButton } from "@/components/ui";
+import { emptyStates } from "@/config/emptyStates";
 import { useAuthStore } from "@/stores/auth";
 import { useStrongroomStore } from "@/stores/strongroom";
 
@@ -47,12 +48,7 @@ onUnmounted(() => {
     <LoadingSkeleton v-if="strongroomStore.loading && !strongroomStore.elections.length" variant="list" :rows="4" />
 
     <section v-else class="rounded-xl bg-white shadow-sm ring-1 ring-slate-900/5">
-      <EmptyState
-        v-if="!strongroomStore.elections.length"
-        title="No sealed elections yet"
-        description="Ballots are sealed automatically after submission. Certified elections appear here once results are processed."
-        icon="🔒"
-      />
+      <EmptyState v-if="!strongroomStore.elections.length" v-bind="emptyStates.strongroom" />
       <ul v-else class="divide-y divide-slate-100">
         <li
           v-for="item in strongroomStore.elections"

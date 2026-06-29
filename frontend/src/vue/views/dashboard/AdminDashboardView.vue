@@ -5,11 +5,13 @@ import {
   ActivityFeed,
   ConnectionStatusIndicator,
   ElectionCard,
+  EmptyState,
   LiveTurnoutWidget,
   LoadingSkeleton,
   StatCard,
 } from "@/components/dashboard";
 import { VAlert, VButton, VCard } from "@/components/ui";
+import { emptyStates } from "@/config/emptyStates";
 import { useDashboardRealtime } from "@/composables/useDashboardRealtime";
 import { useDashboardStore } from "@/stores/dashboard";
 import { useResultsStore } from "@/stores/results";
@@ -79,20 +81,25 @@ onMounted(() => {
         <ul v-if="taskItems.length" class="space-y-2 text-sm text-slate-700">
           <li v-for="item in taskItems" :key="item.id">{{ item.title }}</li>
         </ul>
-        <p v-else class="text-sm text-slate-500">No urgent tasks.</p>
+        <p v-else class="text-sm text-slate-500">No urgent tasks — you're up to date.</p>
       </VCard>
     </section>
 
     <section>
       <h3 class="mb-4 text-lg font-semibold text-slate-900">Open elections</h3>
-      <div v-if="dashboardStore.openElectionsList.length" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <LoadingSkeleton v-if="dashboardStore.loading" variant="card" />
+      <div v-else-if="dashboardStore.openElectionsList.length" class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ElectionCard
           v-for="election in dashboardStore.openElectionsList"
           :key="election.uuid"
           :election="election"
         />
       </div>
-      <p v-else class="text-sm text-slate-500">No elections are currently open.</p>
+      <EmptyState v-else v-bind="emptyStates.openElections">
+        <template #action>
+          <VButton @click="router.push('/elections/create')">Create election</VButton>
+        </template>
+      </EmptyState>
     </section>
   </div>
 </template>

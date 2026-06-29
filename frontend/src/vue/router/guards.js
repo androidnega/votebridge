@@ -1,4 +1,5 @@
 import { useAuthStore } from "@/stores/auth";
+import { branding } from "@/config/branding";
 
 export function setupRouterGuards(router) {
   router.beforeEach(async (to) => {
@@ -48,5 +49,10 @@ export function setupRouterGuards(router) {
     }
 
     return true;
+  });
+
+  router.afterEach((to) => {
+    const pageTitle = to.meta?.title;
+    document.title = pageTitle ? `${pageTitle} · ${branding.systemName}` : branding.systemName;
   });
 }

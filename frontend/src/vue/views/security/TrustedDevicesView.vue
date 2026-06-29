@@ -4,6 +4,7 @@ import { useRoute } from "vue-router";
 import CurrentDeviceCard from "@/components/trusted-devices/CurrentDeviceCard.vue";
 import DeviceRenameDialog from "@/components/trusted-devices/DeviceRenameDialog.vue";
 import {
+  ConfirmDialog,
   EmptyState,
   LoadingSkeleton,
   PageHeader,
@@ -14,6 +15,8 @@ import {
   VModal,
   VTable,
 } from "@/components/ui";
+import { emptyStates } from "@/config/emptyStates";
+import { toastMessages } from "@/config/toastMessages";
 import { useTrustedDevicesStore } from "@/stores/trustedDevices";
 import { useToast } from "@/composables/useToast";
 import { useAuthStore } from "@/stores/auth";
@@ -92,14 +95,14 @@ async function openHistory(device) {
 async function handleRename(name) {
   if (!selectedDevice.value) return;
   await store.renameDevice(selectedDevice.value.uuid, name);
-  toast.success("Device renamed");
+  toast.success(toastMessages.device.renamed);
   renameOpen.value = false;
 }
 
 async function handleRevoke() {
   if (!selectedDevice.value) return;
   await store.revokeDevice(selectedDevice.value.uuid);
-  toast.success("Device revoked");
+  toast.success(toastMessages.device.revoked);
   revokeOpen.value = false;
   await store.fetchCurrentDevice();
   await store.fetchSessionStatus();
@@ -107,7 +110,7 @@ async function handleRevoke() {
 
 async function handleAssignUniversity(device) {
   await store.assignUniversity(device.uuid);
-  toast.success("Device marked as university managed");
+  toast.success(toastMessages.device.assigned);
 }
 
 async function handleForceReverify() {
@@ -146,11 +149,7 @@ async function handleForceReverify() {
           </VButton>
         </div>
 
-        <EmptyState
-          v-if="!store.devices.length"
-          title="No trusted devices"
-          description="Complete biometric verification at login to register this browser."
-        />
+        <EmptyState v-if="!store.devices.length" v-bind="emptyStates.trustedDevices" />
 
         <VTable v-else :columns="columns" :rows="store.devices" row-key="uuid">
           <template #cell-trust_level="{ row }">
@@ -201,25 +200,25 @@ async function handleForceReverify() {
     </template>
 
     <DeviceRenameDialog
-      :open="renameOpen"
+      v-model="renameOpen"
       :device="selectedDevice"
       :loading="store.actionLoading"
-      @close="renameOpen = false"
       @save="handleRename"
     />
 
-    <VModal :open="revokeOpen" title="Revoke trusted device?" @close="revokeOpen = false">
-      <p class="text-sm text-slate-600">
-        Revoking <strong>{{ selectedDevice?.device_name }}</strong> will terminate active sessions and require biometric verification on next login.
-      </p>
-      <div class="mt-4 flex justify-end gap-3">
-        <VButton variant="secondary" @click="revokeOpen = false">Cancel</VButton>
-        <VButton variant="danger" :loading="store.actionLoading" @click="handleRevoke">Revoke</VButton>
-      </div>
-    </VModal>
+    <ConfirmDialog
+      v-model="revokeOpen"
+      title="Revoke trusted device?"
+      :description="`Revoking ${selectedDevice?.device_name || 'this device'} will require biometric verification on next login.`"
+      variant="danger"
+      icon="security"
+      confirm-label="Revoke device"
+      :loading="store.actionLoading"
+      @confirm="handleRevoke"
+    />
 
     <VModal
-      :open="historyOpen"
+      v-model="historyOpen"
       :title="`Login history — ${selectedDevice?.device_name || ''}`"
       @close="historyOpen = false"
     >

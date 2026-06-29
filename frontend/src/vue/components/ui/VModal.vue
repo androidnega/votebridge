@@ -70,10 +70,19 @@ onUnmounted(() => {
           :class="sizeClasses[size]"
           role="dialog"
           aria-modal="true"
+          :aria-labelledby="title ? 'vb-modal-title' : undefined"
         >
           <div class="flex items-start justify-between border-b border-slate-100 px-6 py-4">
-            <h2 v-if="title" class="text-lg font-semibold text-slate-900">{{ title }}</h2>
-            <VButton variant="ghost" size="sm" class="!p-2" @click="close">✕</VButton>
+            <h2 v-if="title" id="vb-modal-title" class="text-lg font-semibold text-slate-900">{{ title }}</h2>
+            <VButton
+              variant="ghost"
+              size="sm"
+              class="min-h-touch !p-2"
+              aria-label="Close dialog"
+              @click="close"
+            >
+              ✕
+            </VButton>
           </div>
           <div class="px-6 py-4">
             <slot />

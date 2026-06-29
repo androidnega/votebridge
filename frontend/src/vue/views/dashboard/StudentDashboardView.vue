@@ -8,6 +8,7 @@ import {
   StatCard,
 } from "@/components/dashboard";
 import { VAlert, VButton, VInput } from "@/components/ui";
+import { emptyStates } from "@/config/emptyStates";
 import { useDashboardRealtime } from "@/composables/useDashboardRealtime";
 import { useAuthStore } from "@/stores/auth";
 import { useDashboardStore } from "@/stores/dashboard";
@@ -89,9 +90,7 @@ onMounted(() => {
       <LoadingSkeleton v-if="dashboardStore.loading" variant="card" />
       <EmptyState
         v-else-if="dashboardStore.studentActiveElections.length === 0"
-        title="No active elections"
-        description="You have no open elections right now. Check upcoming elections below."
-        icon="🗳️"
+        v-bind="emptyStates.studentActive"
       />
       <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ElectionCard
@@ -108,9 +107,7 @@ onMounted(() => {
       <LoadingSkeleton v-if="dashboardStore.loading" variant="card" />
       <EmptyState
         v-else-if="dashboardStore.scheduledElections.length === 0"
-        title="No upcoming elections"
-        description="Scheduled elections will appear here when they are published."
-        icon="📅"
+        v-bind="emptyStates.studentUpcoming"
       />
       <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ElectionCard
@@ -125,9 +122,7 @@ onMounted(() => {
       <h3 class="mb-4 text-lg font-semibold text-slate-900">Voting history</h3>
       <EmptyState
         v-if="!dashboardStore.loading && dashboardStore.studentVotingHistory.length === 0"
-        title="No votes recorded yet"
-        description="Your completed ballots will show up here."
-        icon="📋"
+        v-bind="emptyStates.voteHistory"
       />
       <div v-else class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <ElectionCard

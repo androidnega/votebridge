@@ -15,5 +15,6 @@ export { default as SectionHeader } from "./SectionHeader.vue";
 export { default as ToastContainer } from "./ToastContainer.vue";
 export { default as VTooltip } from "./VTooltip.vue";
 export { default as ModuleNav } from "./ModuleNav.vue";
+export { default as ConfirmDialog } from "./ConfirmDialog.vue";
 export { default as EmptyState } from "./EmptyState.vue";
 export { default as LoadingSkeleton } from "./LoadingSkeleton.vue";

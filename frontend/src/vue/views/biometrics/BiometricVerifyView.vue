@@ -9,6 +9,7 @@ import { useBiometricsStore } from "@/stores/biometrics";
 import { useAuthStore } from "@/stores/auth";
 import { useTrustedDevicesStore } from "@/stores/trustedDevices";
 import { useToast } from "@/composables/useToast";
+import { toastMessages } from "@/config/toastMessages";
 
 const router = useRouter();
 const route = useRoute();
@@ -51,7 +52,7 @@ async function submitVerification() {
       frames: frames.value,
     });
     await authStore.fetchProfile();
-    toast.success("Identity verified");
+    toast.success(toastMessages.biometric.verified);
     const redirect =
       typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
         ? route.query.redirect

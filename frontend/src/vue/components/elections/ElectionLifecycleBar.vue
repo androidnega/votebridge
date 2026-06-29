@@ -2,7 +2,8 @@
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { ElectionStatusBadge } from "@/components/voting";
-import { VButton, VModal } from "@/components/ui";
+import { ConfirmDialog, VButton } from "@/components/ui";
+import { toastMessages } from "@/config/toastMessages";
 import { useToast } from "@/composables/useToast";
 import { useElectionStore } from "@/stores/election";
 
@@ -30,7 +31,27 @@ const showConfirm = computed({
   },
 });
 
-async function runAction(action, label) {
+const confirmVariant = computed(() =>
+  ["close", "archive"].includes(confirmAction.value?.action) ? "danger" : "primary"
+);
+
+const confirmIcon = computed(() => {
+  const action = confirmAction.value?.action;
+  if (action === "close") return "strongroom";
+  if (action === "pause") return "bolt";
+  return "help";
+});
+
+const toastForAction = {
+  schedule: toastMessages.election.scheduled,
+  open: toastMessages.election.opened,
+  pause: toastMessages.election.paused,
+  resume: toastMessages.election.resumed,
+  close: toastMessages.election.closed,
+  archive: toastMessages.election.archived,
+};
+
+async function runAction(action) {
   const uuid = props.election.uuid;
   try {
     if (action === "schedule") await electionStore.scheduleElection(uuid);
@@ -39,13 +60,13 @@ async function runAction(action, label) {
     else if (action === "resume") await electionStore.openElection(uuid);
     else if (action === "close") await electionStore.closeElection(uuid);
     else if (action === "archive") await electionStore.archiveElection(uuid);
-    toast.success(`${label} completed.`);
+    toast.success(toastForAction[action] || toastMessages.generic.saved);
     emit("updated");
     if (action === "close") {
       router.push("/results");
     }
   } catch {
-    toast.error(electionStore.error || `${label} failed.`);
+    toast.error(electionStore.error || toastMessages.generic.error);
   } finally {
     electionStore.clearPendingLifecycleAction();
   }
@@ -57,7 +78,7 @@ function askConfirm(action, label, message) {
 
 function confirm() {
   if (!confirmAction.value) return;
-  runAction(confirmAction.value.action, confirmAction.value.label);
+  runAction(confirmAction.value.action);
 }
 
 function cancelConfirm() {
@@ -74,17 +95,12 @@ function cancelConfirm() {
       size="sm"
       variant="secondary"
       :loading="loading"
-      @click="runAction('schedule', 'Schedule')"
+      @click="runAction('schedule')"
     >
       Schedule
     </VButton>
 
-    <VButton
-      v-if="status === 'scheduled'"
-      size="sm"
-      :loading="loading"
-      @click="runAction('open', 'Open')"
-    >
+    <VButton v-if="status === 'scheduled'" size="sm" :loading="loading" @click="runAction('open')">
       Open election
     </VButton>
 
@@ -93,17 +109,12 @@ function cancelConfirm() {
       size="sm"
       variant="secondary"
       :loading="loading"
-      @click="askConfirm('pause', 'Pause', 'Pause voting for this election?')"
+      @click="askConfirm('pause', 'Pause election', 'Voting will be temporarily suspended. Students cannot submit ballots while paused.')"
     >
       Pause
     </VButton>
 
-    <VButton
-      v-if="status === 'paused'"
-      size="sm"
-      :loading="loading"
-      @click="runAction('resume', 'Resume')"
-    >
+    <VButton v-if="status === 'paused'" size="sm" :loading="loading" @click="runAction('resume')">
       Resume
     </VButton>
 
@@ -112,7 +123,13 @@ function cancelConfirm() {
       size="sm"
       variant="danger"
       :loading="loading"
-      @click="askConfirm('close', 'Close', 'Close this election? Voting will end and results processing will begin.')"
+      @click="
+        askConfirm(
+          'close',
+          'Close election',
+          'Voting will end and results processing will begin. This cannot be undone.'
+        )
+      "
     >
       Close
     </VButton>
@@ -122,21 +139,22 @@ function cancelConfirm() {
       size="sm"
       variant="secondary"
       :loading="loading"
-      @click="askConfirm('archive', 'Archive', 'Archive this election?')"
+      @click="askConfirm('archive', 'Archive election', 'Archive this election for long-term storage?')"
     >
       Archive
     </VButton>
 
-    <VModal
+    <ConfirmDialog
       v-model="showConfirm"
-      :title="confirmAction?.label"
-      @close="cancelConfirm"
-    >
-      <p class="text-sm text-slate-600">{{ confirmAction?.message }}</p>
-      <template #footer>
-        <VButton variant="secondary" @click="cancelConfirm">Cancel</VButton>
-        <VButton :loading="loading" @click="confirm">Confirm</VButton>
-      </template>
-    </VModal>
+      :title="confirmAction?.label || 'Confirm'"
+      :description="confirmAction?.message || ''"
+      :variant="confirmVariant"
+      :icon="confirmIcon"
+      confirm-label="Confirm"
+      cancel-label="Cancel"
+      :loading="loading"
+      @confirm="confirm"
+      @cancel="cancelConfirm"
+    />
   </div>
 </template>

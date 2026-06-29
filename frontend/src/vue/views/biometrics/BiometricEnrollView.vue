@@ -5,6 +5,7 @@ import CameraCapture from "@/components/biometrics/CameraCapture.vue";
 import { LoadingSkeleton, PageHeader, VAlert, VButton, VCard, VInput } from "@/components/ui";
 import { useBiometricsStore } from "@/stores/biometrics";
 import { useToast } from "@/composables/useToast";
+import { toastMessages } from "@/config/toastMessages";
 
 const router = useRouter();
 const route = useRoute();
@@ -41,7 +42,7 @@ async function completeEnrollment() {
   }
   try {
     await store.enroll(userUuid.value, captures.value);
-    toast.success("Biometric enrollment complete");
+    toast.success(toastMessages.biometric.enrolled);
     await router.push({ name: "biometrics-history" });
   } catch (error) {
     submitError.value = error.message || store.error;

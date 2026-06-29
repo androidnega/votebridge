@@ -1,7 +1,9 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
-import { VAlert, VButton, VCard, VInput, VTable } from "@/components/ui";
+import { EmptyState, LoadingSkeleton, VAlert, VButton, VCard, VInput, VTable, ConfirmDialog } from "@/components/ui";
+import { emptyStates } from "@/config/emptyStates";
+import { toastMessages } from "@/config/toastMessages";
 import { useToast } from "@/composables/useToast";
 import { electionsApi } from "@/api/elections";
 import { usersApi } from "@/api/users";
@@ -18,6 +20,8 @@ const loading = ref(false);
 const searching = ref(false);
 const saving = ref(false);
 const error = ref(null);
+const pendingRemove = ref(null);
+const hasSearched = ref(false);
 
 const filters = ref({
   indexNumber: "",
@@ -72,6 +76,7 @@ async function loadRecords() {
 
 async function searchStudents() {
   searching.value = true;
+  hasSearched.value = true;
   error.value = null;
   try {
     const query = [filters.value.indexNumber, filters.value.name, filters.value.programmeCode]
@@ -113,7 +118,7 @@ async function addSingle(user) {
       is_eligible: eligibleForm.value.is_eligible,
       eligibility_reason: eligibleForm.value.eligibility_reason,
     });
-    toast.success(`${displayName(user)} added to voter roll.`);
+    toast.success(toastMessages.eligibility.added);
     await loadRecords();
   } catch (err) {
     error.value = extractApiError(err);
@@ -131,7 +136,7 @@ async function bulkAddSelected() {
       is_eligible: eligibleForm.value.is_eligible,
       eligibility_reason: eligibleForm.value.eligibility_reason,
     });
-    toast.success(`${selectedUsers.value.length} voters updated.`);
+    toast.success(toastMessages.eligibility.bulkAdded(selectedUsers.value.length));
     selectedUsers.value = [];
     await loadRecords();
   } catch (err) {
@@ -141,10 +146,31 @@ async function bulkAddSelected() {
   }
 }
 
+function askRemoveRecord(row) {
+  pendingRemove.value = {
+    title: "Remove voter",
+    description: `Remove ${row.user_name || row.user_index_number} from the voter roll?`,
+    row,
+  };
+}
+
 async function removeRecord(row) {
   await electionsApi.deleteEligibility(electionUuid.value, row.uuid);
-  toast.success("Eligibility record removed.");
+  toast.success(toastMessages.eligibility.removed);
   await loadRecords();
+}
+
+const confirmRemoveOpen = computed({
+  get: () => Boolean(pendingRemove.value),
+  set: (value) => {
+    if (!value) pendingRemove.value = null;
+  },
+});
+
+async function confirmRemove() {
+  if (!pendingRemove.value?.row) return;
+  await removeRecord(pendingRemove.value.row);
+  pendingRemove.value = null;
 }
 
 onMounted(loadRecords);
@@ -185,13 +211,34 @@ watch(() => electionUuid.value, loadRecords);
       </VTable>
     </VCard>
 
-    <VCard padding="none" title="Voter roll">
-      <VTable :columns="columns" :rows="records" :loading="loading" empty-text="No voters on the roll yet.">
+    <VCard v-else-if="searching" padding="compact">
+      <LoadingSkeleton variant="list" :rows="3" />
+    </VCard>
+
+    <EmptyState
+      v-if="hasSearched && !searching && !searchResults.length"
+      v-bind="emptyStates.searchStudents"
+    />
+
+    <VCard title="Voter roll" padding="none">
+      <LoadingSkeleton v-if="loading && !records.length" variant="list" :rows="4" class="p-card" />
+      <VTable v-else-if="records.length" :columns="columns" :rows="records" :loading="loading">
         <template #cell-is_eligible="{ row }">{{ row.is_eligible ? "Yes" : "No" }}</template>
         <template #cell-actions="{ row }">
-          <VButton size="sm" variant="ghost" @click="removeRecord(row)">Remove</VButton>
+          <VButton size="sm" variant="ghost" @click="askRemoveRecord(row)">Remove</VButton>
         </template>
       </VTable>
+      <EmptyState v-else v-bind="emptyStates.eligibility" class="p-card" />
     </VCard>
+
+    <ConfirmDialog
+      v-model="confirmRemoveOpen"
+      :title="pendingRemove?.title || 'Remove voter'"
+      :description="pendingRemove?.description || ''"
+      variant="danger"
+      icon="profile"
+      confirm-label="Remove"
+      @confirm="confirmRemove"
+    />
   </div>
 </template>

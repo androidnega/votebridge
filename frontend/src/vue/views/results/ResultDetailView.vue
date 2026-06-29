@@ -7,7 +7,9 @@ import {
   PositionResultsCard,
   ResultStatusBadge,
 } from "@/components/results";
-import { VAlert, VButton } from "@/components/ui";
+import { ConfirmDialog, VAlert, VButton } from "@/components/ui";
+import { toastMessages } from "@/config/toastMessages";
+import { useToast } from "@/composables/useToast";
 import { useAuthStore } from "@/stores/auth";
 import { useResultsStore } from "@/stores/results";
 
@@ -15,6 +17,11 @@ const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
 const resultsStore = useResultsStore();
+const toast = useToast();
+
+const certifyOpen = ref(false);
+const publishOpen = ref(false);
+const archiveOpen = ref(false);
 
 const electionUuid = computed(() => route.params.electionUuid);
 const result = computed(() => resultsStore.currentResult);
@@ -71,14 +78,20 @@ async function handleCertify() {
     acknowledge_fraud: acknowledgeFraud.value,
     fraud_notes: fraudNotes.value,
   });
+  certifyOpen.value = false;
+  toast.success(toastMessages.results.certified);
 }
 
 async function handlePublish() {
   await resultsStore.publish(electionUuid.value);
+  publishOpen.value = false;
+  toast.success(toastMessages.results.published);
 }
 
 async function handleArchive() {
   await resultsStore.archive(electionUuid.value);
+  archiveOpen.value = false;
+  toast.success(toastMessages.results.archived);
 }
 
 async function downloadReport(format) {
@@ -144,17 +157,17 @@ async function downloadReport(format) {
         >
           Download CSV
         </VButton>
-        <VButton v-if="canCertify" :loading="resultsStore.actionLoading" @click="handleCertify">
+        <VButton v-if="canCertify" :loading="resultsStore.actionLoading" @click="certifyOpen = true">
           Certify results
         </VButton>
-        <VButton v-if="canPublish" :loading="resultsStore.actionLoading" @click="handlePublish">
+        <VButton v-if="canPublish" :loading="resultsStore.actionLoading" @click="publishOpen = true">
           Publish results
         </VButton>
         <VButton
           v-if="canArchive"
           variant="secondary"
           :loading="resultsStore.actionLoading"
-          @click="handleArchive"
+          @click="archiveOpen = true"
         >
           Archive
         </VButton>
@@ -200,5 +213,34 @@ async function downloadReport(format) {
         Results will appear here once they are officially published.
       </VAlert>
     </template>
+
+    <ConfirmDialog
+      v-model="certifyOpen"
+      title="Certify election results?"
+      description="Certification confirms the results are accurate and ready for publication. This action is recorded in the audit trail."
+      confirm-label="Certify results"
+      icon="results"
+      :loading="resultsStore.actionLoading"
+      @confirm="handleCertify"
+    />
+    <ConfirmDialog
+      v-model="publishOpen"
+      title="Publish results?"
+      description="Published results become visible to students and the public. Ensure certification is complete before publishing."
+      confirm-label="Publish results"
+      icon="results"
+      :loading="resultsStore.actionLoading"
+      @confirm="handlePublish"
+    />
+    <ConfirmDialog
+      v-model="archiveOpen"
+      title="Archive results?"
+      description="Archived results remain available for audit but are removed from active publication queues."
+      variant="danger"
+      confirm-label="Archive results"
+      icon="inbox"
+      :loading="resultsStore.actionLoading"
+      @confirm="handleArchive"
+    />
   </div>
 </template>

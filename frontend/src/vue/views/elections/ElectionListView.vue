@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import EmptyState from "@/components/dashboard/EmptyState.vue";
 import ElectionStatusBadge from "@/components/voting/ElectionStatusBadge.vue";
 import { PageHeader, VAlert, VButton, VCard, VTable } from "@/components/ui";
+import { emptyStates } from "@/config/emptyStates";
 import { useAuthStore } from "@/stores/auth";
 import { useElectionStore } from "@/stores/election";
 
@@ -54,14 +55,16 @@ function openElection(row) {
     <VCard padding="none">
       <div class="border-b border-border p-card">
         <h3 class="text-base font-semibold text-slate-800">All elections</h3>
-        <p class="mt-1 text-sm text-slate-500">Select an election to open its workspace.</p>
+        <p class="mt-1 text-sm text-slate-500">
+          {{ authStore.isAdmin ? "Select an election to open its workspace." : "Tap an election to view details." }}
+        </p>
       </div>
 
       <VTable
+        v-if="electionStore.loading || electionStore.elections.length"
         :columns="columns"
         :rows="electionStore.elections"
         :loading="electionStore.loading"
-        empty-text="No elections found."
         @row-click="openElection"
       >
         <template #cell-status="{ row }">
@@ -70,11 +73,14 @@ function openElection(row) {
       </VTable>
 
       <EmptyState
-        v-if="!electionStore.loading && !electionStore.elections.length && !electionStore.error"
-        title="No elections yet"
-        description="Create your first election to begin setup."
+        v-else-if="!electionStore.error"
+        v-bind="authStore.isAdmin ? emptyStates.electionsAdmin : emptyStates.elections"
         class="p-card"
-      />
+      >
+        <template v-if="authStore.isAdmin" #action>
+          <VButton @click="router.push('/elections/create')">Create election</VButton>
+        </template>
+      </EmptyState>
     </VCard>
   </div>
 </template>

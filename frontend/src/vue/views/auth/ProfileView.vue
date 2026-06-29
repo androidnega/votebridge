@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { VAlert, VButton, VCard, VInput, VTable } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth";
 import { useToast } from "@/composables/useToast";
+import { toastMessages } from "@/config/toastMessages";
 
 const router = useRouter();
 const authStore = useAuthStore();
@@ -70,7 +71,7 @@ async function saveProfile() {
       phone_number: form.phone_number.trim(),
     });
     editing.value = false;
-    toast.success("Profile updated");
+    toast.success(toastMessages.profile.updated);
   } catch (error) {
     saveError.value = error.message;
   }

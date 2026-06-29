@@ -2,7 +2,8 @@
 import { computed, onMounted, onUnmounted } from "vue";
 import { useRoute } from "vue-router";
 import { LiveFraudFeed, StatCard } from "@/components/dashboard";
-import { LoadingSkeleton, PageHeader, VAlert } from "@/components/ui";
+import { EmptyState, LoadingSkeleton, PageHeader, VAlert } from "@/components/ui";
+import { emptyStates } from "@/config/emptyStates";
 import { useFraudStore } from "@/stores/fraud";
 
 const route = useRoute();
@@ -57,10 +58,16 @@ onUnmounted(() => {
     </section>
 
     <LiveFraudFeed
+      v-if="fraudStore.casesFeed.length || fraudStore.loading"
       title="Fraud cases"
       :items="fraudStore.casesFeed"
       :loading="fraudStore.loading"
       :status="fraudStore.realtimeStatus"
+    />
+    <EmptyState
+      v-else-if="fraudStore.integrityReport"
+      v-bind="emptyStates.fraud"
+      class="mt-4"
     />
   </div>
 </template>

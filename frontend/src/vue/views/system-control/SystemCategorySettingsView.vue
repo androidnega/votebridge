@@ -5,6 +5,7 @@ import StepUpModal from "@/components/system-control/StepUpModal.vue";
 import { systemControlNav } from "@/config/moduleNav";
 import { useStepUp } from "@/composables/useStepUp";
 import { useToast } from "@/composables/useToast";
+import { toastMessages } from "@/config/toastMessages";
 import { LoadingSkeleton, ModuleNav, PageHeader, VAlert, VButton, VCard, VInput } from "@/components/ui";
 import { useSystemControlStore } from "@/stores/systemControl";
 
@@ -29,7 +30,7 @@ function save(updates) {
   const run = () =>
     store
       .saveSettings(props.category, updates)
-      .then(() => toast.success("Settings saved."))
+      .then(() => toast.success(toastMessages.settings.saved))
       .catch(() => {});
 
   if (props.sensitive) {
