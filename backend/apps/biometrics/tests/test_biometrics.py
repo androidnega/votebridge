@@ -143,7 +143,7 @@ class BiometricVerificationTests(TestCase):
                     "is_public": False,
                 },
             )
-        images = [_mock_image(f"enroll-{i}") for i in range(10)]
+        images = [_mock_image("enroll-match") for _ in range(10)]
         biometric_enrollment_service.enroll(
             actor=self.super_admin,
             target_user=self.admin,
@@ -158,7 +158,7 @@ class BiometricVerificationTests(TestCase):
 
     def test_verify_login_with_matching_frames(self):
         pending = biometric_verification_service.create_pending_auth(self.admin, "otp-uuid")
-        frames = [_mock_image(f"enroll-{i}") for i in range(3)]
+        frames = [_mock_image("enroll-match") for _ in range(3)]
         result = biometric_verification_service.verify_login(
             pending_auth_token=pending["pending_auth_token"],
             challenge_id=pending["challenge"]["challenge_id"],

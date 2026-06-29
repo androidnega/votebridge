@@ -813,15 +813,11 @@ const router = createRouter({
         },
         {
           path: "analytics/security",
-          name: "analytics-security",
-          component: () => import("@/views/analytics/AnalyticsSecurityView.vue"),
-          meta: { title: "Security Analytics", roles: ["admin", "super_admin"] },
+          redirect: { name: "reports-explore-security" },
         },
         {
           path: "analytics/fraud",
-          name: "analytics-fraud",
-          component: () => import("@/views/analytics/AnalyticsFraudView.vue"),
-          meta: { title: "Fraud Analytics", roles: ["admin", "super_admin"] },
+          redirect: { name: "reports-explore-fraud" },
         },
         {
           path: "analytics/operations",
@@ -837,9 +833,7 @@ const router = createRouter({
         },
         {
           path: "analytics/ussd",
-          name: "analytics-ussd",
-          component: () => import("@/views/analytics/AnalyticsUssdView.vue"),
-          meta: { title: "USSD Analytics", roles: ["admin", "super_admin"] },
+          redirect: { name: "reports-explore-ussd" },
         },
         {
           path: "analytics/strongroom",

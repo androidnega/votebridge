@@ -129,7 +129,6 @@ class BiometricVerificationService:
             metadata={**(metadata or {}), "locked": locked},
         )
 
-    @transaction.atomic
     def verify_login(
         self,
         *,
@@ -224,59 +223,60 @@ class BiometricVerificationService:
             )
             raise AuthenticationError(message="Face verification failed.", code="face_mismatch")
 
-        challenge_generator_service.consume_challenge(challenge_id)
-        self._consume_pending_auth(pending_auth_token)
+        with transaction.atomic():
+            challenge_generator_service.consume_challenge(challenge_id)
+            self._consume_pending_auth(pending_auth_token)
 
-        profile.failed_attempts = 0
-        profile.locked_until = None
-        profile.last_verified_at = timezone.now()
-        profile.save()
+            profile.failed_attempts = 0
+            profile.locked_until = None
+            profile.last_verified_at = timezone.now()
+            profile.save()
 
-        biometric_audit_service.record(
-            user=user,
-            event_type=BiometricVerificationLog.EventType.VERIFICATION_PASSED,
-            outcome=BiometricVerificationLog.Outcome.SUCCESS,
-            ip_address=ip_address,
-            user_agent=user_agent,
-            challenge_type=challenge_type,
-            confidence=confidence if policy.get("enable_confidence_logging") else None,
-            liveness_score=passive["score"],
-            processing_time_ms=elapsed,
-            model_version=MODEL_VERSION,
-            device_fingerprint=device_fingerprint,
-        )
-
-        session, tokens = session_service.create_session(
-            user=user,
-            ip_address=ip_address,
-            user_agent=user_agent,
-        )
-        ha_session = biometric_session_service.issue_session(user)
-        biometric_session_service.register_latest_token(
-            user,
-            ha_session["high_assurance_token"],
-            ha_session["expires_in_seconds"],
-        )
-
-        from apps.trusted_devices.services.policy_service import trusted_device_policy_service
-        from apps.trusted_devices.services.registration_service import trusted_device_registration_service
-        from apps.trusted_devices.utils import build_device_context
-
-        policy = trusted_device_policy_service.get_policy()
-        raw_device_token = ""
-        device_registered = False
-        if policy.get("enable_trusted_devices"):
-            context = build_device_context(
-                user_agent=user_agent or "",
-                browser_fingerprint=device_fingerprint,
-                signals=device_signals,
-            )
-            raw_device_token, registered_device = trusted_device_registration_service.register_after_biometric(
-                user,
-                context,
+            biometric_audit_service.record(
+                user=user,
+                event_type=BiometricVerificationLog.EventType.VERIFICATION_PASSED,
+                outcome=BiometricVerificationLog.Outcome.SUCCESS,
                 ip_address=ip_address,
+                user_agent=user_agent,
+                challenge_type=challenge_type,
+                confidence=confidence if policy.get("enable_confidence_logging") else None,
+                liveness_score=passive["score"],
+                processing_time_ms=elapsed,
+                model_version=MODEL_VERSION,
+                device_fingerprint=device_fingerprint,
             )
-            device_registered = registered_device is not None
+
+            session, tokens = session_service.create_session(
+                user=user,
+                ip_address=ip_address,
+                user_agent=user_agent,
+            )
+            ha_session = biometric_session_service.issue_session(user)
+            biometric_session_service.register_latest_token(
+                user,
+                ha_session["high_assurance_token"],
+                ha_session["expires_in_seconds"],
+            )
+
+            from apps.trusted_devices.services.policy_service import trusted_device_policy_service
+            from apps.trusted_devices.services.registration_service import trusted_device_registration_service
+            from apps.trusted_devices.utils import build_device_context
+
+            policy = trusted_device_policy_service.get_policy()
+            raw_device_token = ""
+            device_registered = False
+            if policy.get("enable_trusted_devices"):
+                context = build_device_context(
+                    user_agent=user_agent or "",
+                    browser_fingerprint=device_fingerprint,
+                    signals=device_signals,
+                )
+                raw_device_token, registered_device = trusted_device_registration_service.register_after_biometric(
+                    user,
+                    context,
+                    ip_address=ip_address,
+                )
+                device_registered = registered_device is not None
 
         return {
             "user_uuid": str(user.uuid),
