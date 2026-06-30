@@ -56,8 +56,8 @@ async function completeEnrollment() {
     <PageHeader
       title="Biometric enrollment"
       :breadcrumbs="[
-        { label: 'System', to: '/system-control' },
-        { label: 'Identity configuration', to: '/settings/identity-assurance' },
+        { label: 'System', to: '/dashboard/system-control' },
+        { label: 'Identity configuration', to: '/dashboard/settings/identity-assurance' },
         { label: 'Enroll' },
       ]"
     />

@@ -22,7 +22,7 @@ async function archive(item) {
 }
 
 function openDetail(item) {
-  router.push(`/results/${item.election_uuid}`);
+  router.push(`/dashboard/results/${item.election_uuid}`);
 }
 </script>
 
@@ -32,8 +32,8 @@ function openDetail(item) {
       title="Archive manager"
       subtitle="Archive published results for long-term retention."
       :breadcrumbs="[
-        { label: 'Overview', to: '/' },
-        { label: 'Results', to: '/results' },
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Results', to: '/dashboard/results' },
         { label: 'Archive' },
       ]"
     />

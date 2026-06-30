@@ -15,7 +15,7 @@ onMounted(() => store.fetchEnvironment().catch(() => {}));
     <PageHeader
       title="Environment"
       subtitle="Runtime environment and deployment information (read-only)."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'System Control', to: '/system-control' }, { label: 'Environment' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: 'Environment' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

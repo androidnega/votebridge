@@ -44,7 +44,7 @@ function loadMore() {
     <PageHeader
       title="Live activity"
       subtitle="Unified operational event stream from audit and realtime feeds."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Operations', to: '/operations' }, { label: 'Live Activity' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Operations', to: '/dashboard/operations' }, { label: 'Live Activity' }]"
     >
       <template #actions>
         <ConnectionStatusIndicator :status="store.realtimeStatus" />

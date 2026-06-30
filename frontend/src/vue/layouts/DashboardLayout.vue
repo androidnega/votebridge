@@ -13,11 +13,11 @@ const route = useRoute();
     <RouterView v-slot="{ Component, route: activeRoute }">
       <transition
         v-if="
-          activeRoute.path.startsWith('/system-control') ||
-          activeRoute.path.startsWith('/settings') ||
-          activeRoute.path.startsWith('/reports') ||
-          activeRoute.path.startsWith('/analytics') ||
-          activeRoute.path.startsWith('/strongroom')
+          activeRoute.path.startsWith('/dashboard/system-control') ||
+          activeRoute.path.startsWith('/dashboard/settings') ||
+          activeRoute.path.startsWith('/dashboard/reports') ||
+          activeRoute.path.startsWith('/dashboard/analytics') ||
+          activeRoute.path.startsWith('/dashboard/strongroom')
         "
         name="vb-tab"
         mode="out-in"

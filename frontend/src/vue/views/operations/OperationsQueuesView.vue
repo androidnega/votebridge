@@ -18,7 +18,7 @@ onMounted(() => {
     <PageHeader
       title="Queues"
       subtitle="Notification, SMS, email, and USSD queue status."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Operations', to: '/operations' }, { label: 'Queues' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Operations', to: '/dashboard/operations' }, { label: 'Queues' }]"
     />
     <ModuleNav :items="operationsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

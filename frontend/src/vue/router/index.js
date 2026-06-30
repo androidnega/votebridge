@@ -4,6 +4,7 @@ import AuthLayout from "@/layouts/AuthLayout.vue";
 import ElectionLayout from "@/layouts/ElectionLayout.vue";
 import PublicLayout from "@/layouts/PublicLayout.vue";
 import VerificationLayout from "@/layouts/VerificationLayout.vue";
+import { legacyRedirectRoutes } from "@/router/legacyRedirects";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -18,6 +19,18 @@ const router = createRouter({
           name: "auth-login",
           component: () => import("@/views/auth/LoginView.vue"),
           meta: { title: "Sign in" },
+        },
+        {
+          path: "forgot-password",
+          name: "auth-forgot-password",
+          component: () => import("@/views/auth/ForgotPasswordView.vue"),
+          meta: { title: "Forgot password" },
+        },
+        {
+          path: "reset-password",
+          name: "auth-reset-password",
+          component: () => import("@/views/auth/ResetPasswordView.vue"),
+          meta: { title: "Reset password" },
         },
         {
           path: "otp",
@@ -58,33 +71,15 @@ const router = createRouter({
       ],
     },
     {
-      path: "/",
+      path: "/dashboard",
       component: DashboardLayout,
       meta: { requiresAuth: true },
       children: [
         {
           path: "",
-          name: "home",
+          name: "dashboard",
           component: () => import("@/views/dashboard/DashboardHubView.vue"),
-          meta: { title: "Overview" },
-        },
-        {
-          path: "dashboard/student",
-          name: "dashboard-student",
-          component: () => import("@/views/dashboard/StudentDashboardView.vue"),
-          meta: { title: "Student Dashboard", roles: ["student", "candidate"] },
-        },
-        {
-          path: "dashboard/admin",
-          name: "dashboard-admin",
-          component: () => import("@/views/dashboard/AdminDashboardView.vue"),
-          meta: { title: "Admin Dashboard", roles: ["admin"] },
-        },
-        {
-          path: "dashboard/super-admin",
-          name: "dashboard-super-admin",
-          component: () => import("@/views/dashboard/SuperAdminDashboardView.vue"),
-          meta: { title: "Super Admin Dashboard", roles: ["super_admin"] },
+          meta: { title: "Dashboard" },
         },
         {
           path: "profile",
@@ -112,15 +107,15 @@ const router = createRouter({
         },
         {
           path: "election-management/candidates",
-          redirect: "/elections",
+          redirect: "/dashboard/elections",
         },
         {
           path: "election-management/positions",
-          redirect: "/elections",
+          redirect: "/dashboard/elections",
         },
         {
           path: "election-management/eligibility",
-          redirect: "/elections",
+          redirect: "/dashboard/elections",
         },
         {
           path: "elections",
@@ -856,7 +851,7 @@ const router = createRouter({
       ],
     },
     {
-      path: "/welcome",
+      path: "/",
       component: PublicLayout,
       meta: { public: true },
       children: [
@@ -870,7 +865,7 @@ const router = createRouter({
     },
     {
       path: "/observe",
-      component: PublicLayout,
+      component: () => import("@/layouts/ObserverLayout.vue"),
       meta: { public: true },
       children: [
         {
@@ -908,7 +903,7 @@ const router = createRouter({
       ],
     },
     {
-      path: "/elections/:uuid",
+      path: "/dashboard/elections/:uuid",
       component: ElectionLayout,
       meta: { requiresAuth: true },
       children: [
@@ -962,6 +957,7 @@ const router = createRouter({
         },
       ],
     },
+    ...legacyRedirectRoutes,
     {
       path: "/:pathMatch(.*)*",
       name: "not-found",

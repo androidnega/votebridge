@@ -9,22 +9,22 @@ const sections = [
   {
     title: "Runtime configuration",
     description: "Worker processes, cache, and live runtime parameters.",
-    to: "/settings/runtime",
+    to: "/dashboard/settings/runtime",
   },
   {
     title: "Environment",
     description: "Deployment environment variables and service endpoints.",
-    to: "/settings/environment",
+    to: "/dashboard/settings/environment",
   },
   {
     title: "Storage",
     description: "Media and document storage backends.",
-    to: "/settings/storage",
+    to: "/dashboard/settings/storage",
   },
   {
     title: "Audit settings",
     description: "Platform audit retention and logging policies.",
-    to: "/settings/audit",
+    to: "/dashboard/settings/audit",
   },
 ];
 </script>
@@ -34,7 +34,7 @@ const sections = [
     <PageHeader
       title="System configuration"
       subtitle="Advanced runtime and infrastructure settings."
-      :breadcrumbs="[{ label: 'Settings', to: '/settings' }, { label: 'System configuration' }]"
+      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'System configuration' }]"
     />
 
     <ModuleNav :items="settingsNav" />

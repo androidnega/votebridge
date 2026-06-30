@@ -15,7 +15,7 @@ onMounted(() => store.fetchRuntime().catch(() => {}));
     <PageHeader
       title="Runtime Configuration"
       subtitle="Adjust runtime values without redeploying where supported."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'System Control', to: '/system-control' }, { label: 'Runtime' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: 'Runtime' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

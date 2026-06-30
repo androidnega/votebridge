@@ -6,9 +6,9 @@ import { settingsNav } from "@/config/moduleNav";
 const router = useRouter();
 
 const links = [
-  { title: "Authentication", description: "OTP, sessions, and login policies.", to: "/settings/authentication" },
-  { title: "Identity configuration", description: "Biometrics and step-up verification policies.", to: "/settings/identity-assurance" },
-  { title: "Security policies", description: "Rate limits, lockouts, and alert thresholds.", to: "/settings/security" },
+  { title: "Authentication", description: "OTP, sessions, and login policies.", to: "/dashboard/settings/authentication" },
+  { title: "Identity configuration", description: "Biometrics and step-up verification policies.", to: "/dashboard/settings/identity-assurance" },
+  { title: "Security policies", description: "Rate limits, lockouts, and alert thresholds.", to: "/dashboard/settings/security" },
 ];
 </script>
 
@@ -17,7 +17,7 @@ const links = [
     <PageHeader
       title="Security"
       subtitle="Access control and identity policies for the platform."
-      :breadcrumbs="[{ label: 'Settings', to: '/settings' }, { label: 'Security' }]"
+      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Security' }]"
     />
     <ModuleNav :items="settingsNav" />
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

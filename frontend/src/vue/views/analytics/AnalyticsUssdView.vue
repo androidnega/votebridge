@@ -12,7 +12,7 @@ onMounted(() => store.fetchUssd().catch(() => {}));
 
 <template>
   <div class="vb-page">
-    <PageHeader title="USSD Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'USSD' }]" />
+    <PageHeader title="USSD Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'USSD' }]" />
     <ModuleNav :items="analyticsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <LoadingSkeleton v-if="store.loading && !store.ussd" variant="stats" :rows="4" />

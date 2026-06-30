@@ -8,12 +8,12 @@ import { useBiometricsStore } from "@/stores/biometrics";
 const route = useRoute();
 const store = useBiometricsStore();
 
-const isStrongroom = computed(() => route.path.startsWith("/strongroom"));
+const isStrongroom = computed(() => route.path.startsWith("/dashboard/strongroom"));
 const breadcrumbs = computed(() =>
   isStrongroom.value
     ? [
-        { label: "Strong room", to: "/strongroom" },
-        { label: "Investigations", to: "/strongroom/investigations" },
+        { label: "Strong room", to: "/dashboard/strongroom" },
+        { label: "Investigations", to: "/dashboard/strongroom/investigations" },
         { label: "Identity investigations" },
       ]
     : [

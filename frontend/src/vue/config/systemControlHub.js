@@ -7,8 +7,8 @@ export const systemControlSections = [
     description: "Identity, contact details, and portal appearance.",
     icon: "profile",
     items: [
-      { label: "Institution profile", to: "/settings/institution", description: "Name, campus, and election office contacts" },
-      { label: "Branding", to: "/settings/branding", description: "Logos, colours, and login panel assets" },
+      { label: "Institution profile", to: "/dashboard/settings/institution", description: "Name, campus, and election office contacts" },
+      { label: "Branding", to: "/dashboard/settings/branding", description: "Logos, colours, and login panel assets" },
     ],
   },
   {
@@ -17,8 +17,8 @@ export const systemControlSections = [
     description: "Rules that govern how elections run on the platform.",
     icon: "elections",
     items: [
-      { label: "Election policies", to: "/settings/election-policies", description: "Voting windows, eligibility, and result rules" },
-      { label: "Feature flags", to: "/settings/feature-flags", description: "Toggle experimental or phased capabilities" },
+      { label: "Election policies", to: "/dashboard/settings/election-policies", description: "Voting windows, eligibility, and result rules" },
+      { label: "Feature flags", to: "/dashboard/settings/feature-flags", description: "Toggle experimental or phased capabilities" },
     ],
   },
   {
@@ -27,11 +27,11 @@ export const systemControlSections = [
     description: "Authentication, identity assurance, and platform hardening.",
     icon: "security",
     items: [
-      { label: "Authentication", to: "/settings/authentication", description: "OTP, sessions, and login policies" },
-      { label: "Identity assurance", to: "/settings/identity-assurance", description: "Biometrics and step-up verification" },
-      { label: "Security settings", to: "/settings/security", description: "Rate limits, lockouts, and alerts" },
-      { label: "API management", to: "/settings/api", description: "Keys, webhooks, and integration limits" },
-      { label: "Audit settings", to: "/settings/audit", description: "Retention and audit log policies" },
+      { label: "Authentication", to: "/dashboard/settings/authentication", description: "OTP, sessions, and login policies" },
+      { label: "Identity assurance", to: "/dashboard/settings/identity-assurance", description: "Biometrics and step-up verification" },
+      { label: "Security settings", to: "/dashboard/settings/security", description: "Rate limits, lockouts, and alerts" },
+      { label: "API management", to: "/dashboard/settings/api", description: "Keys, webhooks, and integration limits" },
+      { label: "Audit settings", to: "/dashboard/settings/audit", description: "Retention and audit log policies" },
     ],
   },
   {
@@ -40,11 +40,11 @@ export const systemControlSections = [
     description: "SMS, email, USSD, and notification delivery.",
     icon: "communications",
     items: [
-      { label: "All providers", to: "/settings/providers", description: "Manage communication integrations" },
-      { label: "SMS", to: "/settings/sms", description: "Arkesel and SMS routing" },
-      { label: "Email", to: "/settings/email", description: "SMTP and outbound mail" },
-      { label: "Notifications", to: "/settings/notifications", description: "Templates and delivery rules" },
-      { label: "USSD", to: "/settings/ussd", description: "USSD gateway and session settings" },
+      { label: "All providers", to: "/dashboard/settings/providers", description: "Manage communication integrations" },
+      { label: "SMS", to: "/dashboard/settings/sms", description: "Arkesel and SMS routing" },
+      { label: "Email", to: "/dashboard/settings/email", description: "SMTP and outbound mail" },
+      { label: "Notifications", to: "/dashboard/settings/notifications", description: "Templates and delivery rules" },
+      { label: "USSD", to: "/dashboard/settings/ussd", description: "USSD gateway and session settings" },
     ],
   },
   {
@@ -53,11 +53,11 @@ export const systemControlSections = [
     description: "Maintenance, backups, storage, and runtime.",
     icon: "operations",
     items: [
-      { label: "Maintenance mode", to: "/settings/maintenance", description: "Schedule downtime and user messaging" },
-      { label: "Backup & recovery", to: "/settings/backup", description: "Create and verify platform backups" },
-      { label: "Storage", to: "/settings/storage", description: "Disk usage and cleanup" },
-      { label: "Environment", to: "/settings/environment", description: "Deployment and runtime context" },
-      { label: "Runtime config", to: "/settings/runtime", description: "Live tunable system parameters" },
+      { label: "Maintenance mode", to: "/dashboard/settings/maintenance", description: "Schedule downtime and user messaging" },
+      { label: "Backup & recovery", to: "/dashboard/settings/backup", description: "Create and verify platform backups" },
+      { label: "Storage", to: "/dashboard/settings/storage", description: "Disk usage and cleanup" },
+      { label: "Environment", to: "/dashboard/settings/environment", description: "Deployment and runtime context" },
+      { label: "Runtime config", to: "/dashboard/settings/runtime", description: "Live tunable system parameters" },
     ],
   },
   {
@@ -66,17 +66,17 @@ export const systemControlSections = [
     description: "Version information and support contacts.",
     icon: "help",
     items: [
-      { label: "License", to: "/settings/license", description: "Edition and support entitlements" },
-      { label: "About VoteBridge", to: "/settings/about", description: "Release notes and credits" },
+      { label: "License", to: "/dashboard/settings/license", description: "Edition and support entitlements" },
+      { label: "About VoteBridge", to: "/dashboard/settings/about", description: "Release notes and credits" },
     ],
   },
 ];
 
 export const quickActionRoutes = {
-  maintenance_enable: "/settings/maintenance",
-  test_sms: "/settings/sms",
-  create_backup: "/settings/backup",
-  open_operations: "/operations",
+  maintenance_enable: "/dashboard/settings/maintenance",
+  test_sms: "/dashboard/settings/sms",
+  create_backup: "/dashboard/settings/backup",
+  open_operations: "/dashboard/operations",
 };
 
 export const infrastructureServices = [

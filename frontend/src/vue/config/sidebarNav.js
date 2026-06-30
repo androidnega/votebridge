@@ -1,27 +1,29 @@
-/** Primary sidebar navigation — Phase 29 governance separation. */
+/** Primary sidebar navigation — Phase 32 universal dashboard namespace. */
+
+import { dashboardPath } from "@/config/routes";
 
 const studentNav = [
-  { name: "Dashboard", to: "/", icon: "home" },
-  { name: "Elections", to: "/elections", icon: "elections" },
-  { name: "Notifications", to: "/notifications", icon: "notifications" },
-  { name: "Profile", to: "/profile", icon: "profile" },
+  { name: "Dashboard", to: dashboardPath(), icon: "home" },
+  { name: "Elections", to: dashboardPath("elections"), icon: "elections" },
+  { name: "Notifications", to: dashboardPath("notifications"), icon: "notifications" },
+  { name: "Profile", to: dashboardPath("profile"), icon: "profile" },
 ];
 
 const adminNav = [
-  { name: "Dashboard", to: "/", icon: "home" },
-  { name: "Election workspace", to: "/elections", icon: "elections" },
-  { name: "Results", to: "/results", icon: "results" },
-  { name: "Reports", to: "/reports", icon: "analytics" },
-  { name: "Profile", to: "/profile", icon: "profile" },
+  { name: "Dashboard", to: dashboardPath(), icon: "home" },
+  { name: "Election workspace", to: dashboardPath("elections"), icon: "elections" },
+  { name: "Results", to: dashboardPath("results"), icon: "results" },
+  { name: "Reports", to: dashboardPath("reports"), icon: "analytics" },
+  { name: "Profile", to: dashboardPath("profile"), icon: "profile" },
 ];
 
 const superAdminNav = [
-  { name: "Dashboard", to: "/", icon: "home" },
-  { name: "Results", to: "/results", icon: "results" },
-  { name: "Reports", to: "/reports", icon: "analytics" },
-  { name: "Strong room", to: "/strongroom", icon: "strongroom", roles: ["super_admin"] },
-  { name: "Settings", to: "/settings", icon: "settings", roles: ["super_admin"] },
-  { name: "Profile", to: "/profile", icon: "profile" },
+  { name: "Dashboard", to: dashboardPath(), icon: "home" },
+  { name: "Results", to: dashboardPath("results"), icon: "results" },
+  { name: "Reports", to: dashboardPath("reports"), icon: "analytics" },
+  { name: "Strong room", to: dashboardPath("strongroom"), icon: "strongroom", roles: ["super_admin"] },
+  { name: "Settings", to: dashboardPath("settings"), icon: "settings", roles: ["super_admin"] },
+  { name: "Profile", to: dashboardPath("profile"), icon: "profile" },
 ];
 
 export function getSidebarNav(role) {

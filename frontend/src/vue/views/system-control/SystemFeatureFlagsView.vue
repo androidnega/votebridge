@@ -53,7 +53,7 @@ function isFlagLoading(flag) {
     <PageHeader
       title="Feature Flags"
       subtitle="Enable or disable platform modules without code changes."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'System Control', to: '/system-control' }, { label: 'Feature Flags' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: 'Feature Flags' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

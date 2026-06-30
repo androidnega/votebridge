@@ -12,7 +12,7 @@ onMounted(() => store.fetchCommunications().catch(() => {}));
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Communication Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Communications' }]" />
+    <PageHeader title="Communication Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Communications' }]" />
     <ModuleNav :items="analyticsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <LoadingSkeleton v-if="store.loading && !store.communications" variant="stats" :rows="4" />

@@ -82,7 +82,7 @@ function goToPositionEdit(positionUuid) {
 async function handleSubmit() {
   try {
     await votingStore.submitBallot(electionUuid.value);
-    router.push(`/elections/${electionUuid.value}/confirmation`);
+    router.push(`/dashboard/elections/${electionUuid.value}/confirmation`);
   } catch {
     /* store error */
   }

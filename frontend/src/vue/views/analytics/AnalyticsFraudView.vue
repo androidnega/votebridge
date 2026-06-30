@@ -14,7 +14,7 @@ onMounted(() => store.fetchFraud().catch(() => {}));
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Fraud Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Fraud' }]" />
+    <PageHeader title="Fraud Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Fraud' }]" />
     <ModuleNav :items="analyticsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <LoadingSkeleton v-if="store.loading && !store.fraud" variant="list" :rows="4" />

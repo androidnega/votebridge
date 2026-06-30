@@ -9,27 +9,27 @@ const channels = [
   {
     title: "Web voting",
     description: "Browser-based voting policies and channel availability.",
-    to: "/settings/election-policies",
+    to: "/dashboard/settings/election-policies",
   },
   {
     title: "USSD voting",
     description: "Mobile USSD menu codes, session limits, and provider routing.",
-    to: "/settings/ussd",
+    to: "/dashboard/settings/ussd",
   },
   {
     title: "SMS notifications",
     description: "SMS delivery settings and notification templates.",
-    to: "/settings/notifications",
+    to: "/dashboard/settings/notifications",
   },
   {
     title: "Channel health",
     description: "Monitor USSD sessions, queues, and delivery performance.",
-    to: "/ussd",
+    to: "/dashboard/ussd",
   },
   {
     title: "Provider testing",
     description: "Send test messages and validate communication providers.",
-    to: "/communications/test",
+    to: "/dashboard/communications/test",
   },
 ];
 </script>
@@ -39,7 +39,7 @@ const channels = [
     <PageHeader
       title="Voting channels"
       subtitle="Configure how students vote and receive election communications."
-      :breadcrumbs="[{ label: 'Settings', to: '/settings' }, { label: 'Voting channels' }]"
+      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Voting channels' }]"
     />
 
     <ModuleNav :items="settingsNav" />

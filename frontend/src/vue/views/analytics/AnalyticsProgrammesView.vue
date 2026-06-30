@@ -13,7 +13,7 @@ onMounted(() => store.fetchProgrammes().catch(() => {}));
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Programme Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Programmes' }]" />
+    <PageHeader title="Programme Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Programmes' }]" />
     <ModuleNav :items="analyticsNav" />
     <VCard title="Programme turnout">
       <BarChart :labels="rows.map((r) => r.label)" :values="rows.map((r) => r.turnout_percent)" />

@@ -13,7 +13,7 @@ onMounted(() => store.fetchFaculties().catch(() => {}));
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Faculty Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Faculties' }]" />
+    <PageHeader title="Faculty Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Faculties' }]" />
     <ModuleNav :items="analyticsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <LoadingSkeleton v-if="!rows.length && store.loading" variant="list" :rows="4" />

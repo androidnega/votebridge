@@ -24,11 +24,11 @@ onUnmounted(() => {
     <PageHeader
       title="USSD management"
       subtitle="Arkesel USSD sessions, votes, and provider status."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'USSD' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'USSD' }]"
     >
       <template #actions>
         <ConnectionStatusIndicator :status="store.realtimeStatus" />
-        <VButton variant="secondary" size="sm" @click="router.push('/ussd/sessions')">
+        <VButton variant="secondary" size="sm" @click="router.push('/dashboard/ussd/sessions')">
           Session monitor
         </VButton>
       </template>

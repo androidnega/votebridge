@@ -18,7 +18,7 @@ watch(period, load, { immediate: true });
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Historical Trends" :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Historical' }]" />
+    <PageHeader title="Historical Trends" :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Historical' }]" />
     <ModuleNav :items="analyticsNav" />
     <div class="flex flex-wrap gap-2">
       <VButton v-for="p in periods" :key="p" size="sm" :variant="period === p ? 'primary' : 'secondary'" @click="period = p">{{ p }}</VButton>

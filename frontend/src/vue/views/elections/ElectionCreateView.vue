@@ -59,7 +59,7 @@ async function submit() {
       title="Create election"
       subtitle="Set up a new campus election. Positions and candidates can be added after creation."
       :breadcrumbs="[
-        { label: 'Election workspace', to: '/elections' },
+        { label: 'Election workspace', to: '/dashboard/elections' },
         { label: 'Create' },
       ]"
     />
@@ -110,7 +110,7 @@ async function submit() {
         </div>
         <div class="flex flex-wrap gap-3">
           <VButton type="submit" :loading="saving">Create election</VButton>
-          <VButton variant="secondary" type="button" @click="router.push('/elections')">Cancel</VButton>
+          <VButton variant="secondary" type="button" @click="router.push('/dashboard/elections')">Cancel</VButton>
         </div>
       </form>
     </VCard>

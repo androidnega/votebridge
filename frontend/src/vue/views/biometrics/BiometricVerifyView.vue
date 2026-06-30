@@ -9,7 +9,7 @@ import { useBiometricsStore } from "@/stores/biometrics";
 import { useAuthStore } from "@/stores/auth";
 import { useTrustedDevicesStore } from "@/stores/trustedDevices";
 import { useToast } from "@/composables/useToast";
-import { toastMessages } from "@/config/toastMessages";
+import { normalizeAuthRedirect } from "@/config/routes";
 
 const router = useRouter();
 const route = useRoute();
@@ -53,10 +53,11 @@ async function submitVerification() {
     });
     await authStore.fetchProfile();
     toast.success(toastMessages.biometric.verified);
-    const redirect =
+    const redirect = normalizeAuthRedirect(
       typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
         ? route.query.redirect
-        : result.redirect_path || "/";
+        : result.redirect_path
+    );
     await router.replace(redirect);
   } catch (error) {
     submitError.value = error.message || biometricsStore.error;

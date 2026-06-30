@@ -6,9 +6,9 @@ import { settingsNav } from "@/config/moduleNav";
 const router = useRouter();
 
 const links = [
-  { title: "Institution profile", description: "Campus identity and election office contacts.", to: "/settings/institution" },
-  { title: "Branding", description: "Logos, colours, and login panel assets.", to: "/settings/branding" },
-  { title: "Election policies", description: "Voting windows, eligibility, and result rules.", to: "/settings/election-policies" },
+  { title: "Institution profile", description: "Campus identity and election office contacts.", to: "/dashboard/settings/institution" },
+  { title: "Branding", description: "Logos, colours, and login panel assets.", to: "/dashboard/settings/branding" },
+  { title: "Election policies", description: "Voting windows, eligibility, and result rules.", to: "/dashboard/settings/election-policies" },
 ];
 </script>
 
@@ -17,7 +17,7 @@ const links = [
     <PageHeader
       title="Institution"
       subtitle="One-time setup for your university election portal."
-      :breadcrumbs="[{ label: 'Settings', to: '/settings' }, { label: 'Institution' }]"
+      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Institution' }]"
     />
     <ModuleNav :items="settingsNav" />
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

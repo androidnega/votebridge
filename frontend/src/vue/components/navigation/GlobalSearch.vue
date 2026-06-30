@@ -15,26 +15,26 @@ const searchRef = ref(null);
 const searchItems = computed(() => {
   const role = authStore.role;
   const items = [
-    { label: "Overview", to: "/", keywords: "dashboard home" },
-    { label: "Results", to: "/results", keywords: "outcome standings certify publish" },
-    { label: "Reports", to: "/reports", keywords: "turnout participation export" },
-    { label: "Profile", to: "/profile", keywords: "account settings" },
-    { label: "Notifications", to: "/notifications", keywords: "alerts messages" },
+    { label: "Dashboard", to: "/dashboard", keywords: "dashboard home" },
+    { label: "Results", to: "/dashboard/results", keywords: "outcome standings certify publish" },
+    { label: "Reports", to: "/dashboard/reports", keywords: "turnout participation export" },
+    { label: "Profile", to: "/dashboard/profile", keywords: "account settings" },
+    { label: "Notifications", to: "/dashboard/notifications", keywords: "alerts messages" },
   ];
 
   if (role === "admin") {
     items.splice(1, 0, {
       label: "Election workspace",
-      to: "/elections",
+      to: "/dashboard/elections",
       keywords: "vote ballot create positions candidates",
     });
   }
 
   if (role === "super_admin") {
     items.push(
-      { label: "Strong room", to: "/strongroom", keywords: "integrity investigation fraud audit" },
-      { label: "Certification", to: "/results/certification", keywords: "certify results" },
-      { label: "Settings", to: "/settings", keywords: "configuration institution voting security" }
+      { label: "Strong room", to: "/dashboard/strongroom", keywords: "integrity investigation fraud audit" },
+      { label: "Certification", to: "/dashboard/results/certification", keywords: "certify results" },
+      { label: "Settings", to: "/dashboard/settings", keywords: "configuration institution voting security" }
     );
   }
 

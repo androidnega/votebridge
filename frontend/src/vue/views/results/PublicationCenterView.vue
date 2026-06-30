@@ -24,7 +24,7 @@ async function publish(item) {
 }
 
 function openDetail(item) {
-  router.push(`/results/${item.election_uuid}`);
+  router.push(`/dashboard/results/${item.election_uuid}`);
 }
 </script>
 
@@ -34,8 +34,8 @@ function openDetail(item) {
       title="Publication center"
       subtitle="Publish certified results for students and the public."
       :breadcrumbs="[
-        { label: 'Overview', to: '/' },
-        { label: 'Results', to: '/results' },
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Results', to: '/dashboard/results' },
         { label: 'Publication' },
       ]"
     >

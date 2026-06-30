@@ -9,7 +9,7 @@ import { VButton, VCard } from "@/components/ui";
         Check the address or return to your dashboard to continue working.
       </p>
       <div class="mt-6 flex flex-wrap justify-center gap-3">
-        <VButton @click="$router.push('/')">Go to dashboard</VButton>
+        <VButton @click="$router.push('/dashboard')">Go to dashboard</VButton>
         <VButton variant="secondary" @click="$router.push({ name: 'auth-login' })">
           Sign in
         </VButton>

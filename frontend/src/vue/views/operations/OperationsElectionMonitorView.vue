@@ -21,7 +21,7 @@ onUnmounted(() => store.disconnectRealtime());
     <PageHeader
       title="Election monitor"
       subtitle="Active elections with turnout and alert metrics — no candidate rankings while open."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Operations', to: '/operations' }, { label: 'Election Monitor' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Operations', to: '/dashboard/operations' }, { label: 'Election Monitor' }]"
     >
       <template #actions>
         <ConnectionStatusIndicator :status="store.realtimeStatus" />

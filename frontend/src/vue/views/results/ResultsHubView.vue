@@ -51,7 +51,7 @@ onUnmounted(() => {
     <PageHeader
       :title="title"
       :subtitle="subtitle"
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Results' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Results' }]"
     >
       <template v-if="authStore.isStaff" #actions>
         <ConnectionStatusIndicator :status="resultsStore.realtimeStatus" />
@@ -90,7 +90,7 @@ onUnmounted(() => {
           <VButton
             size="sm"
             variant="secondary"
-            @click="router.push(`/results/${result.election_uuid}`)"
+            @click="router.push(`/dashboard/results/${result.election_uuid}`)"
           >
             View details
           </VButton>

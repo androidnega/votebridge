@@ -8,15 +8,15 @@ import { useSecurityStore } from "@/stores/security";
 const route = useRoute();
 const securityStore = useSecurityStore();
 
-const isStrongroom = computed(() => route.path.startsWith("/strongroom"));
+const isStrongroom = computed(() => route.path.startsWith("/dashboard/strongroom"));
 const breadcrumbs = computed(() =>
   isStrongroom.value
     ? [
-        { label: "Strong room", to: "/strongroom" },
-        { label: "Investigations", to: "/strongroom/investigations" },
+        { label: "Strong room", to: "/dashboard/strongroom" },
+        { label: "Investigations", to: "/dashboard/strongroom/investigations" },
         { label: "Security timeline" },
       ]
-    : [{ label: "Overview", to: "/" }, { label: "Security" }]
+    : [{ label: "Dashboard", to: "/dashboard" }, { label: "Security" }]
 );
 
 onMounted(() => {

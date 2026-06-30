@@ -137,26 +137,26 @@ onMounted(refresh);
     <section v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <VCard title="Positions" padding="compact">
         <p class="text-2xl font-semibold text-slate-900">{{ election.position_count ?? 0 }}</p>
-        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/elections/${electionUuid}/positions`)">
+        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/dashboard/elections/${electionUuid}/positions`)">
           Manage
         </VButton>
       </VCard>
       <VCard title="Candidates" padding="compact">
         <p class="text-2xl font-semibold text-slate-900">{{ election.candidate_count ?? 0 }}</p>
         <p class="text-xs text-slate-500">{{ election.approved_candidate_count ?? 0 }} approved</p>
-        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/elections/${electionUuid}/candidates`)">
+        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/dashboard/elections/${electionUuid}/candidates`)">
           Manage
         </VButton>
       </VCard>
       <VCard title="Eligibility" padding="compact">
         <p class="text-sm text-slate-600">Voter roll and programme filters</p>
-        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/elections/${electionUuid}/eligibility`)">
+        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/dashboard/elections/${electionUuid}/eligibility`)">
           Manage
         </VButton>
       </VCard>
       <VCard title="Readiness" padding="compact">
         <p class="text-sm text-slate-600">Pre-open validation checklist</p>
-        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/elections/${electionUuid}/readiness`)">
+        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/dashboard/elections/${electionUuid}/readiness`)">
           View checklist
         </VButton>
       </VCard>
@@ -167,7 +167,7 @@ onMounted(refresh);
           class="mt-3"
           size="sm"
           variant="secondary"
-          @click="router.push('/results')"
+          @click="router.push('/dashboard/results')"
         >
           View results
         </VButton>
@@ -176,7 +176,7 @@ onMounted(refresh);
           class="mt-3"
           size="sm"
           variant="secondary"
-          @click="router.push(`/elections/${electionUuid}/monitor`)"
+          @click="router.push(`/dashboard/elections/${electionUuid}/monitor`)"
         >
           Monitor turnout
         </VButton>

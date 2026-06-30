@@ -46,7 +46,7 @@ const healthMeta = computed(() => electionHealth[props.healthLevel] || electionH
 
 const workspaceRoute = computed(() => {
   const uuid = props.election?.uuid || props.election?.election_uuid;
-  return uuid ? `/elections/${uuid}` : "/elections";
+  return uuid ? `/dashboard/elections/${uuid}` : "/dashboard/elections";
 });
 </script>
 

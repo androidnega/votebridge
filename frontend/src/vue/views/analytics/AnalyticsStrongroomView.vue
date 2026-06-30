@@ -12,7 +12,7 @@ onMounted(() => store.fetchStrongroom().catch(() => {}));
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Strongroom Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Strongroom' }]" />
+    <PageHeader title="Strongroom Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Strongroom' }]" />
     <ModuleNav :items="analyticsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <LoadingSkeleton v-if="store.loading && !store.strongroom" variant="list" :rows="4" />

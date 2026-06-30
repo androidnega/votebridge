@@ -25,7 +25,7 @@ onUnmounted(() => {
     <PageHeader
       title="Enterprise Operations Center"
       subtitle="Real-time platform monitoring for election operations."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Operations' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Operations' }]"
     >
       <template #actions>
         <ConnectionStatusIndicator :status="store.realtimeStatus" />

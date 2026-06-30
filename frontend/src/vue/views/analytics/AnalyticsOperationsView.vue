@@ -13,7 +13,7 @@ onMounted(() => store.fetchOperations().catch(() => {}));
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Operations Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Operations' }]" />
+    <PageHeader title="Operations Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Operations' }]" />
     <ModuleNav :items="analyticsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <LoadingSkeleton v-if="store.loading && !store.operations" variant="stats" :rows="4" />

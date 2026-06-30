@@ -1,7 +1,9 @@
 /** Election workspace in-page navigation (admin). */
 
+import { dashboardPath } from "@/config/routes";
+
 export function getElectionWorkspaceNav(electionUuid, status) {
-  const base = `/elections/${electionUuid}`;
+  const base = dashboardPath(`elections/${electionUuid}`);
   const tabs = [
     { label: "Overview", to: base, exact: true },
     { label: "Positions", to: `${base}/positions` },

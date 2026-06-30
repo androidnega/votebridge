@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, watch } from "vue";
 import { RouterLink, RouterView, useRoute } from "vue-router";
 import { ModuleNav, PageHeader } from "@/components/ui";
+import { dashboardPath } from "@/config/routes";
 import { getElectionWorkspaceNav } from "@/config/electionWorkspaceNav";
 import { useAuthStore } from "@/stores/auth";
 import { useElectionStore } from "@/stores/election";
@@ -35,17 +36,18 @@ const adminTabs = computed(() => {
 const studentTabs = computed(() => {
   if (!authStore.isStudent && !authStore.isCandidate) return [];
   const uuid = electionUuid.value;
+  const base = dashboardPath(`elections/${uuid}`);
   return [
-    { label: "Overview", to: `/elections/${uuid}`, exact: true },
-    { label: "Vote", to: `/elections/${uuid}/vote`, disabled: !canVote.value },
-    { label: "Confirmation", to: `/elections/${uuid}/confirmation` },
+    { label: "Overview", to: base, exact: true },
+    { label: "Vote", to: `${base}/vote`, disabled: !canVote.value },
+    { label: "Confirmation", to: `${base}/confirmation` },
   ];
 });
 
 const breadcrumbs = computed(() => {
   const root = authStore.isElectionOfficer
-    ? [{ label: "Election workspace", to: "/elections" }]
-    : [{ label: "Elections", to: "/elections" }];
+    ? [{ label: "Election workspace", to: dashboardPath("elections") }]
+    : [{ label: "Elections", to: dashboardPath("elections") }];
   return [...root, { label: electionTitle.value }];
 });
 

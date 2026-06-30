@@ -63,7 +63,7 @@ async function runAction(action) {
     toast.success(toastForAction[action] || toastMessages.generic.saved);
     emit("updated");
     if (action === "close") {
-      router.push("/results");
+      router.push("/dashboard/results");
     }
   } catch {
     toast.error(electionStore.error || toastMessages.generic.error);

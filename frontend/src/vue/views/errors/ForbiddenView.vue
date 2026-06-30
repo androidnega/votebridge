@@ -13,7 +13,7 @@ import { VButton, VCard } from "@/components/ui";
         If you believe this is an error, contact your election administrator.
       </p>
       <div class="mt-6">
-        <VButton @click="$router.push('/')">Return to dashboard</VButton>
+        <VButton @click="$router.push('/dashboard')">Return to dashboard</VButton>
       </div>
     </VCard>
   </div>

@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { authApi } from "@/api";
+import { normalizeAuthRedirect, DASHBOARD_ROOT } from "@/config/routes";
 import {
   clearOtpChallenge,
   clearSession,
@@ -19,7 +20,7 @@ export const useAuthStore = defineStore("auth", {
     user: null,
     sessions: [],
     otpChallenge: getOtpChallenge(),
-    postLoginRedirect: "/",
+    postLoginRedirect: DASHBOARD_ROOT,
     loading: false,
     otpLoading: false,
     sessionsLoading: false,
@@ -140,7 +141,7 @@ export const useAuthStore = defineStore("auth", {
 
         clearOtpChallenge();
         this.otpChallenge = null;
-        this.postLoginRedirect = result.redirect_path || "/";
+        this.postLoginRedirect = normalizeAuthRedirect(result.redirect_path);
         await this.fetchProfile();
         return { user: this.user, redirectPath: this.postLoginRedirect };
       } catch (error) {

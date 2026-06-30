@@ -14,7 +14,7 @@ onMounted(() => store.fetchSecurity().catch(() => {}));
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Security Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Security' }]" />
+    <PageHeader title="Security Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Security' }]" />
     <ModuleNav :items="analyticsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <LoadingSkeleton v-if="store.loading && !store.security" variant="stats" :rows="4" />

@@ -42,7 +42,7 @@ onUnmounted(() => store.disconnectRealtime());
     <PageHeader
       title="Reports"
       subtitle="Election participation, turnout, and institutional reporting."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Reports' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Reports' }]"
     >
       <template #actions>
         <ConnectionStatusIndicator :status="store.realtimeStatus" />

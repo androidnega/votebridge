@@ -18,7 +18,7 @@ onMounted(() => {
     <PageHeader
       title="Chain of custody"
       subtitle="Review sealed ballots and custody events by election."
-      :breadcrumbs="[{ label: 'Strong room', to: '/strongroom' }, { label: 'Chain of custody' }]"
+      :breadcrumbs="[{ label: 'Strong room', to: '/dashboard/strongroom' }, { label: 'Chain of custody' }]"
     />
 
     <VAlert v-if="strongroomStore.error" variant="error">{{ strongroomStore.error }}</VAlert>
@@ -49,7 +49,7 @@ onMounted(() => {
           <VButton
             variant="secondary"
             size="sm"
-            @click="router.push(`/strongroom/${item.election_uuid}`)"
+            @click="router.push(`/dashboard/strongroom/${item.election_uuid}`)"
           >
             View timeline
           </VButton>

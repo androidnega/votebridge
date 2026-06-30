@@ -15,7 +15,7 @@ onMounted(() => store.fetchParticipation().catch(() => {}));
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Participation Analytics" subtitle="Faculty, programme, and turnout breakdowns." :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Participation' }]" />
+    <PageHeader title="Participation Analytics" subtitle="Faculty, programme, and turnout breakdowns." :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Participation' }]" />
     <ModuleNav :items="analyticsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <LoadingSkeleton v-if="store.loading && !store.participation" variant="list" :rows="5" />

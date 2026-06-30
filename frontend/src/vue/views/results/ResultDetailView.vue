@@ -108,7 +108,7 @@ async function downloadReport(format) {
   <div class="space-y-8">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <VButton variant="ghost" size="sm" class="mb-2" @click="router.push('/results')">
+        <VButton variant="ghost" size="sm" class="mb-2" @click="router.push('/dashboard/results')">
           ← Back to results
         </VButton>
         <h2 class="text-2xl font-bold text-slate-900">

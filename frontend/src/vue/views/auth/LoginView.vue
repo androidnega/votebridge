@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { RouterLink, useRoute, useRouter } from "vue-router";
 import { VAlert, VButton, VCheckbox, VInput, VPasswordInput } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth";
 import { getRememberedIdentifier, setRememberedIdentifier } from "@/utils/auth";
@@ -93,6 +93,12 @@ async function handleSubmit() {
       :error="errors.password"
       required
     />
+
+    <p class="text-right text-sm">
+      <RouterLink to="/auth/forgot-password" class="font-medium text-brand-700 hover:underline">
+        Forgot password?
+      </RouterLink>
+    </p>
 
     <Transition
       enter-active-class="transition duration-200 ease-out"

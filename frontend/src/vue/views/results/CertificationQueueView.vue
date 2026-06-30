@@ -20,7 +20,7 @@ onUnmounted(() => {
 });
 
 function openDetail(item) {
-  router.push(`/results/${item.election_uuid}`);
+  router.push(`/dashboard/results/${item.election_uuid}`);
 }
 </script>
 
@@ -30,8 +30,8 @@ function openDetail(item) {
       title="Certification queue"
       subtitle="Review generated results before certification."
       :breadcrumbs="[
-        { label: 'Overview', to: '/' },
-        { label: 'Results', to: '/results' },
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'Results', to: '/dashboard/results' },
         { label: 'Certification' },
       ]"
     >

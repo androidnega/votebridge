@@ -40,12 +40,12 @@ const nextAction = computed(() => {
   const uuid = election.uuid || election.election_uuid;
   const status = election.status || election.election_status;
   if (status === "open") {
-    return { label: "Open control room", route: `/elections/${uuid}/monitor` };
+    return { label: "Open control room", route: `/dashboard/elections/${uuid}/monitor` };
   }
   if (status === "paused") {
-    return { label: "Review election", route: `/elections/${uuid}` };
+    return { label: "Review election", route: `/dashboard/elections/${uuid}` };
   }
-  return { label: "Manage election", route: `/elections/${uuid}` };
+  return { label: "Manage election", route: `/dashboard/elections/${uuid}` };
 });
 
 const taskItems = computed(() => {
@@ -81,8 +81,8 @@ onMounted(() => {
     <PageHeader title="Election officer dashboard" subtitle="Active election context and operational health.">
       <template #actions>
         <ConnectionStatusIndicator :status="realtime.status.value" :label="realtime.label.value" />
-        <VButton @click="router.push('/elections/create')">Create election</VButton>
-        <VButton variant="secondary" size="sm" @click="router.push('/elections')">All elections</VButton>
+        <VButton @click="router.push('/dashboard/elections/create')">Create election</VButton>
+        <VButton variant="secondary" size="sm" @click="router.push('/dashboard/elections')">All elections</VButton>
       </template>
     </PageHeader>
 
@@ -136,7 +136,7 @@ onMounted(() => {
         </div>
         <EmptyState v-else v-bind="emptyStates.openElections">
           <template #action>
-            <VButton @click="router.push('/elections/create')">Create election</VButton>
+            <VButton @click="router.push('/dashboard/elections/create')">Create election</VButton>
           </template>
         </EmptyState>
       </section>

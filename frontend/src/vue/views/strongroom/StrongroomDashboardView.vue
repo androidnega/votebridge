@@ -86,7 +86,7 @@ onUnmounted(() => {
           </div>
           <VButton
             size="sm"
-            @click="router.push(`/strongroom/${item.election_uuid}`)"
+            @click="router.push(`/dashboard/strongroom/${item.election_uuid}`)"
           >
             Open vault
           </VButton>

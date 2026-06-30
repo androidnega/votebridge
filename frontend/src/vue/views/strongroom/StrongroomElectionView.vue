@@ -46,7 +46,7 @@ async function lockElection() {
       :title="dashboard?.election_title || 'Election vault'"
       subtitle="Integrity verification, custody chain, and audit history."
       :breadcrumbs="[
-        { label: 'Strong room', to: '/strongroom' },
+        { label: 'Strong room', to: '/dashboard/strongroom' },
         { label: dashboard?.election_title || 'Election' },
       ]"
     />

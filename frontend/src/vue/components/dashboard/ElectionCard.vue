@@ -70,7 +70,7 @@ function formatDate(value) {
         <VButton
           size="sm"
           variant="secondary"
-          @click="router.push(`/elections/${election.uuid || election.election_uuid}`)"
+          @click="router.push(`/dashboard/elections/${election.uuid || election.election_uuid}`)"
         >
           View details
         </VButton>

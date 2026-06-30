@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import VIcon from "@/components/ui/VIcon.vue";
 import VTooltip from "@/components/ui/VTooltip.vue";
+import { dashboardPath, DASHBOARD_ROOT } from "@/config/routes";
 import { getSidebarNav } from "@/config/sidebarNav";
 import { useSidebar } from "@/composables/useSidebar";
 import { useAuthStore } from "@/stores/auth";
@@ -19,18 +20,26 @@ const { toggleGroup, isGroupExpanded } = useSidebar();
 const visibleItems = computed(() => getSidebarNav(authStore.role));
 
 function isActive(item) {
-  if (item.to === "/") return route.path === "/";
-  if (item.to === "/elections") {
-    return route.path.startsWith("/elections") || route.path.startsWith("/election-management");
+  if (item.to === DASHBOARD_ROOT) {
+    return route.path === DASHBOARD_ROOT;
   }
-  if (item.to === "/reports") {
-    return route.path.startsWith("/reports") || route.path.startsWith("/analytics");
+  if (item.to === dashboardPath("elections")) {
+    return (
+      route.path.startsWith(dashboardPath("elections")) ||
+      route.path.startsWith("/election-management")
+    );
   }
-  if (item.to === "/settings") {
-    return route.path.startsWith("/settings") || route.path.startsWith("/system-control");
+  if (item.to === dashboardPath("reports")) {
+    return route.path.startsWith(dashboardPath("reports")) || route.path.startsWith(dashboardPath("analytics"));
   }
-  if (item.to === "/strongroom") {
-    return route.path.startsWith("/strongroom");
+  if (item.to === dashboardPath("settings")) {
+    return (
+      route.path.startsWith(dashboardPath("settings")) ||
+      route.path.startsWith(dashboardPath("system-control"))
+    );
+  }
+  if (item.to === dashboardPath("strongroom")) {
+    return route.path.startsWith(dashboardPath("strongroom"));
   }
   return route.path === item.to || route.path.startsWith(`${item.to}/`);
 }

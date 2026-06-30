@@ -29,7 +29,7 @@ onMounted(() => {
     <PageHeader
       title="Performance"
       subtitle="Platform throughput and resource metrics."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Operations', to: '/operations' }, { label: 'Performance' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Operations', to: '/dashboard/operations' }, { label: 'Performance' }]"
     />
     <ModuleNav :items="operationsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

@@ -32,7 +32,7 @@ onUnmounted(() => {
     <PageHeader
       title="Communication center"
       subtitle="Central hub for SMS, email, and in-app notifications."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Communications' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Communications' }]"
     >
       <template #actions>
         <ConnectionStatusIndicator :status="store.realtimeStatus" />
@@ -82,17 +82,17 @@ onUnmounted(() => {
               </span>
             </li>
           </ul>
-          <VButton class="mt-4" variant="secondary" size="sm" @click="router.push('/communications/providers')">
+          <VButton class="mt-4" variant="secondary" size="sm" @click="router.push('/dashboard/communications/providers')">
             Manage providers
           </VButton>
         </VCard>
 
         <VCard title="Quick links">
           <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <VButton variant="secondary" @click="router.push('/communications/templates')">Templates</VButton>
-            <VButton variant="secondary" @click="router.push('/communications/logs?channel=sms')">SMS logs</VButton>
-            <VButton variant="secondary" @click="router.push('/communications/logs?channel=email')">Email logs</VButton>
-            <VButton variant="secondary" @click="router.push('/notifications')">Notification center</VButton>
+            <VButton variant="secondary" @click="router.push('/dashboard/communications/templates')">Templates</VButton>
+            <VButton variant="secondary" @click="router.push('/dashboard/communications/logs?channel=sms')">SMS logs</VButton>
+            <VButton variant="secondary" @click="router.push('/dashboard/communications/logs?channel=email')">Email logs</VButton>
+            <VButton variant="secondary" @click="router.push('/dashboard/notifications')">Notification center</VButton>
           </div>
         </VCard>
       </section>

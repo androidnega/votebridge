@@ -17,7 +17,7 @@ onMounted(() => {
     <PageHeader
       title="System health"
       subtitle="Infrastructure and integration health probes."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Operations', to: '/operations' }, { label: 'System Health' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Operations', to: '/dashboard/operations' }, { label: 'System Health' }]"
     >
       <template #actions>
         <OpsHealthBadge v-if="store.health" :status="store.health.overall_status" />

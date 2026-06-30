@@ -101,11 +101,11 @@ const pageTitle = computed(() => (isStrongroomAudit.value ? "Audit trail" : "Pla
 const breadcrumbs = computed(() =>
   isStrongroomAudit.value
     ? [
-        { label: "Strong room", to: "/strongroom" },
-        { label: "Investigations", to: "/strongroom/investigations" },
+        { label: "Strong room", to: "/dashboard/strongroom" },
+        { label: "Investigations", to: "/dashboard/strongroom/investigations" },
         { label: "Audit trail" },
       ]
-    : [{ label: "Overview", to: "/" }, { label: "Platform logs" }]
+    : [{ label: "Dashboard", to: "/dashboard" }, { label: "Platform logs" }]
 );
 
 onMounted(() => loadTab());

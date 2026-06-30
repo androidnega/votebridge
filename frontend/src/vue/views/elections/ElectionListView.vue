@@ -26,7 +26,7 @@ onMounted(() => {
 function openElection(row) {
   if (!row.uuid) return;
   if (authStore.isElectionOfficer) {
-    router.push(`/elections/${row.uuid}`);
+    router.push(`/dashboard/elections/${row.uuid}`);
     return;
   }
   router.push({ name: "election-detail", params: { uuid: row.uuid } });
@@ -44,7 +44,7 @@ function openElection(row) {
       "
     >
       <template v-if="authStore.isElectionOfficer" #actions>
-        <VButton @click="router.push('/elections/create')">Create election</VButton>
+        <VButton @click="router.push('/dashboard/elections/create')">Create election</VButton>
       </template>
     </PageHeader>
 
@@ -78,7 +78,7 @@ function openElection(row) {
         class="p-card"
       >
         <template v-if="authStore.isElectionOfficer" #action>
-          <VButton @click="router.push('/elections/create')">Create election</VButton>
+          <VButton @click="router.push('/dashboard/elections/create')">Create election</VButton>
         </template>
       </EmptyState>
     </VCard>

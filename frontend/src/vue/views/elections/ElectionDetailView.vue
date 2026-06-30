@@ -163,7 +163,7 @@ onUnmounted(() => {
         <VButton
           v-if="!alreadyVoted"
           size="lg"
-          @click="router.push(`/elections/${electionUuid}/vote`)"
+          @click="router.push(`/dashboard/elections/${electionUuid}/vote`)"
         >
           Cast your vote
         </VButton>
@@ -171,7 +171,7 @@ onUnmounted(() => {
           v-else
           size="lg"
           variant="secondary"
-          @click="router.push(`/elections/${electionUuid}/confirmation`)"
+          @click="router.push(`/dashboard/elections/${electionUuid}/confirmation`)"
         >
           View confirmation
         </VButton>

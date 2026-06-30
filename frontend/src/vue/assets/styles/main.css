@@ -78,7 +78,56 @@
   }
 
   .vb-portal-hero {
-    @apply overflow-hidden rounded-card bg-brand-700 px-6 py-10 text-white sm:px-10 sm:py-14;
+    @apply rounded-card bg-brand-700 px-6 py-8 text-white sm:px-8 sm:py-10;
+  }
+
+  .vb-portal-hero-title {
+    @apply text-2xl font-semibold tracking-tight sm:text-3xl;
+  }
+
+  .vb-portal-hero-lead {
+    @apply mt-2 max-w-xl text-sm leading-relaxed text-brand-100;
+  }
+
+  .vb-portal-hero-actions {
+    @apply mt-5 flex flex-wrap gap-3;
+  }
+
+  .vb-portal-hero-link {
+    @apply inline-flex min-h-touch items-center rounded-input border border-white/20 px-4 text-sm font-semibold text-white transition hover:bg-white/10 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white;
+  }
+
+  .vb-portal-hero-cta {
+    @apply inline-flex min-h-touch items-center rounded-input bg-white px-4 text-sm font-semibold text-brand-700 transition hover:bg-brand-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white;
+  }
+
+  .vb-portal-info-grid {
+    @apply grid gap-section md:grid-cols-2;
+  }
+
+  .vb-observer-board {
+    @apply flex h-full min-h-0 flex-col overflow-hidden rounded-card border border-border bg-surface px-5 py-4 sm:px-8 sm:py-5;
+  }
+
+  .vb-observer-phase {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-700;
+  }
+
+  .vb-observer-phase-dot {
+    @apply h-1.5 w-1.5 rounded-full bg-slate-300;
+  }
+
+  .vb-observer-phase-dot--live {
+    @apply bg-success-600;
+    animation: vbObserverPulse 2s ease-in-out infinite;
+  }
+
+  .vb-observer-countdown {
+    @apply font-mono text-5xl font-light tabular-nums tracking-[0.08em] text-slate-900 sm:text-6xl;
+  }
+
+  .vb-observer-stat-label {
+    @apply text-[9px] font-medium uppercase tracking-[0.18em] text-slate-400;
   }
 
   .vb-surface-panel {
@@ -107,6 +156,16 @@
 
   .vb-table-shell {
     @apply overflow-hidden rounded-card bg-white shadow-card ring-1 ring-slate-900/5;
+  }
+}
+
+@keyframes vbObserverPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
   }
 }
 

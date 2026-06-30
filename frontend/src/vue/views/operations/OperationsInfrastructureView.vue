@@ -17,7 +17,7 @@ onMounted(() => {
     <PageHeader
       title="Infrastructure"
       subtitle="Platform topology and service relationships."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Operations', to: '/operations' }, { label: 'Infrastructure' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Operations', to: '/dashboard/operations' }, { label: 'Infrastructure' }]"
     />
     <ModuleNav :items="operationsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

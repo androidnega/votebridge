@@ -9,7 +9,7 @@ import { branding } from "@/config/branding";
     <PageHeader
       title="About VoteBridge"
       subtitle="Platform information and enterprise election management overview."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'System Control', to: '/system-control' }, { label: 'About' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: 'About' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VCard title="VoteBridge Enterprise">

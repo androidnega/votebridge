@@ -21,7 +21,7 @@ onMounted(() => store.fetchElections().catch(() => {}));
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Election Analytics" subtitle="Turnout, channels, and election comparisons." :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Elections' }]" />
+    <PageHeader title="Election Analytics" subtitle="Turnout, channels, and election comparisons." :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Elections' }]" />
     <ModuleNav :items="analyticsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <LoadingSkeleton v-if="store.loading && !store.elections" variant="list" :rows="6" />

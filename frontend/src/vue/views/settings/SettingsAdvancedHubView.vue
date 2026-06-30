@@ -6,11 +6,11 @@ import { settingsNav } from "@/config/moduleNav";
 const router = useRouter();
 
 const links = [
-  { title: "Maintenance", description: "Schedule downtime and user messaging.", to: "/settings/maintenance" },
-  { title: "Backup", description: "Create and verify platform backups.", to: "/settings/backup" },
-  { title: "Integrations", description: "API keys, webhooks, and external systems.", to: "/settings/api" },
-  { title: "Feature flags", description: "Toggle phased platform capabilities.", to: "/settings/feature-flags" },
-  { title: "System configuration", description: "Runtime, environment, and storage.", to: "/settings/system" },
+  { title: "Maintenance", description: "Schedule downtime and user messaging.", to: "/dashboard/settings/maintenance" },
+  { title: "Backup", description: "Create and verify platform backups.", to: "/dashboard/settings/backup" },
+  { title: "Integrations", description: "API keys, webhooks, and external systems.", to: "/dashboard/settings/api" },
+  { title: "Feature flags", description: "Toggle phased platform capabilities.", to: "/dashboard/settings/feature-flags" },
+  { title: "System configuration", description: "Runtime, environment, and storage.", to: "/dashboard/settings/system" },
 ];
 </script>
 
@@ -19,7 +19,7 @@ const links = [
     <PageHeader
       title="Advanced"
       subtitle="Platform operations for technical administrators."
-      :breadcrumbs="[{ label: 'Settings', to: '/settings' }, { label: 'Advanced' }]"
+      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Advanced' }]"
     />
     <ModuleNav :items="settingsNav" />
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

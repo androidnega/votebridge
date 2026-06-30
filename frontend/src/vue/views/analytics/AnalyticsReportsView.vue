@@ -33,7 +33,7 @@ async function exportReport() {
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Analytics Reports" subtitle="Export institutional intelligence reports." :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Reports' }]" />
+    <PageHeader title="Analytics Reports" subtitle="Export institutional intelligence reports." :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Reports' }]" />
     <ModuleNav :items="analyticsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <VCard title="Generate report">

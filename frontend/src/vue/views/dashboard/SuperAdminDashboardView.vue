@@ -48,9 +48,9 @@ onMounted(() => {
         </p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <VButton variant="secondary" size="sm" @click="router.push('/strongroom')">Strong room</VButton>
-        <VButton variant="secondary" size="sm" @click="router.push('/results/certification')">Certification</VButton>
-        <VButton variant="secondary" size="sm" @click="router.push('/results/publication')">Publication</VButton>
+        <VButton variant="secondary" size="sm" @click="router.push('/dashboard/strongroom')">Strong room</VButton>
+        <VButton variant="secondary" size="sm" @click="router.push('/dashboard/results/certification')">Certification</VButton>
+        <VButton variant="secondary" size="sm" @click="router.push('/dashboard/results/publication')">Publication</VButton>
       </div>
     </div>
 
@@ -72,7 +72,7 @@ onMounted(() => {
       <StatCard label="Security issues" :value="alertSummary.open ?? 0" accent="red" />
       <VCard title="Platform health" padding="compact">
         <OpsHealthBadge :status="healthStatus" />
-        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push('/operations/health')">
+        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push('/dashboard/operations/health')">
           View details
         </VButton>
       </VCard>

@@ -27,7 +27,7 @@ onUnmounted(() => store.disconnectRealtime());
     <PageHeader
       title="Users & sessions"
       subtitle="Authenticated sessions and online role distribution."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Operations', to: '/operations' }, { label: 'Users & Sessions' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Operations', to: '/dashboard/operations' }, { label: 'Users & Sessions' }]"
     >
       <template #actions>
         <ConnectionStatusIndicator :status="store.realtimeStatus" />

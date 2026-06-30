@@ -76,7 +76,7 @@ async function runClose() {
   await electionStore.closeElection(electionUuid.value);
   closeOpen.value = false;
   toast.success(toastMessages.election.closed);
-  router.push("/results");
+  router.push("/dashboard/results");
 }
 
 function acknowledgeIncident() {

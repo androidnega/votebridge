@@ -14,7 +14,7 @@ import { VButton, VCard } from "@/components/ui";
       </p>
       <div class="mt-6 flex flex-wrap justify-center gap-3">
         <VButton @click="$router.go(-1)">Go back</VButton>
-        <VButton variant="secondary" @click="$router.push('/')">Dashboard</VButton>
+        <VButton variant="secondary" @click="$router.push('/dashboard')">Dashboard</VButton>
       </div>
     </VCard>
   </div>

@@ -1,5 +1,6 @@
 import { useAuthStore } from "@/stores/auth";
 import { branding } from "@/config/branding";
+import { DASHBOARD_ROOT, normalizeAuthRedirect } from "@/config/routes";
 
 export function setupRouterGuards(router) {
   router.beforeEach(async (to) => {
@@ -34,9 +35,6 @@ export function setupRouterGuards(router) {
     }
 
     if (requiresAuth && !authStore.isAuthenticated) {
-      if (to.path === "/") {
-        return { name: "landing" };
-      }
       return {
         name: "auth-login",
         query: { redirect: to.fullPath !== "/auth/login" ? to.fullPath : undefined },
@@ -48,7 +46,10 @@ export function setupRouterGuards(router) {
     }
 
     if (guestOnly && authStore.isAuthenticated && !requiresOtp && !requiresBiometric) {
-      return { name: "home" };
+      const redirect = normalizeAuthRedirect(
+        typeof to.query.redirect === "string" ? to.query.redirect : DASHBOARD_ROOT
+      );
+      return redirect.startsWith("/") ? redirect : { name: "dashboard" };
     }
 
     return true;

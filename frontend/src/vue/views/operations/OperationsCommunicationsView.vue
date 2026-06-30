@@ -20,7 +20,7 @@ onUnmounted(() => store.disconnectRealtime());
     <PageHeader
       title="Communications"
       subtitle="SMS, email, and notification delivery operations."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Operations', to: '/operations' }, { label: 'Communications' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Operations', to: '/dashboard/operations' }, { label: 'Communications' }]"
     >
       <template #actions>
         <ConnectionStatusIndicator :status="store.realtimeStatus" />

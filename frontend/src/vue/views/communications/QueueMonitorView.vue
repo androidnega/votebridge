@@ -31,7 +31,7 @@ async function loadRetry() {
   <div class="space-y-8">
     <div class="flex flex-wrap items-start justify-between gap-4">
       <div>
-        <VButton variant="ghost" size="sm" class="mb-2" @click="router.push('/communications')">
+        <VButton variant="ghost" size="sm" class="mb-2" @click="router.push('/dashboard/communications')">
           ← Back
         </VButton>
         <h2 class="text-2xl font-bold text-slate-900">Queue monitor</h2>

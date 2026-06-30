@@ -25,7 +25,7 @@ const confirmation = computed(() => {
 onMounted(() => {
   const loaded = votingStore.loadConfirmation(electionUuid.value);
   if (!loaded) {
-    router.replace(`/elections/${electionUuid.value}`);
+    router.replace(`/dashboard/elections/${electionUuid.value}`);
   }
 });
 
@@ -78,10 +78,10 @@ async function handleVerify() {
     </section>
 
     <div class="flex flex-wrap gap-3">
-      <VButton variant="secondary" @click="router.push(`/elections/${electionUuid}`)">
+      <VButton variant="secondary" @click="router.push(`/dashboard/elections/${electionUuid}`)">
         Back to election
       </VButton>
-      <VButton @click="router.push('/')">Dashboard</VButton>
+      <VButton @click="router.push('/dashboard')">Dashboard</VButton>
     </div>
   </div>
 </template>

@@ -16,7 +16,7 @@ onMounted(() => store.fetchDepartments().catch(() => {}));
 
 <template>
   <div class="vb-page">
-    <PageHeader title="Department Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/analytics' }, { label: 'Departments' }]" />
+    <PageHeader title="Department Analytics" :breadcrumbs="[{ label: 'Analytics', to: '/dashboard/analytics' }, { label: 'Departments' }]" />
     <ModuleNav :items="analyticsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
     <LoadingSkeleton v-if="!rows.length && store.loading" variant="list" :rows="4" />

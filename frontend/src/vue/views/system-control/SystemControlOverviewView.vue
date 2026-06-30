@@ -64,7 +64,7 @@ const quickActions = computed(() => {
   const actions = overview.value?.quick_actions || [];
   return actions.map((action) => ({
     ...action,
-    to: quickActionRoutes[action.action] || "/settings",
+    to: quickActionRoutes[action.action] || "/dashboard/settings",
   }));
 });
 
@@ -91,7 +91,7 @@ onMounted(() => {
     <PageHeader
       title="Settings"
       subtitle="Monitor platform health and manage VoteBridge configuration in one place."
-      :breadcrumbs="[{ label: 'Overview', to: '/' }, { label: 'Settings' }]"
+      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Settings' }]"
     >
       <template #actions>
         <VButton variant="secondary" size="sm" :loading="store.loading" @click="refresh">
@@ -120,7 +120,7 @@ onMounted(() => {
           variant="secondary"
           size="sm"
           class="mt-3"
-          @click="openAction('/settings/maintenance')"
+          @click="openAction('/dashboard/settings/maintenance')"
         >
           Manage maintenance
         </VButton>
@@ -234,7 +234,7 @@ onMounted(() => {
                   variant="secondary"
                   size="sm"
                   class="mt-3"
-                  @click="openAction('/settings/backup')"
+                  @click="openAction('/dashboard/settings/backup')"
                 >
                   Open backup center
                 </VButton>
@@ -246,7 +246,7 @@ onMounted(() => {
             <p class="text-sm text-slate-600">
               For real-time queues, sessions, and election activity use the Operations Center.
             </p>
-            <VButton variant="primary" size="sm" class="mt-4" @click="openAction('/operations')">
+            <VButton variant="primary" size="sm" class="mt-4" @click="openAction('/dashboard/operations')">
               Open operations
             </VButton>
           </VCard>

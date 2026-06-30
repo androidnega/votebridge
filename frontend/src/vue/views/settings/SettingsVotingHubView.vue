@@ -6,10 +6,10 @@ import { settingsNav } from "@/config/moduleNav";
 const router = useRouter();
 
 const links = [
-  { title: "Voting channels", description: "Web, USSD, and SMS channel configuration.", to: "/settings/voting-channels" },
-  { title: "Communication providers", description: "SMS and email delivery integrations.", to: "/settings/providers" },
-  { title: "Notifications", description: "Templates and delivery rules.", to: "/settings/notifications" },
-  { title: "USSD configuration", description: "Mobile voting menu and session settings.", to: "/settings/ussd" },
+  { title: "Voting channels", description: "Web, USSD, and SMS channel configuration.", to: "/dashboard/settings/voting-channels" },
+  { title: "Communication providers", description: "SMS and email delivery integrations.", to: "/dashboard/settings/providers" },
+  { title: "Notifications", description: "Templates and delivery rules.", to: "/dashboard/settings/notifications" },
+  { title: "USSD configuration", description: "Mobile voting menu and session settings.", to: "/dashboard/settings/ussd" },
 ];
 </script>
 
@@ -18,7 +18,7 @@ const links = [
     <PageHeader
       title="Voting"
       subtitle="Channels students use to vote and receive election messages."
-      :breadcrumbs="[{ label: 'Settings', to: '/settings' }, { label: 'Voting' }]"
+      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Voting' }]"
     />
     <ModuleNav :items="settingsNav" />
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

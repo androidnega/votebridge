@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { VAlert, VButton, VInput } from "@/components/ui";
-import { useAuthStore } from "@/stores/auth";
+import { normalizeAuthRedirect, DASHBOARD_ROOT } from "@/config/routes";
 import { useToast } from "@/composables/useToast";
 import { otpCode, required, validateFields } from "@/utils/validators";
 
@@ -27,7 +27,7 @@ const maskedDestination = computed(() => challenge.value?.masked_destination || 
 
 onMounted(() => {
   if (authStore.isAuthenticated) {
-    router.replace(authStore.postLoginRedirect || { name: "home" });
+    router.replace(authStore.postLoginRedirect || { name: "dashboard" });
     return;
   }
   if (!authStore.hasPendingOtp) {
@@ -71,10 +71,11 @@ async function handleVerify() {
       return;
     }
     toast.success("Signed in successfully");
-    const redirect =
+    const redirect = normalizeAuthRedirect(
       typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
         ? route.query.redirect
-        : result.redirectPath || "/";
+        : result.redirectPath
+    );
     await router.replace(redirect);
   } catch (error) {
     submitError.value = error.message;

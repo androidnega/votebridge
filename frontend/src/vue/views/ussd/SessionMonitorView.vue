@@ -34,8 +34,8 @@ function formatDate(v) {
       title="Session monitor"
       subtitle="Live and historical USSD voting sessions."
       :breadcrumbs="[
-        { label: 'Overview', to: '/' },
-        { label: 'USSD', to: '/ussd' },
+        { label: 'Dashboard', to: '/dashboard' },
+        { label: 'USSD', to: '/dashboard/ussd' },
         { label: 'Sessions' },
       ]"
     />
