@@ -80,8 +80,8 @@ async function handleLogout() {
             class="group flex min-h-touch w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition duration-200"
             :class="
               groupIsActive(item)
-                ? 'bg-slate-700/60 text-white'
-                : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                ? 'bg-navy-700/60 text-white'
+                : 'text-slate-400 hover:bg-navy-700 hover:text-white'
             "
             :aria-expanded="isGroupExpanded(item.key || item.name)"
             @click="onGroupToggle(item)"
@@ -96,7 +96,7 @@ async function handleLogout() {
           </button>
           <ul
             v-show="isGroupExpanded(item.key || item.name)"
-            class="mt-1 space-y-0.5 border-l border-slate-700 pl-3"
+            class="mt-1 space-y-0.5 border-l border-navy-border pl-3"
             role="list"
           >
             <li v-for="child in visibleChildren(item)" :key="child.to">
@@ -106,7 +106,7 @@ async function handleLogout() {
                 :class="
                   isChildActive(child)
                     ? 'bg-brand-600 text-white'
-                    : 'text-slate-400 hover:bg-slate-700 hover:text-white'
+                    : 'text-slate-400 hover:bg-navy-700 hover:text-white'
                 "
               >
                 {{ child.name }}
@@ -123,7 +123,7 @@ async function handleLogout() {
               :class="
                 groupIsActive(item)
                   ? 'bg-brand-600 text-white'
-                  : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                  : 'text-slate-400 hover:bg-navy-700 hover:text-white'
               "
             >
               <VIcon :name="item.icon" class="h-5 w-5 shrink-0" />
@@ -136,7 +136,7 @@ async function handleLogout() {
             :class="
               isActive(item)
                 ? 'bg-brand-600 text-white'
-                : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                : 'text-slate-400 hover:bg-navy-700 hover:text-white'
             "
           >
             <VIcon :name="item.icon" class="h-5 w-5 shrink-0" />
@@ -146,11 +146,11 @@ async function handleLogout() {
       </li>
     </ul>
 
-    <div class="mt-auto border-t border-slate-700 pt-4">
+    <div class="mt-auto border-t border-navy-border pt-4">
       <VTooltip v-if="collapsed" label="Sign out" position="right">
         <button
           type="button"
-          class="mt-1 flex min-h-touch w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-slate-300 transition duration-200 hover:bg-slate-700 hover:text-white"
+          class="mt-1 flex min-h-touch w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-slate-400 transition duration-200 hover:bg-navy-700 hover:text-white"
           @click="handleLogout"
         >
           <VIcon name="logout" class="h-5 w-5 shrink-0" />
@@ -159,7 +159,7 @@ async function handleLogout() {
       <button
         v-else
         type="button"
-        class="mt-1 flex min-h-touch w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition duration-200 hover:bg-slate-700 hover:text-white"
+        class="mt-1 flex min-h-touch w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 transition duration-200 hover:bg-navy-700 hover:text-white"
         @click="handleLogout"
       >
         <VIcon name="logout" class="h-5 w-5 shrink-0" />

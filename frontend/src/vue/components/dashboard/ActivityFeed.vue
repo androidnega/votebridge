@@ -31,7 +31,7 @@ function formatDate(value) {
 </script>
 
 <template>
-  <section class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-900/5">
+  <section class="rounded-card border border-border bg-white p-5 shadow-card">
     <div v-if="title" class="mb-4 flex items-center justify-between">
       <h3 class="text-sm font-semibold text-slate-900">{{ title }}</h3>
       <span v-if="!loading" class="text-xs text-slate-500">{{ items.length }} items</span>

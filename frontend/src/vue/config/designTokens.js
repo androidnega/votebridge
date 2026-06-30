@@ -1,40 +1,54 @@
 /**
- * VoteBridge enterprise design tokens (Phase 31).
- * Source of truth for Tailwind theme: frontend/tailwind.config.cjs
+ * VoteBridge enterprise design tokens — Phase 33.1
+ * Source of truth mirrored in: frontend/tailwind.config.cjs
  * Utility classes: frontend/src/vue/assets/styles/main.css
  */
 
 export const colors = {
+  primary: "#1E5F46",
+  primaryHover: "#184C38",
+  navy: "#1E293B",
+  navyBorder: "#334155",
+  background: "#F8FAFC",
+  surface: "#FFFFFF",
+  border: "#E2E8F0",
+  textPrimary: "#0F172A",
+  textSecondary: "#64748B",
+  success: "#16A34A",
+  warning: "#D97706",
+  danger: "#DC2626",
+  info: "#2563EB",
   brand: {
     DEFAULT: "#1E5F46",
     hover: "#184C38",
     50: "#E8F3EF",
-    100: "#C5E0D6",
     600: "#1E5F46",
     700: "#184C38",
-    800: "#123A2A",
   },
-  surface: {
+  surfaceToken: {
     DEFAULT: "#FFFFFF",
-    muted: "#F5F7F9",
+    muted: "#F8FAFC",
   },
-  border: "#E2E8F0",
-  success: { 50: "#E8F5E9", 600: "#2E7D32", 700: "#256628" },
-  warning: { 50: "#FEFCE8", 600: "#CA8A04", 700: "#A16207" },
-  danger: { 50: "#FFEBEE", 600: "#C62828", 700: "#B71C1C" },
-  info: { 50: "#F0FDFA", 600: "#0F766E", 700: "#0D6B64" },
 };
+
+export const chartColors = [
+  colors.primary,
+  "#64748B",
+  "#334155",
+  "#94A3B8",
+  "#CBD5E1",
+];
 
 export const typography = {
   fontFamily: "Inter Variable, Inter, system-ui, sans-serif",
   weights: [400, 500, 600, 700],
   scale: {
-    pageTitle: "text-2xl font-semibold text-slate-800",
-    sectionTitle: "text-lg font-semibold text-slate-900",
-    cardTitle: "text-base font-semibold text-slate-800",
-    body: "text-sm text-slate-600",
-    caption: "text-xs text-slate-500",
-    label: "text-sm font-medium text-slate-800",
+    pageTitle: "text-2xl font-semibold text-ink-primary",
+    sectionTitle: "text-lg font-semibold text-ink-primary",
+    cardTitle: "text-base font-semibold text-ink-primary",
+    body: "text-sm text-ink-secondary",
+    caption: "text-xs text-ink-secondary",
+    label: "text-sm font-medium text-ink-primary",
   },
 };
 
@@ -72,6 +86,7 @@ export const electionHealth = {
 
 export default {
   colors,
+  chartColors,
   typography,
   spacing,
   radius,

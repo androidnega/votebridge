@@ -29,11 +29,11 @@ const classes = computed(() => {
     primary:
       "bg-brand-600 text-white shadow-sm hover:bg-brand-hover focus-visible:outline-brand-600",
     secondary:
-      "border border-brand-600 bg-white text-brand-600 shadow-sm hover:bg-brand-50 focus-visible:outline-brand-600",
+      "border border-border bg-white text-ink-primary shadow-sm hover:bg-surface-muted focus-visible:outline-brand-600",
     danger:
-      "bg-danger-600 text-white shadow-sm hover:bg-danger-700 focus-visible:outline-danger-600",
+      "border border-danger-600 bg-white text-danger-600 shadow-sm hover:bg-danger-50 focus-visible:outline-danger-600",
     ghost:
-      "bg-transparent text-slate-700 hover:bg-slate-100 focus-visible:outline-brand-600",
+      "bg-transparent text-ink-primary hover:bg-surface-muted focus-visible:outline-brand-600",
   };
 
   const sizes = {

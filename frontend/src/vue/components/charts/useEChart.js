@@ -1,13 +1,14 @@
 import { onBeforeUnmount, onMounted, ref, shallowRef, watch } from "vue";
+import { chartColors } from "@/config/designTokens";
 
-export const CHART_COLORS = ["#1E3A6E", "#334155", "#2E7D32", "#0F766E", "#CA8A04", "#C62828"];
+export const CHART_COLORS = chartColors;
 
 let echartsPromise = null;
 
 function loadEcharts() {
   if (!echartsPromise) {
     echartsPromise = import("echarts/core").then(async (echarts) => {
-      const [{ BarChart, GaugeChart, HeatmapChart, LineChart, PieChart }, components, { CanvasRenderer }] =
+      const [{ BarChart, GaugeChart, HeatmapChart, LineChart, PieChart, ScatterChart }, components, { CanvasRenderer }] =
         await Promise.all([
           import("echarts/charts"),
           import("echarts/components"),
@@ -19,6 +20,7 @@ function loadEcharts() {
         PieChart,
         GaugeChart,
         HeatmapChart,
+        ScatterChart,
         components.GridComponent,
         components.LegendComponent,
         components.TitleComponent,

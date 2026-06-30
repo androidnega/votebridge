@@ -26,7 +26,7 @@ function cellValue(row, column) {
 </script>
 
 <template>
-  <div class="overflow-hidden rounded-card ring-1 ring-slate-900/5">
+  <div class="vb-table-shell">
     <div v-if="loading" class="space-y-3 bg-white p-card">
       <div class="h-10 w-full animate-pulse rounded-input bg-slate-100" />
       <div
@@ -45,13 +45,13 @@ function cellValue(row, column) {
 
     <div v-else class="hidden overflow-x-auto md:block">
       <table class="min-w-full divide-y divide-border">
-        <thead class="sticky top-0 z-10 bg-slate-50">
+        <thead class="sticky top-0 z-10 border-b border-border bg-surface-muted">
           <tr>
             <th
               v-for="column in columns"
               :key="column.key"
               scope="col"
-              class="h-table-row px-4 text-left text-xs font-semibold uppercase tracking-wide text-slate-500"
+              class="h-table-row px-4 text-left text-xs font-semibold uppercase tracking-wide text-ink-secondary"
             >
               {{ column.label }}
             </th>
@@ -61,7 +61,7 @@ function cellValue(row, column) {
           <tr
             v-for="(row, index) in rows"
             :key="row.id || row.uuid || index"
-            class="h-table-row transition hover:bg-slate-50/80"
+            class="h-table-row transition hover:bg-surface-muted"
             @click="$emit('row-click', row)"
           >
             <td

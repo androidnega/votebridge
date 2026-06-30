@@ -46,7 +46,7 @@ const contentClass = {
 
     <!-- Sidebar: fixed on all breakpoints; drawer on mobile -->
     <aside
-      class="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-slate-800 bg-slate-800 transition-all duration-200 lg:z-30"
+      class="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-navy-border bg-navy transition-all duration-200 lg:z-30"
       :class="[
         mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         collapsed ? 'w-sidebar-collapsed' : 'w-sidebar',
@@ -54,7 +54,7 @@ const contentClass = {
       :aria-label="`${branding.systemName} navigation`"
     >
       <div
-        class="flex h-topbar shrink-0 items-center border-b border-slate-700/80"
+        class="flex h-topbar shrink-0 items-center border-b border-navy-border"
         :class="collapsed ? 'justify-center px-3' : 'gap-3 px-5'"
       >
         <div

@@ -1,12 +1,13 @@
 <script setup>
 import { defineAsyncComponent, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import { ActivityFeed, ConnectionStatusIndicator, LoadingSkeleton } from "@/components/dashboard";
+import { ConnectionStatusIndicator, LoadingSkeleton } from "@/components/dashboard";
 import OpsHealthBadge from "@/components/operations/OpsHealthBadge.vue";
-import { VAlert, VButton, VCard } from "@/components/ui";
+import { VAlert, VCard } from "@/components/ui";
 import { useSuperAdminDashboard } from "@/composables/useSuperAdminDashboard";
 
 const LineChart = defineAsyncComponent(() => import("@/components/charts/LineChart.vue"));
+const BubbleChart = defineAsyncComponent(() => import("@/components/charts/BubbleChart.vue"));
 const DonutChart = defineAsyncComponent(() => import("@/components/charts/DonutChart.vue"));
 const BarChart = defineAsyncComponent(() => import("@/components/charts/BarChart.vue"));
 
@@ -21,11 +22,11 @@ const {
   kpis,
   participationLabels,
   participationSeries,
+  authActivityLabels,
+  authActivityBubbles,
   electionStatusItems,
   votingChannelLabels,
   operationalCards,
-  activityItems,
-  quickActions,
   realtime,
   loadDashboard,
 } = useSuperAdminDashboard();
@@ -37,7 +38,6 @@ onMounted(() => {
 
 <template>
   <div class="vb-page">
-    <!-- Greeting header -->
     <header class="flex flex-wrap items-start justify-between gap-4">
       <div class="min-w-0">
         <h2 class="text-2xl font-semibold text-slate-900">{{ greeting }}</h2>
@@ -54,7 +54,6 @@ onMounted(() => {
     <LoadingSkeleton v-if="loading" variant="stats" :rows="4" />
 
     <template v-else>
-      <!-- Platform status -->
       <section
         class="flex flex-wrap items-center gap-4 rounded-card border border-border bg-white px-5 py-4 shadow-card"
         aria-label="Platform status"
@@ -75,54 +74,63 @@ onMounted(() => {
         </div>
       </section>
 
-      <!-- KPI cards -->
       <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <article
           v-for="kpi in kpis"
           :key="kpi.id"
-          class="rounded-card border border-border bg-white p-card shadow-card vb-fade-in"
+          class="vb-kpi-card"
         >
-          <p class="text-sm text-slate-500">{{ kpi.label }}</p>
-          <p class="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-slate-900">
+          <p class="text-sm text-ink-secondary">{{ kpi.label }}</p>
+          <p class="mt-2 text-3xl font-semibold tabular-nums tracking-tight text-ink-primary">
             {{ kpi.value }}
           </p>
-          <p v-if="kpi.hint" class="mt-2 text-xs text-slate-400">{{ kpi.hint }}</p>
+          <p v-if="kpi.hint" class="mt-2 text-xs text-ink-secondary">{{ kpi.hint }}</p>
         </article>
       </section>
 
-      <!-- Charts -->
-      <section class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <VCard title="Participation trend" subtitle="Vote throughput — last 24 hours" class="lg:col-span-2">
+      <section class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <VCard title="Participation trend" subtitle="Vote throughput — last 24 hours">
           <LineChart
             :labels="participationLabels"
             :series="participationSeries"
-            height="320px"
+            height="280px"
           />
         </VCard>
 
+        <VCard title="Authentication activity" subtitle="Sign-in volume by hour — bubble size = intensity">
+          <BubbleChart
+            v-if="authActivityBubbles.length"
+            :labels="authActivityLabels"
+            :points="authActivityBubbles"
+            height="280px"
+          />
+          <p v-else class="py-12 text-center text-sm text-slate-500">No authentication activity yet.</p>
+        </VCard>
+      </section>
+
+      <section class="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <VCard title="Election status" subtitle="Distribution across lifecycle">
           <DonutChart
             v-if="electionStatusItems.length"
             :items="electionStatusItems"
             donut
-            height="320px"
+            height="280px"
           />
           <p v-else class="py-12 text-center text-sm text-slate-500">No elections recorded yet.</p>
         </VCard>
+
+        <VCard title="Voting channels" subtitle="Votes cast by channel">
+          <BarChart
+            v-if="votingChannelLabels.values.length"
+            :labels="votingChannelLabels.labels"
+            :values="votingChannelLabels.values"
+            horizontal
+            height="280px"
+          />
+          <p v-else class="py-12 text-center text-sm text-slate-500">No voting activity yet.</p>
+        </VCard>
       </section>
 
-      <VCard title="Voting channels" subtitle="Votes cast by channel">
-        <BarChart
-          v-if="votingChannelLabels.values.length"
-          :labels="votingChannelLabels.labels"
-          :values="votingChannelLabels.values"
-          horizontal
-          height="220px"
-        />
-        <p v-else class="py-8 text-center text-sm text-slate-500">No voting activity yet.</p>
-      </VCard>
-
-      <!-- Operational summary -->
       <section class="grid grid-cols-1 gap-4 md:grid-cols-3">
         <VCard
           v-for="card in operationalCards"
@@ -143,34 +151,6 @@ onMounted(() => {
               <dd class="font-semibold tabular-nums text-slate-900">{{ metric.value }}</dd>
             </div>
           </dl>
-        </VCard>
-      </section>
-
-      <!-- Activity + quick actions -->
-      <section class="grid grid-cols-1 gap-4 lg:grid-cols-3">
-        <div class="lg:col-span-2">
-          <ActivityFeed
-            title="Recent platform activity"
-            :items="activityItems"
-            :loading="false"
-            empty-title="No recent activity"
-            empty-description="Live platform events will appear here."
-          />
-        </div>
-
-        <VCard title="Quick actions" subtitle="Governance shortcuts">
-          <ul class="space-y-2">
-            <li v-for="action in quickActions" :key="action.route">
-              <VButton
-                variant="secondary"
-                size="sm"
-                class="w-full justify-start"
-                @click="router.push(action.route)"
-              >
-                {{ action.label }}
-              </VButton>
-            </li>
-          </ul>
         </VCard>
       </section>
     </template>

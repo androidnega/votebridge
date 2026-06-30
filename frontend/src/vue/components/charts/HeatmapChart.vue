@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+import { colors } from "@/config/designTokens";
 import { useEChart } from "./useEChart";
 
 const props = defineProps({
@@ -28,7 +29,7 @@ const option = computed(() => ({
     orient: "horizontal",
     left: "center",
     bottom: 0,
-    inRange: { color: ["#F5F7F9", "#1E3A6E"] },
+    inRange: { color: [colors.background, colors.primary] },
   },
   series: [
     {

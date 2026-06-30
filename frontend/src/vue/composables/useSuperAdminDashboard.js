@@ -21,15 +21,6 @@ function greetingForHour(hour) {
   return "Good evening";
 }
 
-function mapAlertToActivity(alert) {
-  return {
-    id: alert.alert_id || alert.id,
-    title: alert.title || alert.alert_title || "Security alert",
-    description: alert.description || alert.severity || "",
-    created_at: alert.created_at,
-  };
-}
-
 export function useSuperAdminDashboard() {
   const authStore = useAuthStore();
   const dashboardStore = useDashboardStore();
@@ -108,6 +99,18 @@ export function useSuperAdminDashboard() {
     },
   ]);
 
+  const authActivityLabels = computed(
+    () => analytics.value.trends?.auth_hourly?.map((point) => point.label) || []
+  );
+
+  const authActivityBubbles = computed(() =>
+    (analytics.value.trends?.auth_hourly || []).map((point) => ({
+      name: point.label,
+      y: point.value,
+      size: Math.max(10, Math.min(52, point.value * 4 + 10)),
+    }))
+  );
+
   const electionStatusItems = computed(() => {
     const counts =
       analytics.value.election_status || operations.value.elections || {};
@@ -179,26 +182,6 @@ export function useSuperAdminDashboard() {
     },
   ]);
 
-  const activityItems = computed(() => {
-    const feed = [...dashboardStore.activityFeed];
-    const alerts = dashboardStore.securityFeed?.alerts || [];
-    for (const alert of alerts.slice(0, 8)) {
-      feed.push(mapAlertToActivity(alert));
-    }
-    return feed
-      .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
-      .slice(0, 10);
-  });
-
-  const quickActions = [
-    { label: "Strong room", route: "/dashboard/strongroom" },
-    { label: "Certification queue", route: "/dashboard/results/certification" },
-    { label: "Publication center", route: "/dashboard/results/publication" },
-    { label: "Operations center", route: "/dashboard/operations" },
-    { label: "Reports", route: "/dashboard/reports" },
-    { label: "System settings", route: "/dashboard/settings" },
-  ];
-
   async function loadDashboard() {
     const tasks = [dashboardStore.fetchSuperAdminDashboard(), resultsStore.fetchQueues()];
 
@@ -222,11 +205,11 @@ export function useSuperAdminDashboard() {
     kpis,
     participationLabels,
     participationSeries,
+    authActivityLabels,
+    authActivityBubbles,
     electionStatusItems,
     votingChannelLabels,
     operationalCards,
-    activityItems,
-    quickActions,
     realtime,
     loadDashboard,
   };

@@ -19,7 +19,7 @@ const paddingClasses = {
 
 <template>
   <section
-    class="rounded-card bg-white shadow-card ring-1 ring-slate-900/5 vb-fade-in"
+    class="rounded-card border border-border bg-white shadow-card vb-fade-in"
     :class="[
       paddingClasses[padding],
       hoverable ? 'transition hover:shadow-md' : '',
@@ -27,8 +27,8 @@ const paddingClasses = {
   >
     <header v-if="title || subtitle || $slots.header" class="mb-4">
       <slot name="header">
-        <h3 v-if="title" class="text-lg font-semibold text-slate-800">{{ title }}</h3>
-        <p v-if="subtitle" class="mt-1 text-sm text-slate-500">{{ subtitle }}</p>
+        <h3 v-if="title" class="text-lg font-semibold text-ink-primary">{{ title }}</h3>
+        <p v-if="subtitle" class="mt-1 text-sm text-ink-secondary">{{ subtitle }}</p>
       </slot>
     </header>
     <slot />

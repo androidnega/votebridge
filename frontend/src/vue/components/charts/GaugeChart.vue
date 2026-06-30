@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from "vue";
+import { colors } from "@/config/designTokens";
 import { useEChart } from "./useEChart";
 
 const props = defineProps({
@@ -25,11 +26,11 @@ const option = computed(() => ({
         valueAnimation: true,
         formatter: "{value}%",
         fontSize: 24,
-        color: "#1E3A6E",
+        color: colors.primary,
         offsetCenter: [0, 0],
       },
       data: [{ value: props.value }],
-      itemStyle: { color: "#1E3A6E" },
+      itemStyle: { color: colors.primary },
     },
   ],
 }));
