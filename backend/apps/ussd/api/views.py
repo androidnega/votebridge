@@ -10,6 +10,7 @@ from apps.elections.permissions import CanManageVotingChannels
 from apps.ussd.permissions import CanViewUssdMonitoring, UssdCallbackPermission
 from apps.ussd.repositories.ussd_repository import USSDRequestLogRepository, USSDSessionRepository
 from apps.ussd.services.ussd_audit_service import ussd_audit_service
+from apps.ussd.services.ussd_callback_debug import log_incoming_callback
 from apps.ussd.services.ussd_config_service import ussd_config_service
 from apps.ussd.services.ussd_controller_service import ussd_controller_service
 from core.exceptions import NotFoundError
@@ -60,6 +61,8 @@ class UssdCallbackView(APIView):
     parser_classes = [JSONParser, FormParser]
 
     def post(self, request):
+        log_incoming_callback(request)
+
         started = time.monotonic()
         http_status = 200
         body = ""

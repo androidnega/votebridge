@@ -162,3 +162,52 @@ class UssdCallbackAuditIntegrationTests(APITestCase):
         log = USSDRequestLog.objects.filter(carrier_session_id="audit-form-sess").order_by("-created_at").first()
         self.assertIsNotNone(log)
         self.assertEqual(log.response_payload["continueSession"], False)
+
+
+class UssdCallbackDebugLoggingTests(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+
+    @override_settings(DEBUG=True)
+    @patch("apps.ussd.services.ussd_callback_debug.logger")
+    def test_log_incoming_callback_in_development(self, mock_logger):
+        from apps.ussd.services.ussd_callback_debug import log_incoming_callback
+
+        request = self.factory.post(
+            "/api/v1/ussd/callback/",
+            data=json.dumps(
+                {
+                    "sessionID": "debug-sess",
+                    "userID": "ARKESEL",
+                    "newSession": True,
+                    "msisdn": "233241234567",
+                    "userData": "*928*1#",
+                }
+            ),
+            content_type="application/json",
+            HTTP_X_ARKESEL_SECRET="super-secret",
+        )
+        log_incoming_callback(request)
+
+        mock_logger.info.assert_called_once()
+        prefix = mock_logger.info.call_args[0][1]
+        details = mock_logger.info.call_args[0][2]
+        self.assertEqual(prefix, "[USSD CALLBACK DEBUG]")
+        self.assertIn("POST", details)
+        self.assertIn("application/json", details)
+        self.assertIn("233241234567", details)
+        self.assertIn("[REDACTED]", details)
+        self.assertNotIn("super-secret", details)
+
+    @override_settings(DEBUG=False)
+    @patch("apps.ussd.services.ussd_callback_debug.logger")
+    def test_log_incoming_callback_disabled_when_not_debug(self, mock_logger):
+        from apps.ussd.services.ussd_callback_debug import log_incoming_callback
+
+        request = self.factory.post(
+            "/api/v1/ussd/callback/",
+            data=json.dumps({"sessionID": "debug-sess-off", "msisdn": "233241234567"}),
+            content_type="application/json",
+        )
+        log_incoming_callback(request)
+        mock_logger.info.assert_not_called()
