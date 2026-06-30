@@ -12,13 +12,42 @@ export const systemControlSections = [
     ],
   },
   {
-    id: "elections",
-    title: "Elections & policies",
-    description: "Rules that govern how elections run on the platform.",
-    icon: "elections",
+    id: "platform-defaults",
+    title: "Platform defaults",
+    description: "System-wide defaults for new elections and platform behaviour.",
+    icon: "settings",
     items: [
-      { label: "Election policies", to: "/dashboard/settings/election-policies", description: "Voting windows, eligibility, and result rules" },
+      { label: "Platform defaults", to: "/dashboard/settings/platform-defaults", description: "Timezone, OTP expiry, session timeout, retention" },
       { label: "Feature flags", to: "/dashboard/settings/feature-flags", description: "Toggle experimental or phased capabilities" },
+    ],
+  },
+  {
+    id: "election-administration",
+    title: "Election administration",
+    description: "Manage Election Administrators — not individual elections.",
+    icon: "profile",
+    items: [
+      { label: "Election administrators", to: "/dashboard/settings/election-administration", description: "List, create, and suspend platform election officers" },
+      { label: "Administrator activity", to: "/dashboard/settings/election-administration#activity", description: "Sign-in and governance actions for election officers" },
+    ],
+  },
+  {
+    id: "integrations",
+    title: "Integrations",
+    description: "Communication providers, cache, and realtime infrastructure.",
+    icon: "communications",
+    items: [
+      { label: "Integration health", to: "/dashboard/settings/integrations", description: "SMS, USSD, email, Redis, and WebSockets" },
+      { label: "Notifications", to: "/dashboard/settings/notifications", description: "Templates and delivery rules" },
+    ],
+  },
+  {
+    id: "strongroom-config",
+    title: "Strong room configuration",
+    description: "Configure the secure vault before elections — vault access is separate.",
+    icon: "strongroom",
+    items: [
+      { label: "Vault policies", to: "/dashboard/settings/strongroom-config", description: "Committee, credentials, rotation, and audit policies" },
     ],
   },
   {
@@ -32,19 +61,6 @@ export const systemControlSections = [
       { label: "Security settings", to: "/dashboard/settings/security", description: "Rate limits, lockouts, and alerts" },
       { label: "API management", to: "/dashboard/settings/api", description: "Keys, webhooks, and integration limits" },
       { label: "Audit settings", to: "/dashboard/settings/audit", description: "Retention and audit log policies" },
-    ],
-  },
-  {
-    id: "communications",
-    title: "Communications",
-    description: "SMS, email, USSD, and notification delivery.",
-    icon: "communications",
-    items: [
-      { label: "All providers", to: "/dashboard/settings/providers", description: "Manage communication integrations" },
-      { label: "SMS", to: "/dashboard/settings/sms", description: "Arkesel and SMS routing" },
-      { label: "Email", to: "/dashboard/settings/email", description: "SMTP and outbound mail" },
-      { label: "Notifications", to: "/dashboard/settings/notifications", description: "Templates and delivery rules" },
-      { label: "USSD", to: "/dashboard/settings/ussd", description: "USSD gateway and session settings" },
     ],
   },
   {
@@ -74,8 +90,11 @@ export const systemControlSections = [
 
 export const quickActionRoutes = {
   maintenance_enable: "/dashboard/settings/maintenance",
-  test_sms: "/dashboard/settings/sms",
+  validate_sms: "/dashboard/settings/integrations?focus=sms",
+  validate_ussd: "/dashboard/settings/integrations?focus=ussd",
   create_backup: "/dashboard/settings/backup",
+  restore_backup: "/dashboard/settings/backup",
+  export_audit: "/dashboard/platform/logs",
   open_operations: "/dashboard/operations",
 };
 

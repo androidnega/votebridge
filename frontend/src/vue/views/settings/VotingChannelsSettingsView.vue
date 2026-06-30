@@ -13,12 +13,12 @@ const error = ref(null);
 
 const channels = [
   {
-    title: "Web voting",
-    description: "Browser-based voting policies and channel availability.",
-    to: "/dashboard/settings/election-policies",
+    title: "Integration health",
+    description: "Validate SMS, USSD, email, Redis, and WebSocket connectivity.",
+    to: "/dashboard/settings/integrations",
   },
   {
-    title: "USSD voting",
+    title: "USSD gateway",
     description: "Mobile USSD menu codes, session limits, and provider routing.",
     to: "/dashboard/settings/ussd",
   },
@@ -28,14 +28,9 @@ const channels = [
     to: "/dashboard/settings/notifications",
   },
   {
-    title: "Channel health",
+    title: "Channel monitoring",
     description: "Monitor USSD sessions, queues, and delivery performance.",
     to: "/dashboard/ussd",
-  },
-  {
-    title: "Provider testing",
-    description: "Send test messages and validate communication providers.",
-    to: "/dashboard/communications/test",
   },
 ];
 

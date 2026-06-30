@@ -46,7 +46,7 @@ function save(updates) {
     <PageHeader
       :title="title"
       :subtitle="subtitle || `Manage ${title.toLowerCase()} configuration.`"
-      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: title }]"
+      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: title }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

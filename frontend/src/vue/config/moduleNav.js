@@ -32,7 +32,7 @@ export const strongRoomIntegrityNav = [
 export const settingsNav = [
   { label: "Overview", to: "/dashboard/settings", exact: true },
   { label: "Institution", to: "/dashboard/settings/institution-hub" },
-  { label: "Voting", to: "/dashboard/settings/voting-hub" },
+  { label: "Integrations", to: "/dashboard/settings/integrations" },
   { label: "Security", to: "/dashboard/settings/security-hub" },
   { label: "Advanced", to: "/dashboard/settings/advanced-hub" },
 ];

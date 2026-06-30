@@ -7,8 +7,10 @@ const router = useRouter();
 
 const links = [
   { title: "Authentication", description: "OTP, sessions, and login policies.", to: "/dashboard/settings/authentication" },
-  { title: "Identity configuration", description: "Biometrics and step-up verification policies.", to: "/dashboard/settings/identity-assurance" },
+  { title: "Identity assurance", description: "Biometrics and step-up verification policies.", to: "/dashboard/settings/identity-assurance" },
   { title: "Security policies", description: "Rate limits, lockouts, and alert thresholds.", to: "/dashboard/settings/security" },
+  { title: "Election administration", description: "Manage Election Administrators.", to: "/dashboard/settings/election-administration" },
+  { title: "Strong room configuration", description: "Vault policies before elections.", to: "/dashboard/settings/strongroom-config" },
 ];
 </script>
 
@@ -16,7 +18,7 @@ const links = [
   <div class="vb-page">
     <PageHeader
       title="Security"
-      subtitle="Access control and identity policies for the platform."
+      subtitle="Access control, identity policies, and administrator governance."
       :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Security' }]"
     />
     <ModuleNav :items="settingsNav" />

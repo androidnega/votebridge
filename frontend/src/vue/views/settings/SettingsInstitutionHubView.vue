@@ -8,7 +8,7 @@ const router = useRouter();
 const links = [
   { title: "Institution profile", description: "Campus identity and election office contacts.", to: "/dashboard/settings/institution" },
   { title: "Branding", description: "Logos, colours, and login panel assets.", to: "/dashboard/settings/branding" },
-  { title: "Election policies", description: "Voting windows, eligibility, and result rules.", to: "/dashboard/settings/election-policies" },
+  { title: "Platform defaults", description: "System-wide defaults for new elections.", to: "/dashboard/settings/platform-defaults" },
 ];
 </script>
 
@@ -16,7 +16,7 @@ const links = [
   <div class="vb-page">
     <PageHeader
       title="Institution"
-      subtitle="One-time setup for your university election portal."
+      subtitle="Identity and branding for your university election portal."
       :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Institution' }]"
     />
     <ModuleNav :items="settingsNav" />

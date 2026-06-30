@@ -6,19 +6,19 @@ import { settingsNav } from "@/config/moduleNav";
 const router = useRouter();
 
 const links = [
-  { title: "Voting channels", description: "Web, USSD, and SMS channel configuration.", to: "/dashboard/settings/voting-channels" },
-  { title: "Communication providers", description: "SMS and email delivery integrations.", to: "/dashboard/settings/providers" },
+  { title: "Integration health", description: "SMS, USSD, email, Redis, and WebSocket status.", to: "/dashboard/settings/integrations" },
+  { title: "Communication providers", description: "Arkesel SMS and SMTP email configuration.", to: "/dashboard/settings/providers" },
+  { title: "USSD gateway", description: "Callback URL, session limits, and gateway validation.", to: "/dashboard/settings/ussd" },
   { title: "Notifications", description: "Templates and delivery rules.", to: "/dashboard/settings/notifications" },
-  { title: "USSD configuration", description: "Mobile voting menu and session settings.", to: "/dashboard/settings/ussd" },
 ];
 </script>
 
 <template>
   <div class="vb-page">
     <PageHeader
-      title="Voting"
-      subtitle="Channels students use to vote and receive election messages."
-      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Voting' }]"
+      title="Integrations"
+      subtitle="Communication providers and infrastructure connectivity."
+      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Integrations' }]"
     />
     <ModuleNav :items="settingsNav" />
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

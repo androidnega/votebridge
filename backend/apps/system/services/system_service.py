@@ -108,20 +108,21 @@ DEFAULT_SETTINGS = {
         "security_key_required": {"value": False, "description": "Require hardware security key"},
     },
     "election_policies": {
-        "default_duration_hours": {"value": 24, "description": "Default election duration"},
-        "voting_hours_start": {"value": "08:00", "description": "Default voting start time"},
-        "voting_hours_end": {"value": "17:00", "description": "Default voting end time"},
-        "allow_web_voting": {"value": True, "description": "Allow web voting by default"},
-        "allow_ussd_voting": {"value": True, "description": "Allow USSD voting by default"},
-        "allow_sms_voting": {"value": False, "description": "Allow SMS voting by default"},
-        "require_svt": {"value": True, "description": "Require SVT for voting"},
-        "require_otp": {"value": True, "description": "Require OTP for login"},
-        "require_device_verification": {"value": True, "description": "Require device verification"},
-        "require_location_verification": {"value": False, "description": "Require location verification"},
-        "allow_reopening": {"value": False, "description": "Allow reopening closed elections"},
-        "allow_extensions": {"value": True, "description": "Allow election time extensions"},
-        "max_candidates_per_position": {"value": 20, "description": "Maximum candidates per position"},
-        "turnout_alert_threshold_percent": {"value": 50, "description": "Turnout alert threshold (%)"},
+        "default_duration_hours": {"value": 24, "description": "Default duration applied when creating new elections (hours)"},
+        "default_timezone": {"value": "Africa/Accra", "description": "Default election timezone for new elections"},
+        "voting_hours_start": {"value": "08:00", "description": "Legacy default — managed per election by Election Administrators"},
+        "voting_hours_end": {"value": "17:00", "description": "Legacy default — managed per election by Election Administrators"},
+        "allow_web_voting": {"value": True, "description": "Legacy channel default — configure channels per election"},
+        "allow_ussd_voting": {"value": True, "description": "Legacy channel default — configure channels per election"},
+        "allow_sms_voting": {"value": False, "description": "Legacy channel default — configure channels per election"},
+        "require_svt": {"value": True, "description": "Legacy verification default — managed per election"},
+        "require_otp": {"value": True, "description": "Legacy verification default — managed per election"},
+        "require_device_verification": {"value": True, "description": "Legacy verification default — managed per election"},
+        "require_location_verification": {"value": False, "description": "Legacy verification default — managed per election"},
+        "allow_reopening": {"value": False, "description": "Legacy lifecycle default — managed per election"},
+        "allow_extensions": {"value": True, "description": "Legacy lifecycle default — managed per election"},
+        "max_candidates_per_position": {"value": 20, "description": "Legacy candidate default — managed per election"},
+        "turnout_alert_threshold_percent": {"value": 50, "description": "Platform turnout alert threshold (%)"},
     },
     "security": {
         "allowed_domains": {"value": [], "description": "Allowed email domains"},
@@ -737,18 +738,76 @@ class EnvironmentService:
         }
 
 
+PLATFORM_ADMIN_ACTIVITY_LABELS = {
+    "backup_created": "Backup created",
+    "backup_verified": "Backup verified",
+    "maintenance_updated": "Maintenance settings updated",
+    "provider_tested": "Communication provider validated",
+    "provider_updated": "Communication provider updated",
+    "feature_flag_toggled": "Feature flag changed",
+    "institution_updated": "Institution profile updated",
+    "setting_rollback": "Platform setting rolled back",
+    "settings_updated": "Platform defaults updated",
+}
+
+
 class SystemOverviewService:
+    def _platform_state(self, has_active_election: bool) -> dict:
+        if has_active_election:
+            return {
+                "primary": "Election in Progress",
+                "secondary": "Monitoring Enabled",
+                "has_active_election": True,
+            }
+        return {
+            "primary": "No Active Election",
+            "secondary": "Platform Ready",
+            "has_active_election": False,
+        }
+
+    def _admin_activity(self, limit: int = 8) -> list[dict]:
+        since = timezone.now() - timedelta(days=14)
+        logs = (
+            AuditLog.objects.filter(
+                event_type=AuditLog.EventType.ADMIN_ACTION,
+                timestamp__gte=since,
+                election__isnull=True,
+            )
+            .select_related("user")
+            .order_by("-timestamp")[:50]
+        )
+        activity = []
+        for log in logs:
+            metadata = log.metadata or {}
+            if metadata.get("subsystem") != "system_control":
+                continue
+            action = metadata.get("action", "")
+            title = PLATFORM_ADMIN_ACTIVITY_LABELS.get(action, action.replace("_", " ").title())
+            if action == "provider_tested":
+                title = "Communication gateway validated"
+            elif action == "maintenance_updated" and metadata.get("is_enabled"):
+                title = "Maintenance enabled"
+            activity.append(
+                {
+                    "id": log.audit_id,
+                    "title": title,
+                    "timestamp": log.timestamp.isoformat(),
+                    "actor": log.user.get_full_name() if log.user else None,
+                }
+            )
+            if len(activity) >= limit:
+                break
+        return activity
+
     def get_overview(self) -> dict:
         health = operations_health_service.check_all()
         comms = communication_service.get_dashboard()
         institution = InstitutionService().get_profile()
         maintenance = MaintenanceService().get_state()
         backups = BackupRepository().list_all(limit=1)
-        active_election = (
-            Election.objects.filter(status__in=[Election.Status.OPEN, Election.Status.PAUSED])
-            .order_by("-start_date")
-            .first()
-        )
+        has_active_election = Election.objects.filter(
+            status__in=[Election.Status.OPEN, Election.Status.PAUSED]
+        ).exists()
         runtime_setting = SystemSettingRepository().get_by_key("runtime.environment_name")
         env_name = (
             runtime_setting.value.get("value")
@@ -757,6 +816,15 @@ class SystemOverviewService:
         )
 
         components = {c["name"]: c for c in health.get("components", [])}
+        sms_providers = [p for p in comms.get("providers", []) if p.get("provider_type") == "sms"]
+        email_providers = [p for p in comms.get("providers", []) if p.get("provider_type") == "email"]
+        default_sms = sms_providers[0] if sms_providers else {}
+        default_email = email_providers[0] if email_providers else {}
+
+        def _iso(value):
+            if value is None:
+                return None
+            return value.isoformat() if hasattr(value, "isoformat") else value
 
         return {
             "system_status": health.get("overall_status", "unknown"),
@@ -767,20 +835,51 @@ class SystemOverviewService:
             "database_status": components.get("database", {}).get("status", "unknown"),
             "redis_status": components.get("redis", {}).get("status", "unknown"),
             "websocket_status": components.get("websockets", {}).get("status", "unknown"),
-            "sms_provider": comms.get("providers", [{}])[0].get("connection_status", "unknown") if comms.get("providers") else "unknown",
-            "email_provider": comms.get("providers", [{}])[-1].get("connection_status", "unknown") if comms.get("providers") else "unknown",
+            "sms_provider": default_sms.get("connection_status", "unknown"),
+            "email_provider": default_email.get("connection_status", "unknown"),
             "ussd_provider": components.get("ussd", {}).get("status", "unknown"),
             "storage_usage_percent": components.get("storage", {}).get("usage_percent"),
             "last_backup": backups[0].created_at.isoformat() if backups else None,
             "institution": institution.get("institution_name"),
-            "active_election": active_election.title if active_election else None,
+            "platform_state": self._platform_state(has_active_election),
             "maintenance_status": maintenance,
             "system_health": health,
+            "admin_activity": self._admin_activity(),
+            "integrations": {
+                "sms": {
+                    "status": default_sms.get("connection_status", "unknown"),
+                    "last_sync": _iso(default_sms.get("last_success_at")),
+                    "last_error": default_sms.get("last_error"),
+                },
+                "email": {
+                    "status": default_email.get("connection_status", "unknown"),
+                    "last_sync": _iso(default_email.get("last_success_at")),
+                    "last_error": default_email.get("last_error"),
+                },
+                "ussd": {
+                    "status": components.get("ussd", {}).get("status", "unknown"),
+                    "last_sync": components.get("ussd", {}).get("checked_at"),
+                    "last_error": components.get("ussd", {}).get("details"),
+                },
+                "redis": {
+                    "status": components.get("redis", {}).get("status", "unknown"),
+                    "last_sync": components.get("redis", {}).get("checked_at"),
+                    "last_error": components.get("redis", {}).get("details"),
+                },
+                "websockets": {
+                    "status": components.get("websockets", {}).get("status", "unknown"),
+                    "last_sync": components.get("websockets", {}).get("checked_at"),
+                    "last_error": components.get("websockets", {}).get("details"),
+                },
+            },
             "quick_actions": [
                 {"label": "Enable maintenance", "action": "maintenance_enable", "requires_step_up": True},
-                {"label": "Test SMS provider", "action": "test_sms", "requires_step_up": False},
+                {"label": "Validate SMS gateway", "action": "validate_sms", "requires_step_up": False},
+                {"label": "Validate USSD gateway", "action": "validate_ussd", "requires_step_up": False},
                 {"label": "Create backup", "action": "create_backup", "requires_step_up": True},
-                {"label": "View operations", "action": "open_operations", "requires_step_up": False},
+                {"label": "Restore backup", "action": "restore_backup", "requires_step_up": True},
+                {"label": "Export system audit", "action": "export_audit", "requires_step_up": False},
+                {"label": "Open operations center", "action": "open_operations", "requires_step_up": False},
             ],
         }
 

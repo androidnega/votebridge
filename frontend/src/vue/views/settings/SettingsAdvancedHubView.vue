@@ -7,10 +7,11 @@ const router = useRouter();
 
 const links = [
   { title: "Maintenance", description: "Schedule downtime and user messaging.", to: "/dashboard/settings/maintenance" },
-  { title: "Backup", description: "Create and verify platform backups.", to: "/dashboard/settings/backup" },
-  { title: "Integrations", description: "API keys, webhooks, and external systems.", to: "/dashboard/settings/api" },
+  { title: "Backup & recovery", description: "Create, verify, and restore platform backups.", to: "/dashboard/settings/backup" },
+  { title: "Platform defaults", description: "Timezone, OTP expiry, session timeout, retention.", to: "/dashboard/settings/platform-defaults" },
   { title: "Feature flags", description: "Toggle phased platform capabilities.", to: "/dashboard/settings/feature-flags" },
   { title: "System configuration", description: "Runtime, environment, and storage.", to: "/dashboard/settings/system" },
+  { title: "License & about", description: "Version, support, and release information.", to: "/dashboard/settings/license" },
 ];
 </script>
 

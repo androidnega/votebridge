@@ -11,9 +11,9 @@ import {
   systemControlSections,
   systemStatusLabel,
 } from "@/config/systemControlHub";
-import { systemControlNav } from "@/config/moduleNav";
+import { settingsNav } from "@/config/moduleNav";
 import { useToast } from "@/composables/useToast";
-import { LoadingSkeleton, ModuleNav, PageHeader, SectionHeader, VAlert, VButton, VCard, VIcon } from "@/components/ui";
+import { EmptyState, LoadingSkeleton, ModuleNav, PageHeader, SectionHeader, VAlert, VButton, VCard, VIcon } from "@/components/ui";
 import { useSystemControlStore } from "@/stores/systemControl";
 
 const router = useRouter();
@@ -26,6 +26,8 @@ const systemStatus = computed(() => normalizeHealthStatus(overview.value?.system
 const statusHeadline = computed(() => systemStatusLabel(overview.value?.system_status));
 
 const maintenanceEnabled = computed(() => Boolean(overview.value?.maintenance_status?.is_enabled));
+
+const platformState = computed(() => overview.value?.platform_state || {});
 
 const statusBannerClass = computed(() => {
   const styles = {
@@ -54,11 +56,14 @@ const platformFacts = computed(() => {
     { label: "Version", value: overview.value.application_version },
     { label: "Institution", value: overview.value.institution },
     {
-      label: "Active election",
-      value: overview.value.active_election || "None scheduled",
+      label: "Current platform state",
+      value: platformState.value.primary || "Unknown",
+      detail: platformState.value.secondary,
     },
   ];
 });
+
+const adminActivity = computed(() => overview.value?.admin_activity || []);
 
 const quickActions = computed(() => {
   const actions = overview.value?.quick_actions || [];
@@ -90,7 +95,7 @@ onMounted(() => {
   <div class="vb-page space-y-section">
     <PageHeader
       title="Settings"
-      subtitle="Monitor platform health and manage VoteBridge configuration in one place."
+      subtitle="Platform governance, infrastructure, integrations, and administration."
       :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'Settings' }]"
     >
       <template #actions>
@@ -100,7 +105,7 @@ onMounted(() => {
       </template>
     </PageHeader>
 
-    <ModuleNav :items="systemControlNav" aria-label="Settings navigation" />
+    <ModuleNav :items="settingsNav" aria-label="Settings navigation" />
 
     <VAlert v-if="store.error" variant="error" dismissible @dismiss="store.clearError()">
       {{ store.error }}
@@ -157,6 +162,7 @@ onMounted(() => {
                 {{ fact.label }}
               </span>
               <span class="mt-0.5 truncate text-sm font-medium text-slate-800">{{ fact.value }}</span>
+              <span v-if="fact.detail" class="mt-0.5 text-xs text-slate-500">{{ fact.detail }}</span>
             </span>
           </div>
         </div>
@@ -179,7 +185,7 @@ onMounted(() => {
           <div>
             <SectionHeader
               title="Configuration areas"
-              subtitle="Grouped settings to help you find what you need quickly."
+              subtitle="Platform governance grouped by responsibility."
             />
             <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
               <SystemSectionCard
@@ -195,7 +201,7 @@ onMounted(() => {
         </div>
 
         <aside class="space-y-4">
-          <VCard title="Quick actions" subtitle="Common administrative tasks">
+          <VCard title="Quick actions" subtitle="Common platform administration tasks">
             <ul class="space-y-2">
               <li v-for="action in quickActions" :key="action.action">
                 <button
@@ -213,6 +219,31 @@ onMounted(() => {
                 </button>
               </li>
             </ul>
+          </VCard>
+
+          <VCard title="Administrative activity" subtitle="Recent platform administration events">
+            <ul v-if="adminActivity.length" class="divide-y divide-border">
+              <li v-for="item in adminActivity" :key="item.id" class="py-3">
+                <p class="text-sm font-medium text-slate-800">{{ item.title }}</p>
+                <p class="mt-0.5 text-xs text-slate-500">
+                  <span v-if="item.actor">{{ item.actor }} · </span>
+                  {{ item.timestamp ? new Date(item.timestamp).toLocaleString() : "" }}
+                </p>
+              </li>
+            </ul>
+            <EmptyState
+              v-else
+              title="No recent activity"
+              description="Backup, maintenance, and integration events appear here."
+            />
+            <VButton
+              variant="secondary"
+              size="sm"
+              class="mt-4"
+              @click="openAction('/dashboard/platform/logs')"
+            >
+              Export system audit
+            </VButton>
           </VCard>
 
           <VCard title="Maintenance & backups">
@@ -242,12 +273,12 @@ onMounted(() => {
             </div>
           </VCard>
 
-          <VCard title="Need live monitoring?">
+          <VCard title="Operations center">
             <p class="text-sm text-slate-600">
-              For real-time queues, sessions, and election activity use the Operations Center.
+              Live queues, sessions, and infrastructure monitoring — separate from platform configuration.
             </p>
             <VButton variant="primary" size="sm" class="mt-4" @click="openAction('/dashboard/operations')">
-              Open operations
+              Open operations center
             </VButton>
           </VCard>
         </aside>

@@ -46,7 +46,12 @@ class SystemControlAccessTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         body = response.json()
         self.assertTrue(body["success"])
-        self.assertIn("application_version", body["data"])
+        data = body["data"]
+        self.assertIn("application_version", data)
+        self.assertIn("platform_state", data)
+        self.assertNotIn("active_election", data)
+        self.assertIn("primary", data["platform_state"])
+        self.assertIn("admin_activity", data)
 
     def test_public_branding_is_open(self):
         response = self.client.get(reverse("system:public-branding"))

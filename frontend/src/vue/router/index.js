@@ -399,9 +399,35 @@ const router = createRouter({
         },
         {
           path: "settings/voting-hub",
-          name: "settings-voting-hub",
-          component: () => import("@/views/settings/SettingsVotingHubView.vue"),
-          meta: { title: "Voting", roles: ["super_admin"] },
+          redirect: { name: "settings-integrations" },
+        },
+        {
+          path: "settings/integrations",
+          name: "settings-integrations",
+          component: () => import("@/views/system-control/SystemIntegrationsView.vue"),
+          meta: { title: "Integrations", roles: ["super_admin"] },
+        },
+        {
+          path: "settings/platform-defaults",
+          name: "settings-platform-defaults",
+          component: () => import("@/views/system-control/PlatformDefaultsView.vue"),
+          meta: { title: "Platform Defaults", roles: ["super_admin"] },
+        },
+        {
+          path: "settings/election-policies",
+          redirect: { name: "settings-platform-defaults" },
+        },
+        {
+          path: "settings/election-administration",
+          name: "settings-election-administration",
+          component: () => import("@/views/settings/SettingsElectionAdministrationView.vue"),
+          meta: { title: "Election Administration", roles: ["super_admin"] },
+        },
+        {
+          path: "settings/strongroom-config",
+          name: "settings-strongroom-config",
+          component: () => import("@/views/settings/SettingsStrongroomConfigView.vue"),
+          meta: { title: "Strong Room Configuration", roles: ["super_admin"] },
         },
         {
           path: "settings/security-hub",
@@ -426,13 +452,6 @@ const router = createRouter({
           name: "settings-branding",
           component: () => import("@/views/system-control/SystemBrandingView.vue"),
           meta: { title: "Branding", roles: ["super_admin"] },
-        },
-        {
-          path: "settings/election-policies",
-          name: "settings-election-policies",
-          component: () => import("@/views/system-control/SystemCategorySettingsView.vue"),
-          props: { category: "election_policies", title: "Election Policies" },
-          meta: { title: "Election Policies", roles: ["super_admin"] },
         },
         {
           path: "settings/authentication",
@@ -538,6 +557,32 @@ const router = createRouter({
           meta: { title: "Storage", roles: ["super_admin"] },
         },
         {
+          path: "settings/sms",
+          name: "settings-sms",
+          component: () => import("@/views/system-control/SystemProvidersView.vue"),
+          props: { providerType: "sms", title: "SMS Providers" },
+          meta: { title: "SMS Providers", roles: ["super_admin"] },
+        },
+        {
+          path: "settings/email",
+          name: "settings-email",
+          component: () => import("@/views/system-control/SystemProvidersView.vue"),
+          props: { providerType: "email", title: "Email Providers" },
+          meta: { title: "Email Providers", roles: ["super_admin"] },
+        },
+        {
+          path: "settings/license",
+          name: "settings-license",
+          component: () => import("@/views/system-control/SystemLicenseView.vue"),
+          meta: { title: "License", roles: ["super_admin"] },
+        },
+        {
+          path: "settings/about",
+          name: "settings-about",
+          component: () => import("@/views/system-control/SystemAboutView.vue"),
+          meta: { title: "About VoteBridge", roles: ["super_admin"] },
+        },
+        {
           path: "system-control/institution",
           name: "system-control-institution",
           component: () => import("@/views/system-control/SystemInstitutionView.vue"),
@@ -551,10 +596,7 @@ const router = createRouter({
         },
         {
           path: "system-control/election-policies",
-          name: "system-control-election-policies",
-          component: () => import("@/views/system-control/SystemCategorySettingsView.vue"),
-          props: { category: "election_policies", title: "Election Policies" },
-          meta: { title: "Election Policies", roles: ["super_admin"] },
+          redirect: { name: "settings-platform-defaults" },
         },
         {
           path: "system-control/authentication",
