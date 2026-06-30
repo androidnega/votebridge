@@ -6,11 +6,14 @@ const props = defineProps({
   title: String,
   items: { type: Array, default: () => [] },
   donut: Boolean,
+  animated: { type: Boolean, default: true },
+  colors: { type: Array, default: null },
   height: { type: String, default: "280px" },
 });
 
 const option = computed(() => ({
-  color: CHART_COLORS,
+  color: props.colors?.length ? props.colors : CHART_COLORS,
+  animation: props.animated,
   title: props.title ? { text: props.title, left: 0, textStyle: { fontSize: 14, fontWeight: 600 } } : undefined,
   tooltip: { trigger: "item" },
   legend: { bottom: 0, type: "scroll" },

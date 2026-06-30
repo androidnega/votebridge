@@ -6,9 +6,6 @@ const router = useRouter();
 
 const links = [
   { label: "Results", icon: "results", route: "/dashboard/results" },
-  { label: "Strong Room", icon: "strongroom", route: "/dashboard/governance/strong-room-requests" },
-  { label: "Operations", icon: "operations", route: "/dashboard/operations" },
-  { label: "Reports", icon: "analytics", route: "/dashboard/reports" },
   { label: "Settings", icon: "settings", route: "/dashboard/settings" },
 ];
 </script>
