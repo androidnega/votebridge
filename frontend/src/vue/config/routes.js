@@ -21,7 +21,7 @@ export function normalizeAuthRedirect(path) {
     return path;
   }
 
-  const publicPrefixes = ["/auth", "/observe", "/verify", "/maintenance", "/welcome"];
+  const publicPrefixes = ["/auth", "/verify", "/maintenance", "/welcome"];
   if (publicPrefixes.some((prefix) => path === prefix || path.startsWith(`${prefix}/`))) {
     return path;
   }

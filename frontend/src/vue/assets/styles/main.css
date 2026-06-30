@@ -105,6 +105,43 @@
     @apply grid gap-section md:grid-cols-2;
   }
 
+  .vb-public-screen {
+    @apply flex h-screen flex-col overflow-hidden bg-surface-muted;
+  }
+
+  .vb-public-frame {
+    @apply mx-auto flex h-full w-full max-w-content flex-col items-center justify-center px-4 py-6 sm:px-8;
+  }
+
+  .vb-public-card {
+    @apply w-full rounded-card border border-border bg-surface px-6 py-8 shadow-sm sm:px-10 sm:py-9;
+  }
+
+  .vb-public-status {
+    @apply inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-700;
+  }
+
+  .vb-public-status-dot {
+    @apply h-1.5 w-1.5 rounded-full bg-slate-300;
+  }
+
+  .vb-public-status-dot--live {
+    @apply bg-success-600;
+    animation: vbObserverPulse 2s ease-in-out infinite;
+  }
+
+  .vb-public-countdown {
+    @apply font-mono text-3xl font-light tabular-nums tracking-[0.06em] text-slate-900 sm:text-4xl;
+  }
+
+  .vb-public-primary-btn {
+    @apply flex min-h-touch w-full items-center justify-center rounded-input bg-brand-600 text-sm font-semibold text-white transition hover:bg-brand-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
+  }
+
+  .vb-public-support-link {
+    @apply block text-center text-sm font-medium text-slate-500 transition hover:text-brand-700;
+  }
+
   .vb-observer-board {
     @apply flex h-full min-h-0 flex-col overflow-hidden rounded-card border border-border bg-surface px-5 py-4 sm:px-8 sm:py-5;
   }

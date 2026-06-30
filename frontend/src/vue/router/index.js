@@ -863,19 +863,7 @@ const router = createRouter({
         },
       ],
     },
-    {
-      path: "/observe",
-      component: () => import("@/layouts/ObserverLayout.vue"),
-      meta: { public: true },
-      children: [
-        {
-          path: "",
-          name: "observer",
-          component: () => import("@/views/public/ObserverPortalView.vue"),
-          meta: { title: "Election Observer Portal", public: true },
-        },
-      ],
-    },
+    // Observer portal excluded from v1.0 — re-enable via router/observerRoutes.v2.js
     {
       path: "/maintenance",
       component: PublicLayout,

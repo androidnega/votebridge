@@ -25,6 +25,8 @@ const LEGACY_APP_PREFIXES = [
 export const legacyRedirectRoutes = [
   { path: "/welcome", redirect: "/" },
   { path: "/welcome/:pathMatch(.*)*", redirect: "/" },
+  { path: "/observe", redirect: "/" },
+  { path: "/observe/:pathMatch(.*)*", redirect: "/" },
   { path: "/dashboard/student", redirect: "/dashboard" },
   { path: "/dashboard/admin", redirect: "/dashboard" },
   { path: "/dashboard/super-admin", redirect: "/dashboard" },
