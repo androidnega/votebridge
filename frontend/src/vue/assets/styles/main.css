@@ -216,6 +216,33 @@
 
   .vb-auth-terminal-cursor {
     @apply text-slate-500;
+    animation: vbVaultCursorBlink 1.1s step-end infinite;
+  }
+
+  .vb-vault-terminal {
+    @apply rounded-card border border-slate-800 bg-black px-6 py-8 shadow-card;
+  }
+
+  .vb-vault-terminal-label {
+    @apply font-mono text-[10px] font-semibold uppercase tracking-[0.24em] text-green-500/80;
+  }
+
+  .vb-vault-terminal-input {
+    @apply w-full rounded-input border border-slate-700 bg-slate-950 px-3 py-2.5 font-mono text-sm text-green-400 placeholder:text-slate-600 focus:border-green-600 focus:outline-none focus:ring-1 focus:ring-green-600/40;
+  }
+
+  .vb-vault-terminal-cursor {
+    animation: vbVaultCursorBlink 1.1s step-end infinite;
+  }
+
+  @keyframes vbVaultCursorBlink {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0;
+    }
   }
 
   .vb-auth-channel {

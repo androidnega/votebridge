@@ -45,6 +45,32 @@ export function setupRouterGuards(router) {
       return { name: "forbidden" };
     }
 
+    if (to.meta.requiresVaultSession) {
+      const { strongroomApi } = await import("@/api/strongroom");
+      const sessionUuid = to.params.sessionUuid;
+      const electionUuid = to.params.uuid;
+      if (!sessionUuid || !electionUuid) {
+        return { name: "forbidden" };
+      }
+      try {
+        const session = await strongroomApi.getVaultSession(sessionUuid);
+        if (to.meta.requiresActiveVault && session.status !== "active") {
+          if (session.status === "awaiting_custodians") {
+            return {
+              name: "election-vault-terminal",
+              params: { uuid: electionUuid, sessionUuid },
+            };
+          }
+          return { name: "election-vault-access", params: { uuid: electionUuid } };
+        }
+        if (["resealed", "expired", "closed"].includes(session.status)) {
+          return { name: "election-vault-access", params: { uuid: electionUuid } };
+        }
+      } catch {
+        return { name: "election-vault-access", params: { uuid: electionUuid } };
+      }
+    }
+
     if (guestOnly && authStore.isAuthenticated && !requiresOtp && !requiresBiometric) {
       const redirect = normalizeAuthRedirect(
         typeof to.query.redirect === "string" ? to.query.redirect : DASHBOARD_ROOT

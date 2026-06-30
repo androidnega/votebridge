@@ -32,7 +32,6 @@ const searchItems = computed(() => {
 
   if (role === "super_admin") {
     items.push(
-      { label: "Strong room", to: "/dashboard/strongroom", keywords: "integrity investigation fraud audit" },
       { label: "Certification", to: "/dashboard/results/certification", keywords: "certify results" },
       { label: "Settings", to: "/dashboard/settings", keywords: "configuration institution voting security" }
     );

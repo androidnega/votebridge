@@ -45,3 +45,21 @@ def on_election_result_saved(sender, instance, **kwargs):
                 logger.exception("Failed to lock election on publish %s", instance.election.uuid)
 
         transaction.on_commit(_lock_election)
+
+
+def on_election_pre_save(sender, instance, **kwargs):
+    from apps.elections.models import Election
+    from apps.strongroom.services.vault_committee_service import vault_committee_service
+
+    if not instance.pk:
+        return
+    try:
+        previous = Election.objects.get(pk=instance.pk)
+    except Election.DoesNotExist:
+        return
+    if previous.status != instance.status and instance.status == Election.Status.OPEN:
+
+        def _lock():
+            vault_committee_service.lock_committee_on_election_open(instance)
+
+        transaction.on_commit(_lock)

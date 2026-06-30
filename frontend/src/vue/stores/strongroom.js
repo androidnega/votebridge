@@ -9,6 +9,10 @@ export const useStrongroomStore = defineStore("strongroom", {
     dashboard: null,
     custodyTimeline: [],
     verificationResult: null,
+    committee: null,
+    accessRequests: [],
+    vaultSession: null,
+    vaultEvidence: null,
     realtimeStatus: "disconnected",
     loading: false,
     actionLoading: false,
@@ -123,6 +127,88 @@ export const useStrongroomStore = defineStore("strongroom", {
     clearDashboard() {
       this.dashboard = null;
       this.custodyTimeline = [];
+    },
+
+    async fetchCommittee(electionUuid) {
+      this.loading = true;
+      this.error = null;
+      try {
+        this.committee = await strongroomApi.getCommittee(electionUuid);
+        return this.committee;
+      } catch (error) {
+        this.committee = null;
+        this.error = extractApiError(error);
+        throw error;
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    async saveCommittee(electionUuid, payload) {
+      this.actionLoading = true;
+      this.error = null;
+      try {
+        this.committee = await strongroomApi.saveCommittee(electionUuid, payload);
+        return this.committee;
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw error;
+      } finally {
+        this.actionLoading = false;
+      }
+    },
+
+    async submitCommittee(electionUuid) {
+      this.committee = await strongroomApi.submitCommittee(electionUuid);
+      return this.committee;
+    },
+
+    async approveCommittee(electionUuid) {
+      this.committee = await strongroomApi.approveCommittee(electionUuid);
+      return this.committee;
+    },
+
+    async fetchAccessRequests(electionUuid) {
+      this.accessRequests = await strongroomApi.listAccessRequests(electionUuid);
+      return this.accessRequests;
+    },
+
+    async createAccessRequest(electionUuid, payload) {
+      const request = await strongroomApi.createAccessRequest(electionUuid, payload);
+      await this.fetchAccessRequests(electionUuid).catch(() => {});
+      return request;
+    },
+
+    async reviewAccessRequest(electionUuid, requestUuid, action) {
+      const result = await strongroomApi.reviewAccessRequest(electionUuid, requestUuid, action);
+      await this.fetchAccessRequests(electionUuid).catch(() => {});
+      return result;
+    },
+
+    async startVaultSession(electionUuid, accessRequestUuid) {
+      this.vaultSession = await strongroomApi.startVaultSession(electionUuid, accessRequestUuid);
+      return this.vaultSession;
+    },
+
+    async fetchVaultSession(sessionUuid) {
+      this.vaultSession = await strongroomApi.getVaultSession(sessionUuid);
+      return this.vaultSession;
+    },
+
+    async authenticateCustodian(sessionUuid, payload) {
+      this.vaultSession = await strongroomApi.authenticateCustodian(sessionUuid, payload);
+      return this.vaultSession;
+    },
+
+    async fetchVaultEvidence(sessionUuid) {
+      this.vaultEvidence = await strongroomApi.getVaultEvidence(sessionUuid);
+      return this.vaultEvidence;
+    },
+
+    async closeVaultSession(sessionUuid) {
+      this.vaultSession = await strongroomApi.closeVaultSession(sessionUuid);
+      this.vaultEvidence = null;
+      return this.vaultSession;
     },
   },
 });

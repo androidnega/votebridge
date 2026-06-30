@@ -51,6 +51,19 @@ const canArchive = computed(
   () => authStore.isSuperAdmin && result.value?.result_status === "published"
 );
 
+const canAccessVault = computed(
+  () =>
+    authStore.isSuperAdmin &&
+    ["closed", "archived"].includes(result.value?.election_status)
+);
+
+function openVaultAccess() {
+  router.push({
+    name: "election-vault-access",
+    params: { uuid: electionUuid.value },
+  });
+}
+
 const showStandings = computed(() => {
   if (authStore.isStudent) return result.value?.result_status === "published";
   return Boolean(positions.value.length);
@@ -118,6 +131,9 @@ async function downloadReport(format) {
           <ResultStatusBadge :status="result.result_status" />
         </div>
       </div>
+      <VButton v-if="canAccessVault" variant="secondary" @click="openVaultAccess">
+        Open electoral vault
+      </VButton>
     </div>
 
     <VAlert v-if="resultsStore.error" variant="error">{{ resultsStore.error }}</VAlert>

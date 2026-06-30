@@ -16,5 +16,13 @@ export function getElectionWorkspaceNav(electionUuid, status) {
     tabs.push({ label: "Control room", to: `${base}/monitor` });
   }
 
+  if (["draft", "scheduled"].includes(status)) {
+    tabs.push({ label: "Strong room committee", to: `${base}/committee` });
+  }
+
+  if (["closed", "archived"].includes(status)) {
+    tabs.push({ label: "Vault access", to: `${base}/vault/access` });
+  }
+
   return tabs;
 }

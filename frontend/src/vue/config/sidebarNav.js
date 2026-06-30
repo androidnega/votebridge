@@ -21,7 +21,6 @@ const superAdminNav = [
   { name: "Dashboard", to: dashboardPath(), icon: "home" },
   { name: "Results", to: dashboardPath("results"), icon: "results" },
   { name: "Reports", to: dashboardPath("reports"), icon: "analytics" },
-  { name: "Strong room", to: dashboardPath("strongroom"), icon: "strongroom", roles: ["super_admin"] },
   { name: "Settings", to: dashboardPath("settings"), icon: "settings", roles: ["super_admin"] },
   { name: "Profile", to: dashboardPath("profile"), icon: "profile" },
 ];

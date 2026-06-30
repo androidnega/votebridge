@@ -171,94 +171,89 @@ const router = createRouter({
           meta: { title: "Election Results" },
         },
         {
-          path: "strongroom",
-          component: () => import("@/layouts/StrongroomWorkspaceLayout.vue"),
-          meta: { title: "Strong Room", roles: ["super_admin"] },
-          children: [
-            {
-              path: "",
-              name: "strongroom",
-              component: () => import("@/views/strongroom/StrongroomDashboardView.vue"),
-              meta: { title: "Overview" },
-            },
-            {
-              path: "certification",
-              redirect: { name: "results-certification" },
-            },
-            {
-              path: "investigations",
-              component: () => import("@/layouts/StrongroomInvestigationsLayout.vue"),
-              children: [
-                { path: "", redirect: { name: "strongroom-fraud" } },
-                {
-                  path: "fraud",
-                  name: "strongroom-fraud",
-                  component: () => import("@/views/fraud/FraudView.vue"),
-                  meta: { title: "Fraud Investigation" },
-                },
-                {
-                  path: "audit",
-                  name: "strongroom-audit",
-                  component: () => import("@/views/platform/PlatformLogsView.vue"),
-                  meta: { title: "Audit Trail" },
-                },
-                {
-                  path: "security",
-                  name: "strongroom-security",
-                  component: () => import("@/views/security/SecurityView.vue"),
-                  meta: { title: "Security Timeline" },
-                },
-                {
-                  path: "identity",
-                  name: "strongroom-identity",
-                  component: () => import("@/views/biometrics/BiometricHistoryView.vue"),
-                  meta: { title: "Identity Investigations" },
-                },
-                {
-                  path: "trusted-devices",
-                  name: "strongroom-trusted-devices",
-                  component: () => import("@/views/security/TrustedDevicesView.vue"),
-                  meta: { title: "Trusted Devices" },
-                },
-              ],
-            },
-            {
-              path: "integrity",
-              component: () => import("@/layouts/StrongroomIntegrityLayout.vue"),
-              children: [
-                {
-                  path: "",
-                  name: "strongroom-integrity",
-                  component: () => import("@/views/strongroom/StrongroomDashboardView.vue"),
-                  meta: { title: "Election Integrity" },
-                },
-                {
-                  path: "custody",
-                  name: "strongroom-custody",
-                  component: () => import("@/views/strongroom/StrongroomCustodyHubView.vue"),
-                  meta: { title: "Chain of Custody" },
-                },
-              ],
-            },
-          ],
-        },
-        {
-          path: "strongroom/:electionUuid",
-          name: "strongroom-election",
-          component: () => import("@/views/strongroom/StrongroomElectionView.vue"),
-          meta: { title: "Election Integrity", roles: ["super_admin"] },
-        },
-        {
-          path: "strongroom/audit",
-          redirect: { name: "strongroom-audit" },
-        },
-        {
-          path: "strongroom/fraud",
+          path: "strongroom/investigations/fraud",
           redirect: { name: "strongroom-fraud" },
         },
         {
-          path: "strongroom/export",
-          redirect: { name: "strongroom" },
+          path: "strongroom/investigations/audit",
+          redirect: { name: "strongroom-audit" },
+        },
+        {
+          path: "strongroom/investigations/security",
+          redirect: { name: "strongroom-security" },
+        },
+        {
+          path: "strongroom/investigations/identity",
+          redirect: { name: "strongroom-identity" },
+        },
+        {
+          path: "strongroom/investigations/trusted-devices",
+          redirect: { name: "strongroom-trusted-devices" },
+        },
+        {
+          path: "strongroom/integrity",
+          redirect: { name: "strongroom-integrity" },
+        },
+        {
+          path: "strongroom/integrity/custody",
+          redirect: { name: "strongroom-custody" },
+        },
+        {
+          path: "investigations/fraud",
+          name: "strongroom-fraud",
+          component: () => import("@/views/fraud/FraudView.vue"),
+          meta: { title: "Fraud Investigation", roles: ["super_admin"] },
+        },
+        {
+          path: "investigations/audit",
+          name: "strongroom-audit",
+          component: () => import("@/views/platform/PlatformLogsView.vue"),
+          meta: { title: "Audit Trail", roles: ["super_admin"] },
+        },
+        {
+          path: "investigations/security",
+          name: "strongroom-security",
+          component: () => import("@/views/security/SecurityView.vue"),
+          meta: { title: "Security Timeline", roles: ["super_admin"] },
+        },
+        {
+          path: "investigations/identity",
+          name: "strongroom-identity",
+          component: () => import("@/views/biometrics/BiometricHistoryView.vue"),
+          meta: { title: "Identity Investigations", roles: ["super_admin"] },
+        },
+        {
+          path: "investigations/trusted-devices",
+          name: "strongroom-trusted-devices",
+          component: () => import("@/views/security/TrustedDevicesView.vue"),
+          meta: { title: "Trusted Devices", roles: ["super_admin"] },
+        },
+        {
+          path: "integrity/hub",
+          name: "strongroom-integrity",
+          component: () => import("@/views/strongroom/StrongroomDashboardView.vue"),
+          meta: { title: "Election Integrity", roles: ["super_admin"] },
+        },
+        {
+          path: "integrity/custody",
+          name: "strongroom-custody",
+          component: () => import("@/views/strongroom/StrongroomCustodyHubView.vue"),
+          meta: { title: "Chain of Custody", roles: ["super_admin"] },
+        },
+        {
+          path: "strongroom/:electionUuid",
+          redirect: (to) => ({
+            name: "election-vault-access",
+            params: { uuid: to.params.electionUuid },
+          }),
+        },
+        {
+          path: "strongroom",
+          redirect: { name: "results" },
+        },
+        {
+          path: "strongroom/:pathMatch(.*)*",
+          redirect: { name: "results" },
         },
         {
           path: "communications",
@@ -942,6 +937,39 @@ const router = createRouter({
           name: "election-confirmation",
           component: () => import("@/views/elections/VoteConfirmationView.vue"),
           meta: { title: "Vote Confirmation", roles: ["student", "candidate"] },
+        },
+        {
+          path: "committee",
+          name: "election-vault-committee",
+          component: () => import("@/views/strongroom/ElectionVaultCommitteeView.vue"),
+          meta: { title: "Strong Room Committee", roles: ["admin", "super_admin"] },
+        },
+        {
+          path: "vault/access",
+          name: "election-vault-access",
+          component: () => import("@/views/strongroom/ElectionVaultAccessView.vue"),
+          meta: { title: "Vault Access", roles: ["super_admin"] },
+        },
+        {
+          path: "vault/terminal/:sessionUuid",
+          name: "election-vault-terminal",
+          component: () => import("@/views/strongroom/VaultTerminalView.vue"),
+          meta: {
+            title: "Secure Vault Terminal",
+            roles: ["super_admin"],
+            requiresVaultSession: true,
+          },
+        },
+        {
+          path: "vault/evidence/:sessionUuid",
+          name: "election-vault-evidence",
+          component: () => import("@/views/strongroom/VaultEvidenceView.vue"),
+          meta: {
+            title: "Election Vault",
+            roles: ["super_admin"],
+            requiresVaultSession: true,
+            requiresActiveVault: true,
+          },
         },
       ],
     },
