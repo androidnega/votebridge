@@ -64,7 +64,7 @@ export function getAuthInfoContent(slug) {
       sections: [
         {
           heading: "1. Sign in",
-          body: "Enter your index number and password on the login screen, then select Continue securely.",
+          body: "Enter your index number and password, then select Sign in.",
         },
         {
           heading: "2. Verify your identity",

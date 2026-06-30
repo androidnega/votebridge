@@ -1,9 +1,11 @@
 <script setup>
 import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { VAlert, VButton, VInput } from "@/components/ui";
-import { normalizeAuthRedirect, DASHBOARD_ROOT } from "@/config/routes";
+import OtpPinInput from "@/components/auth/OtpPinInput.vue";
+import { VAlert, VButton } from "@/components/ui";
+import { normalizeAuthRedirect } from "@/config/routes";
 import { useToast } from "@/composables/useToast";
+import { useAuthStore } from "@/stores/auth";
 import { otpCode, required, validateFields } from "@/utils/validators";
 
 const router = useRouter();
@@ -19,8 +21,8 @@ let cooldownTimer = null;
 
 const challenge = computed(() => authStore.otpChallenge);
 const channelLabel = computed(() => {
-  const channel = challenge.value?.channel || "email";
-  return channel.charAt(0).toUpperCase() + channel.slice(1);
+  const channel = challenge.value?.channel || "sms";
+  return channel === "email" ? "Email" : "SMS";
 });
 
 const maskedDestination = computed(() => challenge.value?.masked_destination || "your registered contact");
@@ -55,13 +57,13 @@ async function handleVerify() {
   const { valid, errors: fieldErrors } = validateFields(
     { otp_code: otp.value },
     {
-      otp_code: [required("Verification code is required."), otpCode()],
+      otp_code: [required("Enter the full verification code."), otpCode()],
     }
   );
   errors.otp_code = fieldErrors.otp_code || "";
   if (!valid) return;
 
-    try {
+  try {
     const result = await authStore.verifyOtp(otp.value);
     if (result?.requiresBiometric) {
       await router.replace({
@@ -79,6 +81,7 @@ async function handleVerify() {
     await router.replace(redirect);
   } catch (error) {
     submitError.value = error.message;
+    otp.value = "";
   }
 }
 
@@ -87,6 +90,7 @@ async function handleResend() {
   try {
     await authStore.resendOtp();
     toast.info("A new verification code has been sent.");
+    otp.value = "";
     startCooldown();
   } catch (error) {
     submitError.value = error.message;
@@ -100,54 +104,42 @@ function backToLogin() {
 </script>
 
 <template>
-  <form class="space-y-5" @submit.prevent="handleVerify">
-    <div>
-      <h2 class="text-xl font-semibold text-slate-800">Verify your identity</h2>
-      <p class="mt-1 text-sm text-slate-500">
-        Enter the verification code sent to {{ maskedDestination }} via
-        {{ channelLabel.toLowerCase() }}.
+  <form class="space-y-4" @submit.prevent="handleVerify">
+    <div class="vb-auth-channel">
+      <p class="vb-auth-channel-label">Secure verification channel</p>
+      <p class="mt-2 text-sm text-slate-600">
+        A 6-digit code was sent via {{ channelLabel.toLowerCase() }} to
+        <span class="font-medium text-slate-800">{{ maskedDestination }}</span>.
       </p>
     </div>
-
-    <VAlert v-if="challenge?.mfa_required" variant="warning" title="Additional verification required">
-      Enter the verification code sent to your registered contact to continue.
-    </VAlert>
 
     <VAlert v-if="submitError" variant="error" dismissible @dismiss="submitError = ''">
       {{ submitError }}
     </VAlert>
 
-    <VInput
-      id="otp_code"
+    <OtpPinInput
       v-model="otp"
-      label="Verification code"
-      inputmode="numeric"
-      autocomplete="one-time-code"
-      placeholder="Enter 6-digit code"
       :error="errors.otp_code"
-      required
+      :disabled="authStore.otpLoading"
+      @complete="handleVerify"
     />
 
-    <VButton type="submit" block :loading="authStore.otpLoading">
+    <VButton type="submit" block :loading="authStore.otpLoading" :disabled="otp.length < 6">
       Verify &amp; sign in
     </VButton>
 
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-      <VButton
+    <div class="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+      <button
         type="button"
-        variant="secondary"
+        class="text-sm font-medium text-slate-500 hover:text-slate-800 disabled:opacity-50"
         :disabled="resendCooldown > 0 || authStore.otpLoading"
         @click="handleResend"
       >
-        {{
-          resendCooldown > 0
-            ? `Resend in ${resendCooldown}s`
-            : "Resend code"
-        }}
-      </VButton>
+        {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend code" }}
+      </button>
       <button
         type="button"
-        class="text-sm font-medium text-brand-600 hover:text-brand-hover"
+        class="text-sm font-medium text-slate-500 hover:text-slate-800"
         @click="backToLogin"
       >
         Back to sign in

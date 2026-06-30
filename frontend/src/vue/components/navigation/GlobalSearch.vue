@@ -98,7 +98,7 @@ onUnmounted(() => document.removeEventListener("keydown", onGlobalKeydown));
 </script>
 
 <template>
-  <div class="relative hidden sm:block">
+  <div class="relative w-full">
     <label class="sr-only" for="global-search">Search pages</label>
     <div class="relative">
       <VIcon name="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -107,8 +107,8 @@ onUnmounted(() => document.removeEventListener("keydown", onGlobalKeydown));
         ref="searchRef"
         v-model="query"
         type="search"
-        placeholder="Search pages (⌘K)"
-        class="w-64 rounded-input border border-border bg-surface py-2 pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 lg:w-72"
+        placeholder="Search"
+        class="vb-topbar-search w-full"
         autocomplete="off"
         @focus="openSearch"
         @blur="onBlur"

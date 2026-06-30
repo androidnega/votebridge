@@ -4,7 +4,6 @@ import { RouterLink } from "vue-router";
 import PublicBrandHeader from "@/components/public/PublicBrandHeader.vue";
 import { LoadingSkeleton } from "@/components/ui";
 import { useElectionPortal } from "@/composables/useElectionPortal";
-import { branding } from "@/config/branding";
 
 const { loading, portal, phaseMeta, countdownParts } = useElectionPortal();
 
@@ -20,10 +19,6 @@ const clockText = computed(() => {
 });
 
 const electionTitle = computed(() => portal.value.election?.title || "Campus elections");
-
-const supportHref = computed(
-  () => `mailto:${branding.electionOfficeEmail}?subject=VoteBridge%20support`
-);
 </script>
 
 <template>
@@ -55,9 +50,8 @@ const supportHref = computed(
       </template>
     </div>
 
-    <div class="mt-8 space-y-3 border-t border-border pt-6">
+    <div class="mt-8 border-t border-border pt-6">
       <RouterLink to="/auth/login" class="vb-public-primary-btn">Sign in to vote</RouterLink>
-      <a :href="supportHref" class="vb-public-support-link">Help &amp; support</a>
     </div>
   </div>
 </template>

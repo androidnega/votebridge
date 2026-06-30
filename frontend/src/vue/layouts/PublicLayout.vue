@@ -1,4 +1,5 @@
 <script setup>
+import AuthHelpFab from "@/components/auth/AuthHelpFab.vue";
 import { RouterView } from "vue-router";
 </script>
 
@@ -7,5 +8,6 @@ import { RouterView } from "vue-router";
     <main class="vb-public-frame">
       <RouterView />
     </main>
+    <AuthHelpFab />
   </div>
 </template>

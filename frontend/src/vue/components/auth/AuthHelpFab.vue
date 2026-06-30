@@ -1,12 +1,16 @@
 <script setup>
-import { onMounted, onUnmounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import { RouterLink } from "vue-router";
 import { VIcon } from "@/components/ui";
-import { authInfoPages } from "@/config/authInfoContent";
+import { branding } from "@/config/branding";
 
 const open = ref(false);
 const menuRef = ref(null);
 const buttonRef = ref(null);
+
+const supportHref = computed(
+  () => `mailto:${branding.electionOfficeEmail}?subject=VoteBridge%20support`
+);
 
 function toggleMenu() {
   open.value = !open.value;
@@ -51,27 +55,32 @@ onUnmounted(() => {
       <div
         v-if="open"
         ref="menuRef"
-        class="mb-3 w-72 overflow-hidden rounded-card border border-border bg-white shadow-card"
+        class="mb-3 w-56 overflow-hidden rounded-card border border-border bg-white shadow-card"
         role="menu"
-        aria-label="Election information"
+        aria-label="Help"
       >
-        <p class="border-b border-border px-4 py-3 text-xs font-medium uppercase tracking-wide text-slate-500">
-          Information
-        </p>
         <ul class="py-1">
-          <li v-for="item in authInfoPages" :key="item.slug">
+          <li>
             <RouterLink
-              :to="{ name: item.routeName }"
-              class="flex items-start gap-3 px-4 py-3 text-left transition hover:bg-slate-50"
+              :to="{ name: 'auth-info-help' }"
+              class="flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-slate-800 transition hover:bg-slate-50"
               role="menuitem"
               @click="closeMenu"
             >
-              <VIcon :name="item.icon" size="sm" class="mt-0.5 text-brand-600" />
-              <span>
-                <span class="block text-sm font-medium text-slate-800">{{ item.title }}</span>
-                <span class="mt-0.5 block text-xs text-slate-500">{{ item.summary }}</span>
-              </span>
+              <VIcon name="help" size="sm" class="shrink-0 text-brand-600" />
+              Help &amp; FAQ
             </RouterLink>
+          </li>
+          <li>
+            <a
+              :href="supportHref"
+              class="flex items-center gap-2.5 px-4 py-3 text-sm font-medium text-slate-800 transition hover:bg-slate-50"
+              role="menuitem"
+              @click="closeMenu"
+            >
+              <VIcon name="inbox" size="sm" class="shrink-0 text-brand-600" />
+              Contact support
+            </a>
           </li>
         </ul>
       </div>
@@ -83,7 +92,7 @@ onUnmounted(() => {
       class="flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-card transition hover:bg-brand-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
       :aria-expanded="open"
       aria-haspopup="menu"
-      aria-label="Election information and help"
+      aria-label="Help"
       @click="toggleMenu"
     >
       <VIcon name="help" size="lg" />
