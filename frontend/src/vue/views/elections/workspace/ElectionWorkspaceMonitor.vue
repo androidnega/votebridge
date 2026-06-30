@@ -135,26 +135,49 @@ onUnmounted(() => {
       </div>
 
       <!-- Metrics grid -->
-      <div class="grid grid-cols-2 gap-4 lg:col-span-7">
+      <div class="grid grid-cols-2 gap-4 lg:col-span-7 lg:grid-cols-3">
+        <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
+          <p class="text-xs text-slate-500">Voters participated</p>
+          <p class="mt-2 text-3xl font-bold tabular-nums text-white">{{ votesCast }}</p>
+          <p class="mt-1 text-xs text-slate-500">of {{ eligible }} eligible</p>
+        </div>
+        <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
+          <p class="text-xs text-slate-500">Web votes</p>
+          <p class="mt-2 text-3xl font-bold tabular-nums text-white">{{ monitorRow?.web_votes ?? 0 }}</p>
+          <p class="mt-1 text-xs text-slate-500">{{ monitorRow?.voting_channels?.web ? "Channel active" : "Channel off" }}</p>
+        </div>
+        <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
+          <p class="text-xs text-slate-500">USSD votes</p>
+          <p class="mt-2 text-3xl font-bold tabular-nums text-white">{{ monitorRow?.ussd_votes ?? 0 }}</p>
+          <p class="mt-1 text-xs text-slate-500">{{ monitorRow?.voting_channels?.ussd ? "Channel active" : "Channel off" }}</p>
+        </div>
+        <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
+          <p class="text-xs text-slate-500">Active USSD sessions</p>
+          <p class="mt-2 text-3xl font-bold tabular-nums text-white">{{ monitorRow?.active_sessions ?? 0 }}</p>
+        </div>
+        <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
+          <p class="text-xs text-slate-500">Failed USSD sessions</p>
+          <p class="mt-2 text-3xl font-bold tabular-nums" :class="monitorRow?.failed_sessions ? 'text-red-400' : 'text-white'">
+            {{ monitorRow?.failed_sessions ?? 0 }}
+          </p>
+        </div>
         <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
           <p class="text-xs text-slate-500">Security alerts</p>
-          <p class="mt-2 text-4xl font-bold tabular-nums" :class="securityAlerts ? 'text-amber-400' : 'text-white'">
+          <p class="mt-2 text-3xl font-bold tabular-nums" :class="securityAlerts ? 'text-amber-400' : 'text-white'">
             {{ securityAlerts }}
           </p>
         </div>
         <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
-          <p class="text-xs text-slate-500">Fraud flags</p>
-          <p class="mt-2 text-4xl font-bold tabular-nums" :class="fraudFlags ? 'text-red-400' : 'text-white'">
+          <p class="text-xs text-slate-500">Fraud alerts</p>
+          <p class="mt-2 text-3xl font-bold tabular-nums" :class="fraudFlags ? 'text-red-400' : 'text-white'">
             {{ fraudFlags }}
           </p>
         </div>
         <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
-          <p class="text-xs text-slate-500">Web channel</p>
-          <p class="mt-2 text-xl font-semibold">{{ monitorRow?.voting_channels?.web ? "Active" : "Off" }}</p>
-        </div>
-        <div class="rounded-xl border border-slate-800 bg-slate-900 p-5">
-          <p class="text-xs text-slate-500">USSD channel</p>
-          <p class="mt-2 text-xl font-semibold">{{ monitorRow?.voting_channels?.ussd ? "Active" : "Off" }}</p>
+          <p class="text-xs text-slate-500">System health</p>
+          <p class="mt-2 text-lg font-semibold capitalize" :class="systemStatus.tone">
+            {{ monitorRow?.system_health?.label || systemStatus.label }}
+          </p>
         </div>
       </div>
     </section>

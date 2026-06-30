@@ -1,12 +1,15 @@
 <script setup>
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import VIcon from "@/components/ui/VIcon.vue";
 import VTooltip from "@/components/ui/VTooltip.vue";
 import { dashboardPath, DASHBOARD_ROOT } from "@/config/routes";
+import { getElectionSidebarChildren } from "@/config/electionWorkspaceNav";
 import { getSidebarNav } from "@/config/sidebarNav";
 import { useSidebar } from "@/composables/useSidebar";
 import { useAuthStore } from "@/stores/auth";
+import { useElectionStore } from "@/stores/election";
+import { useVotingStore } from "@/stores/voting";
 
 const props = defineProps({
   collapsed: Boolean,
@@ -15,18 +18,64 @@ const props = defineProps({
 const route = useRoute();
 const router = useRouter();
 const authStore = useAuthStore();
+const electionStore = useElectionStore();
+const votingStore = useVotingStore();
 const { toggleGroup, isGroupExpanded } = useSidebar();
 
-const visibleItems = computed(() => getSidebarNav(authStore.role));
+const electionUuid = computed(() => {
+  const match = route.path.match(/^\/dashboard\/elections\/([^/]+)/);
+  return match?.[1] || null;
+});
+
+const electionStatus = computed(
+  () => votingStore.electionStatus || electionStore.currentElection?.status || "draft"
+);
+
+const visibleItems = computed(() => {
+  const base = getSidebarNav(authStore.role);
+  if (authStore.isAdmin) return base;
+
+  if (!electionUuid.value) return base;
+
+  const children = getElectionSidebarChildren(electionUuid.value, electionStatus.value, {
+    isElectionOfficer: authStore.isElectionOfficer,
+    isStudent: authStore.isStudent,
+    isSuperAdmin: authStore.isSuperAdmin,
+  });
+
+  if (!children.length) return base;
+
+  return base.map((item) => (item.key === "elections" ? { ...item, children } : item));
+});
+
+watch(
+  electionUuid,
+  (uuid) => {
+    if (!uuid) return;
+    electionStore.fetchElection(uuid).catch(() => {});
+  },
+  { immediate: true }
+);
 
 function isActive(item) {
   if (item.to === DASHBOARD_ROOT) {
     return route.path === DASHBOARD_ROOT;
   }
-  if (item.to === dashboardPath("elections")) {
+  if (item.key === "election-management") {
+    return (
+      route.path.startsWith(dashboardPath("elections")) ||
+      route.path.startsWith(dashboardPath("election-management"))
+    );
+  }
+  if (item.key === "elections" || item.to === dashboardPath("elections")) {
     return (
       route.path.startsWith(dashboardPath("elections")) ||
       route.path.startsWith("/election-management")
+    );
+  }
+  if (item.key === "control-room") {
+    return (
+      route.path.startsWith(dashboardPath("control-room")) || /\/elections\/[^/]+\/monitor$/.test(route.path)
     );
   }
   if (item.to === dashboardPath("reports")) {
@@ -45,13 +94,13 @@ function isActive(item) {
 }
 
 function isChildActive(child) {
+  if (child.disabled) return false;
   if (child.exact) return route.path === child.to;
   return route.path === child.to || route.path.startsWith(`${child.to}/`);
 }
 
 function visibleChildren(item) {
-  if (!item.children) return [];
-  return item.children;
+  return item.children || [];
 }
 
 function groupIsActive(item) {
@@ -59,9 +108,20 @@ function groupIsActive(item) {
   return visibleChildren(item).some((child) => isChildActive(child));
 }
 
+function groupExpanded(item) {
+  if (item.key === "election-management" && route.path.startsWith(dashboardPath("elections"))) return true;
+  if (item.key === "elections" && electionUuid.value) return true;
+  return isGroupExpanded(item.key || item.name);
+}
+
 function onGroupToggle(item) {
   if (props.collapsed) return;
   toggleGroup(item.key || item.name);
+}
+
+function childLinkTo(child) {
+  if (child.disabled) return route.path;
+  return child.to;
 }
 
 async function handleLogout() {
@@ -74,7 +134,7 @@ async function handleLogout() {
   <nav class="flex flex-1 flex-col">
     <ul role="list" class="flex flex-1 flex-col gap-y-1">
       <li v-for="item in visibleItems" :key="item.name" :class="collapsed ? 'flex justify-center' : ''">
-        <template v-if="item.children && !collapsed">
+        <template v-if="visibleChildren(item).length && !collapsed">
           <button
             type="button"
             class="group flex min-h-touch w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition duration-200"
@@ -83,33 +143,36 @@ async function handleLogout() {
                 ? 'bg-navy-700/60 text-white'
                 : 'text-slate-400 hover:bg-navy-700 hover:text-white'
             "
-            :aria-expanded="isGroupExpanded(item.key || item.name)"
+            :aria-expanded="groupExpanded(item)"
             @click="onGroupToggle(item)"
           >
             <VIcon :name="item.icon" class="h-5 w-5 shrink-0" />
-            <span class="flex-1 text-left">{{ item.name }}</span>
+            <span class="flex-1 truncate text-left">{{ item.name }}</span>
             <VIcon
               name="chevronDown"
               class="h-4 w-4 shrink-0 transition-transform duration-200"
-              :class="isGroupExpanded(item.key || item.name) ? 'rotate-180' : ''"
+              :class="groupExpanded(item) ? 'rotate-180' : ''"
             />
           </button>
           <ul
-            v-show="isGroupExpanded(item.key || item.name)"
+            v-show="groupExpanded(item)"
             class="mt-1 space-y-0.5 border-l border-navy-border pl-3"
             role="list"
           >
             <li v-for="child in visibleChildren(item)" :key="child.to">
               <router-link
-                :to="child.to"
+                :to="childLinkTo(child)"
                 class="flex min-h-touch items-center rounded-lg py-2 pl-3 pr-2 text-sm transition duration-200"
                 :class="
                   isChildActive(child)
                     ? 'bg-brand-600 text-white'
-                    : 'text-slate-400 hover:bg-navy-700 hover:text-white'
+                    : child.disabled
+                      ? 'cursor-not-allowed text-slate-500 opacity-60'
+                      : 'text-slate-400 hover:bg-navy-700 hover:text-white'
                 "
+                :aria-disabled="child.disabled ? 'true' : undefined"
               >
-                {{ child.name }}
+                <span class="truncate">{{ child.name }}</span>
               </router-link>
             </li>
           </ul>
@@ -141,7 +204,7 @@ async function handleLogout() {
             "
           >
             <VIcon :name="item.icon" class="h-5 w-5 shrink-0" />
-            <span>{{ item.name }}</span>
+            <span class="truncate">{{ item.name }}</span>
           </router-link>
         </template>
       </li>

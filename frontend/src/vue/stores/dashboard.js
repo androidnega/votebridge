@@ -13,6 +13,8 @@ const REALTIME_LABELS = {
   connected: "Live",
   connecting: "Connecting",
   disconnected: "Offline",
+  unavailable: "Offline",
+  disabled: "Offline",
   error: "Error",
 };
 
@@ -26,6 +28,19 @@ const STUDENT_REFRESH_EVENTS = new Set([
 ]);
 
 const MAX_ACTIVITY_ITEMS = 25;
+const MAX_LIVE_TURNOUT_POINTS = 30;
+
+function currentHourLabel(date = new Date()) {
+  return `${String(date.getHours()).padStart(2, "0")}:00`;
+}
+
+function currentTimeLabel(date = new Date()) {
+  return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" });
+}
+
+function cloneTrendBuckets(buckets = []) {
+  return buckets.map((point) => ({ ...point }));
+}
 
 function mergeAdminOverview(current, incoming) {
   if (!current) return incoming;
@@ -35,6 +50,15 @@ function mergeAdminOverview(current, incoming) {
   }
   if (incoming.fraud_cases && current.fraud_cases) {
     merged.fraud_cases = { ...current.fraud_cases, ...incoming.fraud_cases };
+  }
+  if (incoming.monitoring && current.monitoring) {
+    merged.monitoring = { ...current.monitoring, ...incoming.monitoring };
+    if (incoming.monitoring.system_health || current.monitoring.system_health) {
+      merged.monitoring.system_health = {
+        ...current.monitoring.system_health,
+        ...incoming.monitoring.system_health,
+      };
+    }
   }
   return merged;
 }
@@ -57,6 +81,11 @@ export const useDashboardStore = defineStore("dashboard", {
     activeUsersCount: 0,
     verificationResult: null,
     activityFeed: [],
+    adminTrends: {
+      votesHourly: [],
+      turnoutHourly: [],
+      turnoutLive: [],
+    },
     realtimeStatus: "disconnected",
     realtimeScope: null,
     loading: false,
@@ -103,14 +132,19 @@ export const useDashboardStore = defineStore("dashboard", {
       this.loading = true;
       this.error = null;
       try {
-        const [overview, allElections, openElections] = await Promise.all([
+        const [overview, allElections, openElections, pausedElections, scheduledElections] =
+          await Promise.all([
           dashboardApi.getAdminOverview(),
           electionsApi.list({ page_size: 1 }),
           electionsApi.list({ status: "open", page_size: 10 }),
+          electionsApi.list({ status: "paused", page_size: 10 }),
+          electionsApi.list({ status: "scheduled", page_size: 10 }),
         ]);
         this.adminOverview = overview;
         this.totalElectionsCount = allElections.count;
-        this.openElectionsList = openElections.items;
+        this.openElectionsList = [...openElections.items, ...pausedElections.items];
+        this.scheduledElections = scheduledElections.items;
+        this.seedAdminTrends(overview);
         return overview;
       } catch (error) {
         this.error = extractApiError(error);
@@ -135,6 +169,7 @@ export const useDashboardStore = defineStore("dashboard", {
           ]);
 
         this.adminOverview = overview;
+        this.seedAdminTrends(overview);
         this.monitoringSummary = monitoring;
         this.fraudIntegrity = fraudReport;
         this.totalElectionsCount = elections.count;
@@ -185,6 +220,11 @@ export const useDashboardStore = defineStore("dashboard", {
       if (event === "dashboard_stats") {
         if (data.role === "admin" && (scope === "admin" || scope === "super-admin")) {
           this.adminOverview = mergeAdminOverview(this.adminOverview, data);
+          if (data.trends) {
+            this.seedAdminTrends(this.adminOverview);
+          } else if (data.turnout_percentage !== undefined) {
+            this.recordLiveTurnout(data.turnout_percentage);
+          }
           if (data.fraud_cases) {
             this.fraudIntegrity = { ...this.fraudIntegrity, ...data.fraud_cases };
           }
@@ -214,7 +254,24 @@ export const useDashboardStore = defineStore("dashboard", {
         if (data.turnout_percentage !== undefined) {
           overview.turnout_percentage = data.turnout_percentage;
         }
+        if (data.monitoring) {
+          overview.monitoring = { ...(overview.monitoring || {}), ...data.monitoring };
+        } else if (overview.monitoring) {
+          overview.monitoring = {
+            ...overview.monitoring,
+            voters_participated: data.voters_participated ?? overview.monitoring.voters_participated,
+            turnout_percentage: data.turnout_percentage ?? overview.monitoring.turnout_percentage,
+            total_votes_cast: data.total_votes_cast ?? overview.monitoring.total_votes_cast,
+          };
+        }
         this.adminOverview = { ...overview };
+        const turnout =
+          data.election_turnout_percentage ??
+          data.turnout_percentage ??
+          overview.turnout_percentage;
+        this.recordLiveTurnout(turnout);
+        this.incrementVotesHourly(data.votes_count ?? 1);
+        this.updateTurnoutHourly(turnout);
         this.prependActivity({
           id: `ballot-${timestamp || Date.now()}`,
           title: `Ballot submitted — ${data.election_title || "Election"}`,
@@ -333,6 +390,49 @@ export const useDashboardStore = defineStore("dashboard", {
 
     prependActivity(item) {
       this.activityFeed = [item, ...this.activityFeed].slice(0, MAX_ACTIVITY_ITEMS);
+    },
+
+    seedAdminTrends(overview) {
+      if (!overview) return;
+      const trends = overview.trends || {};
+      const turnout = overview.turnout_percentage ?? 0;
+      this.adminTrends = {
+        votesHourly: cloneTrendBuckets(trends.votes_hourly),
+        turnoutHourly: cloneTrendBuckets(trends.turnout_hourly),
+        turnoutLive: [{ label: currentTimeLabel(), value: turnout }],
+      };
+    },
+
+    recordLiveTurnout(turnout) {
+      if (turnout === undefined || turnout === null) return;
+      const nextPoint = { label: currentTimeLabel(), value: Number(turnout) };
+      const points = [...this.adminTrends.turnoutLive, nextPoint].slice(-MAX_LIVE_TURNOUT_POINTS);
+      this.adminTrends = { ...this.adminTrends, turnoutLive: points };
+    },
+
+    incrementVotesHourly(voteCount = 1) {
+      const label = currentHourLabel();
+      const buckets = cloneTrendBuckets(this.adminTrends.votesHourly);
+      const index = buckets.findIndex((point) => point.label === label);
+      if (index >= 0) {
+        buckets[index] = { ...buckets[index], value: buckets[index].value + voteCount };
+      } else {
+        buckets.push({ label, value: voteCount });
+      }
+      this.adminTrends = { ...this.adminTrends, votesHourly: buckets };
+    },
+
+    updateTurnoutHourly(turnout) {
+      if (turnout === undefined || turnout === null) return;
+      const label = currentHourLabel();
+      const buckets = cloneTrendBuckets(this.adminTrends.turnoutHourly);
+      const index = buckets.findIndex((point) => point.label === label);
+      if (index >= 0) {
+        buckets[index] = { ...buckets[index], value: Number(turnout) };
+      } else {
+        buckets.push({ label, value: Number(turnout) });
+      }
+      this.adminTrends = { ...this.adminTrends, turnoutHourly: buckets };
     },
 
     async verifyBallotToken(tokenCode) {

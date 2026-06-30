@@ -4,14 +4,26 @@ import { dashboardPath } from "@/config/routes";
 
 const studentNav = [
   { name: "Dashboard", to: dashboardPath(), icon: "home" },
-  { name: "Elections", to: dashboardPath("elections"), icon: "elections" },
+  { name: "Elections", to: dashboardPath("elections"), icon: "elections", key: "elections" },
   { name: "Notifications", to: dashboardPath("notifications"), icon: "notifications" },
   { name: "Profile", to: dashboardPath("profile"), icon: "profile" },
 ];
 
 const adminNav = [
   { name: "Dashboard", to: dashboardPath(), icon: "home" },
-  { name: "Election workspace", to: dashboardPath("elections"), icon: "elections" },
+  {
+    name: "Election Management",
+    to: dashboardPath("elections"),
+    icon: "elections",
+    key: "election-management",
+    children: [
+      { name: "Elections", to: dashboardPath("elections"), exact: true },
+      { name: "Candidates", to: dashboardPath("election-management/candidates") },
+      { name: "Positions", to: dashboardPath("election-management/positions") },
+      { name: "Voter Eligibility", to: dashboardPath("election-management/eligibility") },
+    ],
+  },
+  { name: "Control Room", to: dashboardPath("control-room"), icon: "operations", key: "control-room" },
   { name: "Results", to: dashboardPath("results"), icon: "results" },
   { name: "Reports", to: dashboardPath("reports"), icon: "analytics" },
   { name: "Profile", to: dashboardPath("profile"), icon: "profile" },
