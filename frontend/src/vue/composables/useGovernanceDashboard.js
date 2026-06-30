@@ -1,16 +1,21 @@
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { useAuthStore } from "@/stores/auth";
 import { useAnalyticsStore } from "@/stores/analytics";
 import { useDashboardStore } from "@/stores/dashboard";
 import { useOperationsStore } from "@/stores/operations";
 import { useResultsStore } from "@/stores/results";
 import { useVaultAccessQueue } from "@/composables/useVaultAccessQueue";
-import { useDashboardRealtime } from "@/composables/useDashboardRealtime";
 
 function greetingForHour(hour) {
   if (hour < 12) return "Good morning";
   if (hour < 17) return "Good afternoon";
   return "Good evening";
+}
+
+function asResultList(results) {
+  if (Array.isArray(results)) return results;
+  if (Array.isArray(results?.items)) return results.items;
+  return [];
 }
 
 export function useGovernanceDashboard() {
@@ -20,17 +25,16 @@ export function useGovernanceDashboard() {
   const resultsStore = useResultsStore();
   const analyticsStore = useAnalyticsStore();
   const vaultQueue = useVaultAccessQueue();
-  const realtime = useDashboardRealtime("super-admin");
+  const initialLoading = ref(true);
 
   const overview = computed(() => dashboardStore.adminOverview || {});
   const operations = computed(() => operationsStore.overview || {});
+  const analytics = computed(() => analyticsStore.overview || {});
   const monitoring = computed(() => dashboardStore.monitoringSummary || {});
+  const resultRows = computed(() => asResultList(resultsStore.results));
 
   const loading = computed(
-    () =>
-      (dashboardStore.loading && !dashboardStore.adminOverview) ||
-      vaultQueue.loading.value ||
-      (resultsStore.loading && !resultsStore.results.length)
+    () => initialLoading.value || (dashboardStore.loading && !dashboardStore.adminOverview)
   );
 
   const greeting = computed(() => {
@@ -51,11 +55,11 @@ export function useGovernanceDashboard() {
   );
 
   const publishedCount = computed(
-    () => resultsStore.results.filter((row) => row.result_status === "published").length
+    () => resultRows.value.filter((row) => row.result_status === "published").length
   );
 
   const archivedCount = computed(
-    () => resultsStore.results.filter((row) => row.result_status === "archived").length
+    () => resultRows.value.filter((row) => row.result_status === "archived").length
   );
 
   const pendingCertificationCount = computed(
@@ -142,7 +146,7 @@ export function useGovernanceDashboard() {
       count: securityAlertsToday.value,
       description: "Open security alerts requiring attention.",
       actionLabel: "View details",
-      route: { name: "reports-explore-security" },
+      route: { name: "reports" },
     },
     {
       id: "fraud-cases",
@@ -150,7 +154,7 @@ export function useGovernanceDashboard() {
       count: fraudOpenCases.value,
       description: "Open fraud investigations across the platform.",
       actionLabel: "View summary",
-      route: { name: "reports-explore-fraud" },
+      route: { name: "reports" },
     },
     {
       id: "failed-biometrics",
@@ -175,13 +179,13 @@ export function useGovernanceDashboard() {
       id: "security-alerts",
       title: "Security alerts",
       value: `${securityAlertsToday.value} open`,
-      route: { name: "reports-explore-security" },
+      route: { name: "reports" },
     },
     {
       id: "fraud-cases",
       title: "Fraud cases",
       value: `${fraudOpenCases.value} open`,
-      route: { name: "reports-explore-fraud" },
+      route: { name: "reports" },
     },
     {
       id: "biometrics",
@@ -193,26 +197,31 @@ export function useGovernanceDashboard() {
       id: "ussd",
       title: "USSD status",
       value: ussdStatus.value,
-      route: { name: "reports-explore-ussd" },
+      route: { name: "reports" },
     },
   ]);
 
   async function loadDashboard() {
-    const tasks = [
-      dashboardStore.fetchSuperAdminDashboard(),
-      resultsStore.fetchResults(),
-      resultsStore.fetchQueues(),
-    ];
+    initialLoading.value = true;
+    try {
+      const tasks = [
+        dashboardStore.fetchSuperAdminDashboard(),
+        resultsStore.fetchResults(),
+        resultsStore.fetchQueues(),
+      ];
 
-    if (!operationsStore.overview) {
-      tasks.push(operationsStore.fetchOverview());
-    }
-    if (!analyticsStore.overview) {
-      tasks.push(analyticsStore.fetchOverview());
-    }
+      if (!operationsStore.overview) {
+        tasks.push(operationsStore.fetchOverview());
+      }
+      if (!analyticsStore.overview) {
+        tasks.push(analyticsStore.fetchOverview());
+      }
 
-    await Promise.allSettled(tasks);
-    await vaultQueue.loadPendingRequests(resultsStore.results).catch(() => {});
+      await Promise.allSettled(tasks);
+      await vaultQueue.loadPendingRequests(resultRows.value).catch(() => {});
+    } finally {
+      initialLoading.value = false;
+    }
   }
 
   return {

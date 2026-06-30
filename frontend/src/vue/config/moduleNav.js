@@ -4,24 +4,10 @@ export const resultsNav = [
   { label: "Command center", to: "/dashboard/results", exact: true },
 ];
 
-export const reportsNav = [
-  { label: "Overview", to: "/dashboard/reports", exact: true },
-  { label: "Participation", to: "/dashboard/reports/participation" },
-  { label: "Turnout & results", to: "/dashboard/reports/turnout" },
-  { label: "Historical trends", to: "/dashboard/reports/historical" },
-  { label: "Export", to: "/dashboard/reports/export" },
-];
+export const reportsNav = [];
 
-export const reportsAdvancedNav = [
-  { label: "By students", to: "/dashboard/reports/explore/students" },
-  { label: "By departments", to: "/dashboard/reports/explore/departments" },
-  { label: "By faculties", to: "/dashboard/reports/explore/faculties" },
-  { label: "By programmes", to: "/dashboard/reports/explore/programmes" },
-  { label: "Security", to: "/dashboard/reports/explore/security" },
-  { label: "Fraud", to: "/dashboard/reports/explore/fraud" },
-  { label: "Communications", to: "/dashboard/reports/explore/communications" },
-  { label: "USSD", to: "/dashboard/reports/explore/ussd" },
-];
+/** @deprecated Phase 36 — explore pages consolidated into Reports workspace filters. */
+export const reportsAdvancedNav = [];
 
 export const strongRoomNav = [
   { label: "Overview", to: "/dashboard/strongroom", exact: true },

@@ -187,8 +187,8 @@ export const useAnalyticsStore = defineStore("analytics", {
       }
     },
 
-    async fetchReport(type, format = "json") {
-      this.reports = await analyticsApi.getReport(type, format);
+    async fetchReport(type, format = "json", params = {}) {
+      this.reports = await analyticsApi.getReport(type, format, params);
       return this.reports;
     },
 
