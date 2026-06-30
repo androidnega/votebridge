@@ -1,6 +1,7 @@
 import json
 import logging
 import uuid
+from urllib.parse import parse_qs
 
 from django.conf import settings
 
@@ -16,10 +17,11 @@ class UssdControllerService:
     def __init__(self, flow_service: UssdFlowService | None = None):
         self.flow_service = flow_service or ussd_flow_service
 
-    def handle_callback(self, request) -> tuple[str, str, dict | None]:
+    def handle_callback(self, request) -> tuple[str, str, dict]:
         """
-        Returns (content_type, body, json_response_or_none).
-        Supports Arkesel form-encoded (CON/END) and JSON API formats.
+        Returns (content_type, body, json_response).
+        Arkesel gateway expects application/json with sessionID, userID, msisdn,
+        message, and continueSession for every callback response.
         """
         payload = self._parse_request(request)
         inputs = self._parse_inputs(payload)
@@ -41,21 +43,23 @@ class UssdControllerService:
 
         self._broadcast_session_update(payload["session_id"], response)
 
-        if payload.get("format") == "json":
-            json_body = {
-                "sessionID": payload["session_id"],
-                "userID": getattr(settings, "ARKESEL_USSD_USER_ID", "VOTEBRIDGE"),
-                "msisdn": payload["msisdn"],
-                "message": response.message.replace("CON ", "").replace("END ", ""),
-                "continueSession": response.continue_session,
-            }
-            return "application/json", json.dumps(json_body), json_body
+        json_body = self._build_arkesel_response(payload, response)
+        return "application/json", json.dumps(json_body), json_body
 
-        plain = response.message
-        if not plain.startswith(("CON ", "END ")):
-            prefix = "CON" if response.continue_session else "END"
-            plain = f"{prefix} {plain}"
-        return "text/plain", plain, None
+    def _build_arkesel_response(self, payload: dict, response: UssdResponse) -> dict:
+        message = response.message
+        if message.startswith("CON "):
+            message = message[4:]
+        elif message.startswith("END "):
+            message = message[4:]
+
+        return {
+            "sessionID": payload["session_id"],
+            "userID": getattr(settings, "ARKESEL_USSD_USER_ID", "VOTEBRIDGE"),
+            "msisdn": payload["msisdn"],
+            "message": message,
+            "continueSession": response.continue_session,
+        }
 
     def _parse_request(self, request) -> dict:
         content_type = request.content_type or ""
@@ -77,7 +81,7 @@ class UssdControllerService:
                 "new_session": bool(data.get("newSession")),
             }
 
-        data = request.POST
+        data = self._form_data(request)
         session_id = data.get("sessionId") or data.get("sessionID") or str(uuid.uuid4())
         msisdn = self._normalize_msisdn(data.get("phoneNumber") or data.get("msisdn", ""))
         text = data.get("text", "")
@@ -99,6 +103,26 @@ class UssdControllerService:
         if payload.get("format") == "json" and payload.get("new_session"):
             return []
         return [part.strip() for part in raw.split("*") if part.strip()]
+
+    def _form_data(self, request) -> dict:
+        raw = getattr(request, "data", None)
+        if raw:
+            if hasattr(raw, "get"):
+                return {key: raw.get(key) for key in raw.keys()}
+            if hasattr(raw, "dict"):
+                return raw.dict()
+            return dict(raw)
+        if request.POST:
+            return request.POST
+
+        content_type = request.content_type or ""
+        if "application/x-www-form-urlencoded" in content_type and request.body:
+            parsed = parse_qs(request.body.decode("utf-8"), keep_blank_values=True)
+            return {
+                key: values[0] if len(values) == 1 else values
+                for key, values in parsed.items()
+            }
+        return {}
 
     def _normalize_msisdn(self, msisdn: str) -> str:
         return msisdn.replace("+", "").replace(" ", "").strip()

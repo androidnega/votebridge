@@ -1,4 +1,5 @@
 from django.http import HttpResponse
+from rest_framework.parsers import FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -46,12 +47,11 @@ class UssdCallbackView(APIView):
 
     permission_classes = [UssdCallbackPermission]
     authentication_classes = []
+    parser_classes = [JSONParser, FormParser]
 
     def post(self, request):
-        content_type, body, _json = ussd_controller_service.handle_callback(request)
-        if content_type == "text/plain":
-            return HttpResponse(body, content_type=content_type)
-        return HttpResponse(body, content_type=content_type)
+        _content_type, body, _json = ussd_controller_service.handle_callback(request)
+        return HttpResponse(body, content_type="application/json", status=200)
 
     def get(self, request):
         return Response(

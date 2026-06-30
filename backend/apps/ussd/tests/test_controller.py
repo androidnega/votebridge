@@ -14,6 +14,8 @@ class UssdControllerTests(TestCase):
         self.controller = UssdControllerService(flow_service=MagicMock())
 
     def test_form_callback_parses_session(self):
+        import json
+
         request = self.factory.post(
             "/api/v1/ussd/callback/",
             {
@@ -26,9 +28,14 @@ class UssdControllerTests(TestCase):
         self.controller.flow_service.handle_request.return_value = UssdResponse(
             "CON Welcome", True
         )
-        content_type, body, _ = self.controller.handle_callback(request)
-        self.assertEqual(content_type, "text/plain")
-        self.assertIn("CON", body)
+        content_type, body, parsed = self.controller.handle_callback(request)
+        self.assertEqual(content_type, "application/json")
+        response = json.loads(body)
+        self.assertEqual(response["sessionID"], "sess-123")
+        self.assertEqual(response["msisdn"], "233241234567")
+        self.assertEqual(response["message"], "Welcome")
+        self.assertTrue(response["continueSession"])
+        self.assertEqual(parsed, response)
         self.controller.flow_service.handle_request.assert_called_once()
 
     def test_json_callback_format(self):
@@ -49,7 +56,11 @@ class UssdControllerTests(TestCase):
         self.controller.flow_service.handle_request.return_value = UssdResponse(
             "Welcome", True
         )
-        content_type, body, _ = self.controller.handle_callback(request)
+        content_type, body, parsed = self.controller.handle_callback(request)
         self.assertEqual(content_type, "application/json")
-        parsed = json.loads(body)
-        self.assertTrue(parsed["continueSession"])
+        response = json.loads(body)
+        self.assertEqual(response["sessionID"], "json-sess-1")
+        self.assertEqual(response["userID"], "VOTEBRIDGE")
+        self.assertEqual(response["msisdn"], "233241234567")
+        self.assertEqual(response["message"], "Welcome")
+        self.assertTrue(response["continueSession"])

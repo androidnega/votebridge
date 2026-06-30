@@ -21,8 +21,8 @@ Post-vote: `consume_svt` → Strongroom signal → Communication Service (`vote_
 | URL | `POST /api/v1/ussd/callback/` |
 | Form format | `sessionId`, `phoneNumber`, `text`, `serviceCode` |
 | JSON format | `sessionID`, `msisdn`, `userData`, `newSession`, `network` |
-| Form response | Plain text prefixed `CON` (continue) or `END` (terminate) |
-| JSON response | `{ sessionID, userID, msisdn, message, continueSession }` |
+| Form response | `application/json` — `{ sessionID, userID, msisdn, message, continueSession }` |
+| JSON response | `application/json` — `{ sessionID, userID, msisdn, message, continueSession }` |
 
 ---
 
