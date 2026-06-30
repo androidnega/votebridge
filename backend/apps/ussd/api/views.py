@@ -1,12 +1,20 @@
+import logging
+import time
+
 from django.http import HttpResponse
 from rest_framework.parsers import FormParser, JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.elections.permissions import CanManageVotingChannels
 from apps.ussd.permissions import CanViewUssdMonitoring, UssdCallbackPermission
 from apps.ussd.repositories.ussd_repository import USSDRequestLogRepository, USSDSessionRepository
+from apps.ussd.services.ussd_audit_service import ussd_audit_service
+from apps.ussd.services.ussd_config_service import ussd_config_service
 from apps.ussd.services.ussd_controller_service import ussd_controller_service
 from core.exceptions import NotFoundError
+
+logger = logging.getLogger("votebridge")
 
 
 def _serialize_session(session) -> dict:
@@ -36,6 +44,8 @@ def _serialize_log(log) -> dict:
         "outcome": log.outcome,
         "continue_session": log.continue_session,
         "duration_ms": log.duration_ms,
+        "http_status": log.http_status,
+        "provider_user_id": log.provider_user_id,
         "raw_input": log.raw_input,
         "response_message": log.response_message[:200] if log.response_message else "",
         "created_at": log.created_at,
@@ -50,14 +60,50 @@ class UssdCallbackView(APIView):
     parser_classes = [JSONParser, FormParser]
 
     def post(self, request):
-        _content_type, body, _json = ussd_controller_service.handle_callback(request)
-        return HttpResponse(body, content_type="application/json", status=200)
+        started = time.monotonic()
+        http_status = 200
+        body = ""
+        response_payload: dict = {}
+        audit_context: dict = {}
+
+        try:
+            _content_type, body, response_payload, audit_context = (
+                ussd_controller_service.handle_callback(request)
+            )
+        except Exception:
+            logger.exception("USSD callback processing failed.")
+            _content_type, body, response_payload, audit_context = (
+                ussd_controller_service.build_failure_response(request)
+            )
+        finally:
+            duration_ms = int((time.monotonic() - started) * 1000)
+            ussd_audit_service.record_callback(
+                session_id=audit_context.get("session_id", ""),
+                msisdn=audit_context.get("msisdn", ""),
+                provider_user_id=audit_context.get("provider_user_id", ""),
+                request_payload=audit_context.get("request_payload", {}),
+                response_payload=response_payload,
+                http_status=http_status,
+                duration_ms=duration_ms,
+                ip_address=audit_context.get("ip_address"),
+            )
+
+        return HttpResponse(body, content_type="application/json", status=http_status)
 
     def get(self, request):
         return Response(
             {"success": True, "data": {"status": "VoteBridge USSD endpoint ready."}},
             content_type="application/json",
         )
+
+
+class UssdIntegrationView(APIView):
+    """Operational USSD callback configuration and health."""
+
+    permission_classes = [CanManageVotingChannels]
+
+    def get(self, request):
+        return Response({"success": True, "data": ussd_config_service.get_integration_config()})
 
 
 class UssdDashboardView(APIView):
@@ -71,6 +117,12 @@ class UssdDashboardView(APIView):
         sms = CommunicationProvider.objects.filter(provider_type="arkesel_sms").first()
         stats["provider_status"] = sms.connection_status if sms else "unknown"
         stats["sms_sent"] = stats.get("successful_requests", 0)
+        integration = ussd_config_service.get_integration_config()
+        stats["callback_url"] = integration["callback_url"]
+        stats["callback_path"] = integration["callback_path"]
+        stats["environment"] = integration["environment"]
+        stats["health_status"] = integration["health_status"]
+        stats["health"] = integration["health"]
         return Response({"success": True, "data": stats})
 
 

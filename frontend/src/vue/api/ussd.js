@@ -2,6 +2,10 @@ import apiClient from "./client";
 import { unwrapResponse } from "./helpers";
 
 export const ussdApi = {
+  getIntegration() {
+    return apiClient.get("/ussd/integration/").then(unwrapResponse);
+  },
+
   getDashboard() {
     return apiClient.get("/ussd/dashboard/").then(unwrapResponse);
   },

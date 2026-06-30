@@ -19,10 +19,11 @@ Post-vote: `consume_svt` → Strongroom signal → Communication Service (`vote_
 | Item | Value |
 |------|-------|
 | URL | `POST /api/v1/ussd/callback/` |
+| Public URL | `{PUBLIC_BASE_URL}/api/v1/ussd/callback/` |
 | Form format | `sessionId`, `phoneNumber`, `text`, `serviceCode` |
 | JSON format | `sessionID`, `msisdn`, `userData`, `newSession`, `network` |
-| Form response | `application/json` — `{ sessionID, userID, msisdn, message, continueSession }` |
-| JSON response | `application/json` — `{ sessionID, userID, msisdn, message, continueSession }` |
+| Response | `application/json` — `{ sessionID, userID, msisdn, message, continueSession }` |
+| Audit | `USSDRequestLog` stores request/response payloads, HTTP status, duration |
 
 ---
 

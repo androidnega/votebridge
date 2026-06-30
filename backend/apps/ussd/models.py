@@ -88,6 +88,10 @@ class USSDRequestLog(models.Model):
     error_message = models.TextField(blank=True)
     duration_ms = models.PositiveIntegerField(default=0)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
+    provider_user_id = models.CharField(max_length=120, blank=True)
+    request_payload = models.JSONField(default=dict, blank=True)
+    response_payload = models.JSONField(default=dict, blank=True)
+    http_status = models.PositiveSmallIntegerField(default=200)
     created_at = models.DateTimeField(default=timezone.now, db_index=True)
 
     class Meta:

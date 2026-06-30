@@ -65,9 +65,19 @@ onUnmounted(() => {
             <dt class="text-slate-500">SMS confirmations</dt>
             <dd class="font-medium text-slate-800">{{ store.dashboard.sms_sent ?? 0 }} sent</dd>
           </div>
+          <div class="flex justify-between gap-4 rounded-input bg-surface-muted px-4 py-3 sm:col-span-2">
+            <dt class="text-slate-500">Callback URL</dt>
+            <dd class="break-all text-right font-medium text-slate-800">
+              {{ store.dashboard.callback_url || store.dashboard.callback_path || "/api/v1/ussd/callback/" }}
+            </dd>
+          </div>
           <div class="flex justify-between gap-4 rounded-input bg-surface-muted px-4 py-3">
-            <dt class="text-slate-500">Callback endpoint</dt>
-            <dd class="font-medium text-slate-800">/api/v1/ussd/callback/</dd>
+            <dt class="text-slate-500">Environment</dt>
+            <dd class="font-medium capitalize text-slate-800">{{ store.dashboard.environment || "—" }}</dd>
+          </div>
+          <div class="flex justify-between gap-4 rounded-input bg-surface-muted px-4 py-3">
+            <dt class="text-slate-500">Callback health</dt>
+            <dd class="font-medium capitalize text-slate-800">{{ store.dashboard.health_status || "—" }}</dd>
           </div>
           <div class="flex justify-between gap-4 rounded-input bg-surface-muted px-4 py-3">
             <dt class="text-slate-500">Expired sessions</dt>

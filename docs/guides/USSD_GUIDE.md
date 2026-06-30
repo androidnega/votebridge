@@ -32,11 +32,14 @@ Sessions persist in `USSDSession` with a configurable timeout (default 5 minutes
 ## 3. Environment variables
 
 ```bash
+PUBLIC_BASE_URL=https://votebridge.example.edu
 ARKESEL_USSD_USER_ID=VOTEBRIDGE
 ARKESEL_USSD_CALLBACK_SECRET=<strong-random-secret>   # REQUIRED in production
 USSD_SESSION_TIMEOUT_MINUTES=5
 USSD_RATE_LIMIT_PER_MSISDN=30
 ```
+
+`PUBLIC_BASE_URL` is the externally reachable HTTPS origin used to generate callback URLs for Arkesel and the Voting Channels settings UI. Do not hardcode callback URLs in application code.
 
 Also configure SMS for confirmations:
 
@@ -52,20 +55,47 @@ ARKESEL_SMS_URL=https://sms.arkesel.com/api/v2/sms/send
 
 ### 4.1 Public HTTPS URL
 
-Arkesel must reach your callback over HTTPS:
+Arkesel must reach your callback over HTTPS. Set `PUBLIC_BASE_URL` and register:
 
 ```
-https://your-domain.com/api/v1/ussd/callback/
+{PUBLIC_BASE_URL}/api/v1/ussd/callback/
 ```
 
-### 4.2 Cloudflare
+Example production value:
+
+```
+PUBLIC_BASE_URL=https://votebridge.example.edu
+```
+
+### 4.2 Development with Cloudflare Tunnel
+
+1. Start VoteBridge locally (`uvicorn` on port 8000).
+2. Run Cloudflare Quick Tunnel:
+
+```bash
+cloudflared tunnel --url http://localhost:8000
+```
+
+3. Copy the printed `https://<subdomain>.trycloudflare.com` URL into `.env`:
+
+```bash
+PUBLIC_BASE_URL=https://<subdomain>.trycloudflare.com
+```
+
+4. Restart Django so settings reload.
+5. Open **Settings → Voting channels** and confirm the generated callback URL.
+6. Register that callback URL in the Arkesel USSD dashboard.
+
+Development settings automatically allow `.trycloudflare.com` hosts when using `config.settings.development`.
+
+### 4.3 Production DNS / TLS
 
 1. Point DNS to your origin or use Cloudflare Tunnel for staging.
 2. Ensure `DJANGO_ALLOWED_HOSTS` includes your domain.
 3. Set `SECURE_PROXY_SSL_HEADER` (configured in production settings).
 4. Whitelist Arkesel IPs if using firewall rules.
 
-### 4.3 Callback authentication
+### 4.4 Callback authentication
 
 When `ARKESEL_USSD_CALLBACK_SECRET` is set, requests must include header:
 
@@ -128,10 +158,22 @@ curl -X POST https://localhost:8000/api/v1/ussd/callback/ \
 
 WebSocket: `ws/realtime/ussd/`
 
+### 7.4 Callback verification
+
+1. Set `PUBLIC_BASE_URL` in `.env`.
+2. Open **Settings → Voting channels** (Super Admin).
+3. Confirm the **USSD callback configuration** card shows the full HTTPS callback URL.
+4. Review **USSD callback health** — reachability, last callback timestamp, HTTP status, and duration.
+5. Send a manual `curl` request (see §7.2) and confirm the health card updates.
+6. Verify Arkesel receives `application/json` with `sessionID`, `userID`, `msisdn`, `message`, and `continueSession`.
+
+Operational API: `GET /api/v1/ussd/integration/`
+
 ---
 
 ## 8. Production configuration checklist
 
+- [ ] `PUBLIC_BASE_URL` configured
 - [ ] HTTPS callback URL registered with Arkesel
 - [ ] `ARKESEL_USSD_CALLBACK_SECRET` set
 - [ ] Election has `allow_ussd_voting` enabled

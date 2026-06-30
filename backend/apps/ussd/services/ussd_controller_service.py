@@ -10,6 +10,8 @@ from core.exceptions import ValidationError
 
 logger = logging.getLogger("votebridge")
 
+ARKESSEL_RESPONSE_KEYS = ("sessionID", "userID", "msisdn", "message", "continueSession")
+
 
 class UssdControllerService:
     """Parses Arkesel USSD callbacks and returns provider-formatted responses."""
@@ -17,13 +19,14 @@ class UssdControllerService:
     def __init__(self, flow_service: UssdFlowService | None = None):
         self.flow_service = flow_service or ussd_flow_service
 
-    def handle_callback(self, request) -> tuple[str, str, dict]:
+    def handle_callback(self, request) -> tuple[str, str, dict, dict]:
         """
-        Returns (content_type, body, json_response).
+        Returns (content_type, body, json_response, audit_context).
         Arkesel gateway expects application/json with sessionID, userID, msisdn,
         message, and continueSession for every callback response.
         """
         payload = self._parse_request(request)
+        audit_context = self._build_audit_context(request, payload)
         inputs = self._parse_inputs(payload)
         is_new = payload.get("new_session", payload.get("type") == "initiation" or not inputs)
 
@@ -44,7 +47,40 @@ class UssdControllerService:
         self._broadcast_session_update(payload["session_id"], response)
 
         json_body = self._build_arkesel_response(payload, response)
-        return "application/json", json.dumps(json_body), json_body
+        if not self._validate_arkesel_response(json_body):
+            logger.error("USSD callback response failed validation: %s", json_body)
+            json_body = self._build_arkesel_response(
+                payload,
+                UssdResponse("END System error. Please try again later.", False),
+            )
+
+        return "application/json", json.dumps(json_body), json_body, audit_context
+
+    def build_failure_response(self, request) -> tuple[str, str, dict, dict]:
+        """Fallback Arkesel response when callback processing fails unexpectedly."""
+        try:
+            payload = self._parse_request(request)
+            audit_context = self._build_audit_context(request, payload)
+        except Exception:
+            payload = {
+                "session_id": str(uuid.uuid4()),
+                "msisdn": "",
+                "user_id": "",
+                "format": "unknown",
+            }
+            audit_context = {
+                "session_id": payload["session_id"],
+                "msisdn": "",
+                "provider_user_id": "",
+                "request_payload": {},
+                "ip_address": self._client_ip(request),
+            }
+
+        json_body = self._build_arkesel_response(
+            payload,
+            UssdResponse("END System error. Please try again later.", False),
+        )
+        return "application/json", json.dumps(json_body), json_body, audit_context
 
     def _build_arkesel_response(self, payload: dict, response: UssdResponse) -> dict:
         message = response.message
@@ -61,6 +97,43 @@ class UssdControllerService:
             "continueSession": response.continue_session,
         }
 
+    def _validate_arkesel_response(self, body: dict) -> bool:
+        if not isinstance(body, dict):
+            return False
+        for key in ARKESSEL_RESPONSE_KEYS:
+            if key not in body:
+                return False
+        if not isinstance(body["message"], str):
+            return False
+        if not isinstance(body["continueSession"], bool):
+            return False
+        return True
+
+    def _build_audit_context(self, request, payload: dict) -> dict:
+        return {
+            "session_id": payload.get("session_id", ""),
+            "msisdn": payload.get("msisdn", ""),
+            "provider_user_id": payload.get("user_id", ""),
+            "request_payload": self._capture_request_payload(request, payload),
+            "ip_address": self._client_ip(request),
+        }
+
+    def _capture_request_payload(self, request, payload: dict) -> dict:
+        raw: dict = {}
+        content_type = request.content_type or ""
+        if "application/json" in content_type:
+            try:
+                raw = json.loads(request.body.decode("utf-8") if request.body else "{}")
+            except json.JSONDecodeError:
+                raw = {}
+        else:
+            raw = dict(self._form_data(request))
+        return {
+            "parsed": payload,
+            "raw": raw,
+            "content_type": content_type,
+        }
+
     def _parse_request(self, request) -> dict:
         content_type = request.content_type or ""
         if "application/json" in content_type:
@@ -75,6 +148,7 @@ class UssdControllerService:
                 "format": "json",
                 "session_id": session_id,
                 "msisdn": msisdn,
+                "user_id": data.get("userID") or data.get("userId") or "",
                 "raw_text": user_data,
                 "service_code": data.get("userData", "") if data.get("newSession") else "",
                 "network": data.get("network", ""),
@@ -89,6 +163,7 @@ class UssdControllerService:
             "format": "form",
             "session_id": session_id,
             "msisdn": msisdn,
+            "user_id": data.get("userID") or data.get("userId") or "",
             "raw_text": text,
             "service_code": data.get("serviceCode", ""),
             "network": data.get("network", ""),

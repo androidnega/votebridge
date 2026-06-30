@@ -28,7 +28,7 @@ class UssdControllerTests(TestCase):
         self.controller.flow_service.handle_request.return_value = UssdResponse(
             "CON Welcome", True
         )
-        content_type, body, parsed = self.controller.handle_callback(request)
+        content_type, body, parsed, _audit = self.controller.handle_callback(request)
         self.assertEqual(content_type, "application/json")
         response = json.loads(body)
         self.assertEqual(response["sessionID"], "sess-123")
@@ -56,7 +56,7 @@ class UssdControllerTests(TestCase):
         self.controller.flow_service.handle_request.return_value = UssdResponse(
             "Welcome", True
         )
-        content_type, body, parsed = self.controller.handle_callback(request)
+        content_type, body, parsed, _audit = self.controller.handle_callback(request)
         self.assertEqual(content_type, "application/json")
         response = json.loads(body)
         self.assertEqual(response["sessionID"], "json-sess-1")
