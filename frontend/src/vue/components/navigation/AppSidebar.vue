@@ -73,7 +73,7 @@ async function handleLogout() {
 <template>
   <nav class="flex flex-1 flex-col">
     <ul role="list" class="flex flex-1 flex-col gap-y-1">
-      <li v-for="item in visibleItems" :key="item.name">
+      <li v-for="item in visibleItems" :key="item.name" :class="collapsed ? 'flex justify-center' : ''">
         <template v-if="item.children && !collapsed">
           <button
             type="button"
@@ -119,7 +119,8 @@ async function handleLogout() {
           <VTooltip v-if="collapsed" :label="item.name" position="right">
             <router-link
               :to="item.to"
-              class="group flex min-h-touch items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium transition duration-200"
+              :aria-label="item.name"
+              class="group flex h-11 w-11 items-center justify-center rounded-lg text-sm font-medium transition duration-200"
               :class="
                 groupIsActive(item)
                   ? 'bg-brand-600 text-white'
@@ -146,11 +147,12 @@ async function handleLogout() {
       </li>
     </ul>
 
-    <div class="mt-auto border-t border-navy-border pt-4">
+    <div class="mt-auto border-t border-navy-border pt-4" :class="collapsed ? 'flex justify-center' : ''">
       <VTooltip v-if="collapsed" label="Sign out" position="right">
         <button
           type="button"
-          class="mt-1 flex min-h-touch w-full items-center justify-center rounded-lg px-2 py-2.5 text-sm font-medium text-slate-400 transition duration-200 hover:bg-navy-700 hover:text-white"
+          class="flex h-11 w-11 items-center justify-center rounded-lg text-sm font-medium text-slate-400 transition duration-200 hover:bg-navy-700 hover:text-white"
+          aria-label="Sign out"
           @click="handleLogout"
         >
           <VIcon name="logout" class="h-5 w-5 shrink-0" />

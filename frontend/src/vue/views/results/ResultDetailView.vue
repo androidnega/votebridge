@@ -19,7 +19,6 @@ const authStore = useAuthStore();
 const resultsStore = useResultsStore();
 const toast = useToast();
 
-const certifyOpen = ref(false);
 const publishOpen = ref(false);
 const archiveOpen = ref(false);
 
@@ -28,9 +27,7 @@ const result = computed(() => resultsStore.currentResult);
 const positions = computed(() => result.value?.standings?.positions || []);
 const summary = computed(() => result.value?.standings?.summary || {});
 
-const certifyNotes = ref("");
 const acknowledgeFraud = ref(false);
-const fraudNotes = ref("");
 
 const isAutoProcessing = computed(
   () =>
@@ -39,8 +36,10 @@ const isAutoProcessing = computed(
     result.value?.election_status === "closed"
 );
 
-const canCertify = computed(
-  () => authStore.isSuperAdmin && result.value?.result_status === "pending_certification"
+const canReview = computed(
+  () =>
+    authStore.isSuperAdmin &&
+    ["pending_certification", "generated"].includes(result.value?.result_status)
 );
 
 const canPublish = computed(
@@ -51,23 +50,13 @@ const canArchive = computed(
   () => authStore.isSuperAdmin && result.value?.result_status === "published"
 );
 
-const canAccessVault = computed(
-  () =>
-    authStore.isSuperAdmin &&
-    ["closed", "archived"].includes(result.value?.election_status)
-);
-
-function openVaultAccess() {
-  router.push({
-    name: "election-vault-access",
-    params: { uuid: electionUuid.value },
-  });
-}
-
 const showStandings = computed(() => {
   if (authStore.isStudent) return result.value?.result_status === "published";
+  if (authStore.isSuperAdmin) return result.value?.result_status === "published";
   return Boolean(positions.value.length);
 });
+
+const showDetailedIntegrity = computed(() => authStore.isElectionOfficer);
 
 onMounted(() => {
   resultsStore.fetchResult(electionUuid.value).catch(() => {});
@@ -79,16 +68,6 @@ onUnmounted(() => {
 
 async function handleIntegrity() {
   await resultsStore.fetchIntegrity(electionUuid.value, acknowledgeFraud.value);
-}
-
-async function handleCertify() {
-  await resultsStore.certify(electionUuid.value, {
-    notes: certifyNotes.value,
-    acknowledge_fraud: acknowledgeFraud.value,
-    fraud_notes: fraudNotes.value,
-  });
-  certifyOpen.value = false;
-  toast.success(toastMessages.results.certified);
 }
 
 async function handlePublish() {
@@ -131,8 +110,11 @@ async function downloadReport(format) {
           <ResultStatusBadge :status="result.result_status" />
         </div>
       </div>
-      <VButton v-if="canAccessVault" variant="secondary" @click="openVaultAccess">
-        Open electoral vault
+      <VButton
+        v-if="canReview"
+        @click="router.push({ name: 'result-review', params: { electionUuid } })"
+      >
+        Open certification review
       </VButton>
     </div>
 
@@ -151,12 +133,15 @@ async function downloadReport(format) {
       </section>
 
       <VAlert v-if="isAutoProcessing" variant="info" title="Results processing">
-        Results are generated automatically when an election closes. Certification follows Strong Room review.
+        Results are generated automatically when an election closes.
       </VAlert>
 
-      <section v-if="authStore.isStaff" class="flex flex-wrap gap-2">
+      <VAlert v-if="authStore.isSuperAdmin" variant="info">
+        Detailed evidence, custody records, and cryptographic seals are only available through an approved Strong Room session.
+      </VAlert>
+
+      <section v-if="authStore.isElectionOfficer" class="flex flex-wrap gap-2">
         <VButton
-          v-if="authStore.isElectionOfficer"
           variant="secondary"
           :loading="resultsStore.actionLoading"
           @click="handleIntegrity"
@@ -164,15 +149,15 @@ async function downloadReport(format) {
           Run integrity check
         </VButton>
         <VButton
-          v-if="authStore.isElectionOfficer && showStandings"
+          v-if="showStandings"
           variant="secondary"
           @click="downloadReport('csv')"
         >
           Download CSV
         </VButton>
-        <VButton v-if="canCertify" :loading="resultsStore.actionLoading" @click="certifyOpen = true">
-          Certify results
-        </VButton>
+      </section>
+
+      <section v-if="authStore.isSuperAdmin && (canPublish || canArchive)" class="flex flex-wrap gap-2">
         <VButton v-if="canPublish" :loading="resultsStore.actionLoading" @click="publishOpen = true">
           Publish results
         </VButton>
@@ -182,39 +167,18 @@ async function downloadReport(format) {
           :loading="resultsStore.actionLoading"
           @click="archiveOpen = true"
         >
-          Archive
+          Archive election
         </VButton>
       </section>
 
       <IntegrityReportPanel
-        v-if="authStore.isStaff"
+        v-if="showDetailedIntegrity"
         :report="resultsStore.integrityReport || result.integrity_report"
         :loading="resultsStore.actionLoading"
       />
 
-      <section v-if="canCertify" class="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-900/5">
-        <h3 class="text-sm font-semibold text-slate-900">Certification notes</h3>
-        <textarea
-          v-model="certifyNotes"
-          class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-          rows="2"
-          placeholder="Optional certification notes"
-        />
-        <label class="mt-3 flex items-center gap-2 text-sm text-slate-700">
-          <input v-model="acknowledgeFraud" type="checkbox" class="rounded border-slate-300" />
-          Acknowledge open fraud cases
-        </label>
-        <textarea
-          v-if="acknowledgeFraud"
-          v-model="fraudNotes"
-          class="mt-2 w-full rounded-lg border border-slate-200 px-3 py-2 text-sm"
-          rows="2"
-          placeholder="Fraud acknowledgment notes"
-        />
-      </section>
-
       <section v-if="showStandings" class="space-y-6">
-        <h3 class="text-lg font-semibold text-slate-900">Results by position</h3>
+        <h3 class="text-lg font-semibold text-slate-900">Published results by position</h3>
         <PositionResultsCard
           v-for="position in positions"
           :key="position.position_uuid"
@@ -225,21 +189,16 @@ async function downloadReport(format) {
       <VAlert v-else-if="authStore.isStudent" variant="info">
         Results will appear here once they are officially published.
       </VAlert>
+
+      <VAlert v-else-if="authStore.isSuperAdmin" variant="info">
+        Official standings are shown after publication. Use certification review for governance summaries.
+      </VAlert>
     </template>
 
     <ConfirmDialog
-      v-model="certifyOpen"
-      title="Certify election results?"
-      description="Certification confirms the results are accurate and ready for publication. This action is recorded in the audit trail."
-      confirm-label="Certify results"
-      icon="results"
-      :loading="resultsStore.actionLoading"
-      @confirm="handleCertify"
-    />
-    <ConfirmDialog
       v-model="publishOpen"
       title="Publish results?"
-      description="Published results become visible to students and the public. Ensure certification is complete before publishing."
+      description="Published results become visible to students and the public."
       confirm-label="Publish results"
       icon="results"
       :loading="resultsStore.actionLoading"
@@ -248,7 +207,7 @@ async function downloadReport(format) {
     <ConfirmDialog
       v-model="archiveOpen"
       title="Archive results?"
-      description="Archived results remain available for audit but are removed from active publication queues."
+      description="Archived results remain available for audit but leave active publication queues."
       variant="danger"
       confirm-label="Archive results"
       icon="inbox"

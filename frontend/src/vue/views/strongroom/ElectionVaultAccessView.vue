@@ -10,7 +10,7 @@ const ACCESS_REASONS = [
   { value: "candidate_appeal", label: "Candidate Appeal" },
   { value: "electoral_commission_review", label: "Electoral Commission Review" },
   { value: "internal_audit", label: "Internal Audit" },
-  { value: "integrity_verification", label: "Integrity Verification" },
+  { value: "integrity_verification", label: "Serious Fraud Investigation" },
 ];
 
 const route = useRoute();
@@ -51,7 +51,7 @@ async function openTerminal(requestUuid) {
   <div class="vb-page">
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
 
-    <VCard title="Vault access request" subtitle="Strong room access requires an approved request and multi-custodian authentication.">
+    <VCard title="Request Strong Room access" subtitle="Exceptional access to the sealed election vault. Requires governance approval and committee authentication.">
       <div class="space-y-4">
         <div>
           <label class="vb-label" for="reason">Reason for access</label>
@@ -66,7 +66,7 @@ async function openTerminal(requestUuid) {
           <textarea id="justification" v-model="justification" rows="3" class="vb-input" placeholder="Document the lawful basis for vault access." />
         </div>
         <VButton v-if="authStore.isSuperAdmin" :loading="store.actionLoading" @click="requestAccess">
-          Submit access request
+          Request Strong Room access
         </VButton>
       </div>
     </VCard>

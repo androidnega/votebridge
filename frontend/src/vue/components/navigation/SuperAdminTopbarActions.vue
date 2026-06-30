@@ -5,8 +5,8 @@ import VIcon from "@/components/ui/VIcon.vue";
 const router = useRouter();
 
 const links = [
-  { label: "Certification", icon: "results", route: "/dashboard/results/certification" },
-  { label: "Publication", icon: "inbox", route: "/dashboard/results/publication" },
+  { label: "Results", icon: "results", route: "/dashboard/results" },
+  { label: "Strong Room", icon: "strongroom", route: "/dashboard/governance/strong-room-requests" },
   { label: "Operations", icon: "operations", route: "/dashboard/operations" },
   { label: "Reports", icon: "analytics", route: "/dashboard/reports" },
   { label: "Settings", icon: "settings", route: "/dashboard/settings" },

@@ -141,6 +141,12 @@ const router = createRouter({
           meta: { title: "Fraud Dashboard", roles: ["super_admin"] },
         },
         {
+          path: "governance/strong-room-requests",
+          name: "strong-room-requests",
+          component: () => import("@/views/governance/StrongRoomRequestsView.vue"),
+          meta: { title: "Strong Room Requests", roles: ["super_admin"] },
+        },
+        {
           path: "results",
           name: "results",
           component: () => import("@/views/results/ResultsHubView.vue"),
@@ -148,21 +154,21 @@ const router = createRouter({
         },
         {
           path: "results/certification",
-          name: "results-certification",
-          component: () => import("@/views/results/CertificationQueueView.vue"),
-          meta: { title: "Certification Queue", roles: ["super_admin"] },
+          redirect: (to) => ({ name: "results", query: { ...to.query, filter: "certification" } }),
         },
         {
           path: "results/publication",
-          name: "results-publication",
-          component: () => import("@/views/results/PublicationCenterView.vue"),
-          meta: { title: "Publication Center", roles: ["super_admin"] },
+          redirect: { name: "results", query: { filter: "published" } },
         },
         {
           path: "results/archive",
-          name: "results-archive",
-          component: () => import("@/views/results/ArchiveManagerView.vue"),
-          meta: { title: "Archive Manager", roles: ["super_admin"] },
+          redirect: { name: "results", query: { filter: "archived" } },
+        },
+        {
+          path: "results/:electionUuid/review",
+          name: "result-review",
+          component: () => import("@/views/results/ElectionReviewView.vue"),
+          meta: { title: "Certification Review", roles: ["super_admin"] },
         },
         {
           path: "results/:electionUuid",

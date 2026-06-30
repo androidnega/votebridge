@@ -55,19 +55,24 @@ const contentClass = {
     >
       <div
         class="flex h-topbar shrink-0 items-center border-b border-navy-border"
-        :class="collapsed ? 'justify-center px-3' : 'gap-3 px-5'"
+        :class="collapsed ? 'justify-center' : 'gap-3 px-5'"
       >
         <div
-          class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-brand-600 text-xs font-bold text-white"
+          class="flex shrink-0 items-center justify-center overflow-hidden"
+          :class="
+            collapsed
+              ? 'h-11 w-11'
+              : 'h-9 w-9 rounded-lg bg-brand-600 text-xs font-bold text-white'
+          "
           aria-hidden="true"
         >
           <img
-            v-if="branding.institutionLogoUrl && !collapsed"
+            v-if="branding.institutionLogoUrl"
             :src="branding.institutionLogoUrl"
             :alt="`${branding.institutionName} logo`"
-            class="h-full w-full object-contain p-1"
+            :class="collapsed ? 'h-9 w-9 object-contain' : 'h-full w-full object-contain p-1'"
           />
-          <span v-else>VB</span>
+          <span v-else :class="collapsed ? 'text-xs font-bold text-white' : ''">VB</span>
         </div>
         <div v-if="!collapsed" class="min-w-0">
           <p class="truncate text-sm font-semibold text-white">{{ branding.systemName }}</p>
@@ -75,7 +80,11 @@ const contentClass = {
         </div>
       </div>
 
-      <div class="flex flex-1 flex-col overflow-y-auto px-3 py-4" @click="closeMobileSidebar">
+      <div
+        class="flex flex-1 flex-col overflow-y-auto py-4"
+        :class="collapsed ? '' : 'px-3'"
+        @click="closeMobileSidebar"
+      >
         <AppSidebar :collapsed="collapsed" />
       </div>
     </aside>

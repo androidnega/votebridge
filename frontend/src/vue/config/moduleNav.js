@@ -1,10 +1,7 @@
 /** In-page module navigation — Phase 25 consolidated workspaces. */
 
 export const resultsNav = [
-  { label: "Overview", to: "/dashboard/results", exact: true },
-  { label: "Certification", to: "/dashboard/results/certification", roles: ["super_admin"] },
-  { label: "Publication", to: "/dashboard/results/publication", roles: ["super_admin"] },
-  { label: "Archive", to: "/dashboard/results/archive", roles: ["super_admin"] },
+  { label: "Command center", to: "/dashboard/results", exact: true },
 ];
 
 export const reportsNav = [

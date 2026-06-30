@@ -70,7 +70,7 @@
   }
 
   .vb-topbar {
-    @apply sticky top-0 z-40 flex h-14 shrink-0 items-center gap-3 border-b border-navy-border bg-navy px-4 text-white lg:px-6;
+    @apply sticky top-0 z-40 flex h-topbar shrink-0 items-center gap-3 border-b border-navy-border bg-navy px-4 text-white lg:px-6;
   }
 
   .vb-topbar-search {
