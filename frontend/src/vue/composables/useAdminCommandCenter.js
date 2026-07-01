@@ -41,6 +41,20 @@ function formatCountdown(election) {
   return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 }
 
+function buildPlaceholderHourlyBuckets(count = 12) {
+  const buckets = [];
+  const now = new Date();
+  for (let index = count - 1; index >= 0; index -= 1) {
+    const point = new Date(now);
+    point.setHours(point.getHours() - index, 0, 0, 0);
+    buckets.push({
+      label: `${String(point.getHours()).padStart(2, "0")}:00`,
+      value: 0,
+    });
+  }
+  return buckets;
+}
+
 export function useAdminCommandCenter() {
   const authStore = useAuthStore();
   const dashboardStore = useDashboardStore();
@@ -172,7 +186,8 @@ export function useAdminCommandCenter() {
       chartRange.value
     );
     const source = votes.length >= turnout.length ? votes : turnout;
-    return source.map((point) => point.label);
+    const buckets = source.length ? source : buildPlaceholderHourlyBuckets();
+    return buckets.map((point) => point.label);
   });
 
   const votingActivitySeries = computed(() => {
@@ -183,10 +198,12 @@ export function useAdminCommandCenter() {
         : adminTrends.value.turnoutHourly || [],
       chartRange.value
     );
+    const voteBuckets = votes.length ? votes : buildPlaceholderHourlyBuckets();
+    const turnoutBuckets = turnout.length ? turnout : buildPlaceholderHourlyBuckets();
     return [
       {
         name: "Votes Cast",
-        data: votes.map((point) => point.value),
+        data: voteBuckets.map((point) => point.value),
         area: true,
         smooth: true,
         itemStyle: { color: dashboardChartColors[0] },
@@ -194,7 +211,7 @@ export function useAdminCommandCenter() {
       },
       {
         name: "Turnout %",
-        data: turnout.map((point) => point.value),
+        data: turnoutBuckets.map((point) => point.value),
         area: true,
         smooth: true,
         itemStyle: { color: dashboardChartColors[1] },
@@ -203,16 +220,37 @@ export function useAdminCommandCenter() {
     ];
   });
 
+  const votingBarValues = computed(() => {
+    const votes = sliceTrendByRange(adminTrends.value.votesHourly || [], chartRange.value);
+    const buckets = votes.length ? votes : buildPlaceholderHourlyBuckets();
+    return buckets.map((point) => point.value);
+  });
+
+  const isWaitingForVotes = computed(() => {
+    const votes = adminTrends.value.votesHourly || [];
+    const hasVotes = votes.some((point) => point.value > 0);
+    const turnout = monitoring.value.turnout_percentage ?? dashboardStore.turnoutPercentage ?? 0;
+    return !hasVotes && Number(turnout) === 0;
+  });
+
   const electionStatusItems = computed(() => {
     const status = analyticsStore.overview?.election_status || {};
     const published = (resultsStore.results || []).filter((row) => row.result_status === "published").length;
-    return [
+    const items = [
       { name: "Draft", value: status.draft ?? 0 },
       { name: "Scheduled", value: status.scheduled ?? 0 },
       { name: "Open", value: (status.open ?? 0) + (status.paused ?? 0) },
       { name: "Closed", value: status.closed ?? 0 },
       { name: "Published", value: published },
-    ].filter((item) => item.value > 0);
+    ];
+    if (items.every((item) => item.value === 0)) {
+      return [
+        { name: "Open", value: 0 },
+        { name: "Scheduled", value: 0 },
+        { name: "Closed", value: 0 },
+      ];
+    }
+    return items.filter((item) => item.value > 0);
   });
 
   const electionActivity = computed(() =>
@@ -270,6 +308,8 @@ export function useAdminCommandCenter() {
     kpiCards,
     votingActivityLabels,
     votingActivitySeries,
+    votingBarValues,
+    isWaitingForVotes,
     hasVotingActivity: computed(() => votingActivityLabels.value.length > 0),
     electionStatusItems,
     electionActivity,

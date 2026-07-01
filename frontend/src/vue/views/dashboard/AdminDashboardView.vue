@@ -2,6 +2,7 @@
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 import LineChart from "@/components/charts/LineChart.vue";
+import BarChart from "@/components/charts/BarChart.vue";
 import DonutChart from "@/components/charts/DonutChart.vue";
 import {
   DashboardActivityTimeline,
@@ -28,6 +29,8 @@ const {
   kpiCards,
   votingActivityLabels,
   votingActivitySeries,
+  votingBarValues,
+  isWaitingForVotes,
   hasVotingActivity,
   electionStatusItems,
   electionActivity,
@@ -93,18 +96,27 @@ function navigate(route) {
             <template #actions>
               <DashboardChartToolbar v-model="chartRange" :ranges="chartTimeRanges" />
             </template>
+            <p
+              v-if="isWaitingForVotes"
+              class="mb-4 rounded-input border border-border bg-surface-muted px-4 py-3 text-sm text-slate-700"
+            >
+              <span class="font-semibold text-brand-700">0%</span>
+              — Waiting for voting to begin.
+            </p>
             <LineChart
               v-if="hasVotingActivity"
               :labels="votingActivityLabels"
               :series="votingActivitySeries"
               :animated="isLive"
-              height="320px"
+              height="280px"
             />
-            <EmptyState
-              v-else
-              icon="analytics"
-              title="No voting activity yet"
-              description="Turnout and vote trends appear once voters begin casting ballots."
+            <BarChart
+              v-if="hasVotingActivity"
+              class="mt-6"
+              title="Votes by hour"
+              :labels="votingActivityLabels"
+              :values="votingBarValues"
+              height="220px"
             />
           </DashboardSectionCard>
 
@@ -121,16 +133,6 @@ function navigate(route) {
               :animated="isLive"
               height="320px"
             />
-            <EmptyState
-              v-else
-              icon="elections"
-              title="No elections configured"
-              description="Create an election to see lifecycle distribution."
-            >
-              <template #action>
-                <VButton size="sm" @click="navigate('/dashboard/elections/create')">Create Election</VButton>
-              </template>
-            </EmptyState>
           </DashboardSectionCard>
         </section>
 

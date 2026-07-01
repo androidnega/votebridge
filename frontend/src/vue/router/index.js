@@ -104,6 +104,12 @@ const router = createRouter({
           meta: { title: "Profile" },
         },
         {
+          path: "profile/verify-ballot",
+          name: "profile-verify-ballot",
+          component: () => import("@/views/auth/VerifyBallotView.vue"),
+          meta: { title: "Verify Ballot" },
+        },
+        {
           path: "forbidden",
           name: "forbidden",
           component: () => import("@/views/errors/ForbiddenView.vue"),
@@ -562,8 +568,7 @@ const router = createRouter({
         {
           path: "settings/integrations/sms",
           name: "settings-sms",
-          component: () => import("@/views/system-control/SystemProvidersView.vue"),
-          props: { providerType: "arkesel_sms", title: "SMS Providers" },
+          component: () => import("@/views/system-control/SystemSmsProvidersView.vue"),
           meta: { title: "SMS Providers", roles: ["super_admin"] },
         },
         {

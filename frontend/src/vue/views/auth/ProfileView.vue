@@ -137,6 +137,17 @@ function formatDate(value) {
       </form>
     </VCard>
 
+    <VCard title="Ballot verification" subtitle="Confirm your vote was recorded without revealing your choices">
+      <p class="text-sm text-slate-600">
+        Use your Secure Voting Token after voting to verify that your ballot was sealed correctly.
+      </p>
+      <div class="mt-4">
+        <VButton variant="secondary" @click="router.push({ name: 'profile-verify-ballot' })">
+          Verify ballot
+        </VButton>
+      </div>
+    </VCard>
+
     <VCard title="Active sessions" subtitle="Devices currently signed in to your account">
       <VTable
         :columns="sessionColumns"
