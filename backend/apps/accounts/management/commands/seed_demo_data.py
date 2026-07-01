@@ -590,9 +590,9 @@ class Command(BaseCommand):
 
         flag, _ = FeatureFlag.objects.get_or_create(
             key="future_biometrics",
-            defaults={"label": "Biometrics", "description": "Biometrics", "enabled": True},
+            defaults={"label": "Biometrics", "description": "Biometrics", "enabled": False},
         )
-        flag.enabled = True
+        flag.enabled = getattr(settings, "BIOMETRIC_AUTH_ENABLED", False)
         flag.save(update_fields=["enabled"])
 
         super_admin = User.objects.filter(role__name=Role.Name.SUPER_ADMIN).first()

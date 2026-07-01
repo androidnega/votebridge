@@ -62,20 +62,36 @@ Content-Type: application/json
 }
 ```
 
-**Response:**
+**Response (success — v1.0 default, biometrics disabled):**
 
 ```json
 {
   "success": true,
   "data": {
-    "tokens": {
-      "access": "<jwt-access>",
-      "refresh": "<jwt-refresh>"
-    },
-    "user": { "uuid": "...", "role": "student" }
+    "tokens": { "access": "<jwt>", "refresh": "<jwt>" },
+    "user_uuid": "...",
+    "session_uuid": "...",
+    "redirect_path": "/dashboard/student"
   }
 }
 ```
+
+**Response (when `BIOMETRIC_AUTH_ENABLED=True` and privileged user requires verification):**
+
+```json
+{
+  "success": true,
+  "data": {
+    "requires_biometric": true,
+    "pending_auth_token": "...",
+    "challenge": { "challenge_id": "...", "challenge_type": "blink_twice" }
+  }
+}
+```
+
+> Biometric authentication has been deferred for VoteBridge v1.0 (`BIOMETRIC_AUTH_ENABLED=False`) and remains available for future activation via environment variable plus the `future_biometrics` feature flag.
+
+**Response (legacy success shape):**
 
 ### 3. Authenticated requests
 

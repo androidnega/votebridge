@@ -19,7 +19,7 @@ def _mock_image(seed: str) -> str:
     return base64.b64encode(raw).decode()
 
 
-@override_settings(BIOMETRICS_INFERENCE_MODE="mock")
+@override_settings(BIOMETRIC_AUTH_ENABLED=True, BIOMETRICS_INFERENCE_MODE="mock")
 class BiometricPolicyTests(TestCase):
     def setUp(self):
         self.super_role, _ = Role.objects.get_or_create(name=Role.Name.SUPER_ADMIN, defaults={"description": "SA"})
@@ -63,7 +63,7 @@ class BiometricPolicyTests(TestCase):
         self.assertTrue(biometric_policy_service.requires_verification_at_login(self.admin))
 
 
-@override_settings(BIOMETRICS_INFERENCE_MODE="mock")
+@override_settings(BIOMETRIC_AUTH_ENABLED=True, BIOMETRICS_INFERENCE_MODE="mock")
 class BiometricEnrollmentTests(TestCase):
     def setUp(self):
         self.super_role, _ = Role.objects.get_or_create(name=Role.Name.SUPER_ADMIN, defaults={"description": "SA"})
@@ -105,7 +105,7 @@ class BiometricEnrollmentTests(TestCase):
             )
 
 
-@override_settings(BIOMETRICS_INFERENCE_MODE="mock")
+@override_settings(BIOMETRIC_AUTH_ENABLED=True, BIOMETRICS_INFERENCE_MODE="mock")
 class BiometricVerificationTests(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -184,7 +184,7 @@ class BiometricVerificationTests(TestCase):
         )
 
 
-@override_settings(BIOMETRICS_INFERENCE_MODE="mock")
+@override_settings(BIOMETRIC_AUTH_ENABLED=True, BIOMETRICS_INFERENCE_MODE="mock")
 class BiometricEnrollmentFlowTests(TestCase):
     def setUp(self):
         self.super_role, _ = Role.objects.get_or_create(name=Role.Name.SUPER_ADMIN, defaults={"description": "SA"})

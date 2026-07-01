@@ -1,3 +1,5 @@
+from django.conf import settings
+
 from apps.accounts.models import Role, User
 from apps.biometrics.constants import (
     DEFAULT_LIVENESS_THRESHOLD,
@@ -7,6 +9,11 @@ from apps.biometrics.constants import (
     DEFAULT_SESSION_TIMEOUT_MINUTES,
 )
 from apps.system.repositories.system_repository import FeatureFlagRepository, SystemSettingRepository
+
+BIOMETRIC_AUTH_DISABLED_MESSAGE = (
+    "Biometric authentication is currently disabled for this deployment "
+    "and can be enabled in a future release."
+)
 
 
 class BiometricPolicyService:
@@ -28,13 +35,24 @@ class BiometricPolicyService:
             return default
         return setting.value.get("value", default)
 
+    def is_auth_enabled(self) -> bool:
+        """Deployment gate — when False, login never requires biometrics (v1.0 default)."""
+        return bool(getattr(settings, "BIOMETRIC_AUTH_ENABLED", False))
+
     def is_module_enabled(self) -> bool:
+        if not self.is_auth_enabled():
+            return False
         flag = self.feature_flags.get_by_key("future_biometrics")
         return bool(flag.enabled) if flag else False
 
     def get_policy(self) -> dict:
+        auth_enabled = self.is_auth_enabled()
+        module_enabled = self.is_module_enabled()
         return {
-            "enabled": self.is_module_enabled(),
+            "auth_enabled": auth_enabled,
+            "enabled": module_enabled,
+            "deployment_status": "disabled" if not auth_enabled else ("active" if module_enabled else "configured_off"),
+            "deployment_message": BIOMETRIC_AUTH_DISABLED_MESSAGE if not auth_enabled else "",
             "enable_face_verification": self._get_value("enable_face_verification", True),
             "enable_passive_liveness": self._get_value("enable_passive_liveness", True),
             "enable_active_liveness": self._get_value("enable_active_liveness", True),

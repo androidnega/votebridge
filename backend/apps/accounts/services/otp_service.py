@@ -97,6 +97,9 @@ class OTPService:
             OTP_AUTH_RESULT_TTL_SECONDS,
         )
 
+    def clear_auth_result(self, otp_request_uuid) -> None:
+        cache.delete(f"{OTP_AUTH_RESULT_CACHE_PREFIX}{otp_request_uuid}")
+
     def _get_for_update(self, otp_request_uuid) -> OTPRequest:
         try:
             return (

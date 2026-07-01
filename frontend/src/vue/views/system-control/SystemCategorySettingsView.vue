@@ -4,6 +4,7 @@ import { useRoute } from "vue-router";
 import SettingsForm from "@/components/system-control/SettingsForm.vue";
 import StepUpModal from "@/components/system-control/StepUpModal.vue";
 import BiometricResetPanel from "@/components/biometrics/BiometricResetPanel.vue";
+import BiometricAuthStatusCard from "@/components/biometrics/BiometricAuthStatusCard.vue";
 import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { systemControlNav } from "@/config/moduleNav";
 import { useStepUp } from "@/composables/useStepUp";
@@ -78,6 +79,7 @@ function save(updates) {
       <SettingsForm :items="items" :loading="store.actionLoading" :sensitive="sensitive" @save="save" />
     </VCard>
 
+    <BiometricAuthStatusCard v-if="category === 'identity_assurance'" />
     <BiometricResetPanel v-if="category === 'identity_assurance'" />
 
     <StepUpModal

@@ -20,6 +20,8 @@ export const useBiometricsStore = defineStore("biometrics", {
   getters: {
     isEnrolled: (state) => Boolean(state.status?.enrolled),
     requiresVerification: (state) => Boolean(state.status?.required_for_user),
+    moduleEnabled: (state) => Boolean(state.status?.module_enabled),
+    authEnabled: (state) => Boolean(state.status?.auth_enabled),
     hasHighAssurance: (state) => Boolean(state.highAssuranceToken),
   },
 

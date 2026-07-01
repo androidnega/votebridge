@@ -126,6 +126,22 @@ class AuthService:
     def dashboard_path_for_role(self, role_name: str) -> str:
         return DASHBOARD_ROUTES.get(role_name, "/")
 
+    def _sanitize_cached_auth_result(self, otp_request_uuid, cached: dict | None) -> dict | None:
+        """Drop stale biometric pending-auth cache when deployment policy disables biometrics."""
+        if not cached:
+            return None
+        if not (cached.get("requires_biometric") or cached.get("requires_enrollment")):
+            return cached
+
+        from apps.accounts.repositories.auth_repository import OTPRequestRepository
+        from apps.biometrics.services.policy_service import biometric_policy_service
+
+        otp_req = OTPRequestRepository().get_by_uuid(otp_request_uuid)
+        if otp_req and not biometric_policy_service.requires_verification_at_login(otp_req.user):
+            self.otp_service.clear_auth_result(otp_request_uuid)
+            return None
+        return cached
+
     def student_login(
         self,
         index_number: str,
@@ -272,6 +288,7 @@ class AuthService:
         browser_fingerprint: str | None = None,
     ) -> dict:
         cached = self.otp_service.get_cached_auth_result(otp_request_uuid)
+        cached = self._sanitize_cached_auth_result(otp_request_uuid, cached)
         if cached:
             return cached
 
@@ -285,6 +302,7 @@ class AuthService:
         except ValidationError as exc:
             if exc.code == "otp_already_used":
                 cached = self.otp_service.get_cached_auth_result(otp_request_uuid)
+                cached = self._sanitize_cached_auth_result(otp_request_uuid, cached)
                 if cached:
                     return cached
             raise

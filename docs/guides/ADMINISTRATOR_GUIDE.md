@@ -12,7 +12,7 @@ This guide covers platform oversight: users, settings, reports, and election sup
 1. Open the VoteBridge URL provided by your IT team.
 2. Enter your **email** or **index number** in the single login field (no role selector).
 3. Complete **OTP** verification sent to your registered contact.
-4. If prompted, complete **trusted device** registration and **biometric verification** (super admin policy).
+4. After OTP, you are taken directly to the dashboard. **Biometric verification is deferred for v1.0** (`BIOMETRIC_AUTH_ENABLED=False`) and can be enabled in a future release.
 
 After login you land on the **Election command center** dashboard.
 

@@ -24,6 +24,7 @@ env = environ.Env(
     LOG_LEVEL=(str, "INFO"),
     BIOMETRICS_INFERENCE_MODE=(str, "auto"),
     BIOMETRICS_MODEL_DIR=(str, ""),
+    BIOMETRIC_AUTH_ENABLED=(bool, False),
 )
 
 environ.Env.read_env(PROJECT_ROOT / ".env")
@@ -361,6 +362,7 @@ LOGGING = {
 }
 
 # Biometric identity assurance
+BIOMETRIC_AUTH_ENABLED = env("BIOMETRIC_AUTH_ENABLED")
 BIOMETRICS_INFERENCE_MODE = env("BIOMETRICS_INFERENCE_MODE")
 _biometrics_model_dir = env("BIOMETRICS_MODEL_DIR")
 BIOMETRICS_MODEL_DIR = Path(_biometrics_model_dir) if _biometrics_model_dir else BASE_DIR / "models" / "biometrics"

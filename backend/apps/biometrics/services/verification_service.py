@@ -434,7 +434,10 @@ class BiometricVerificationService:
         policy = biometric_policy_service.get_policy()
         privileged = biometric_audit_service.is_privileged_user(user)
         return {
-            "module_enabled": policy.get("enabled", False),
+            "module_enabled": biometric_policy_service.is_module_enabled(),
+            "auth_enabled": biometric_policy_service.is_auth_enabled(),
+            "deployment_status": biometric_policy_service.get_policy().get("deployment_status"),
+            "deployment_message": biometric_policy_service.get_policy().get("deployment_message", ""),
             "required_for_user": privileged and policy.get("enable_face_verification", False),
             "enrolled": bool(profile and profile.is_active),
             "has_active_biometric_profile": bool(profile and profile.is_active),

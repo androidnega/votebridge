@@ -140,6 +140,22 @@ export const useAuthStore = defineStore("auth", {
           const { clearTokens } = await import("@/api/helpers");
           const biometricsStore = useBiometricsStore();
           const trustedStore = useTrustedDevicesStore();
+
+          if (result.module_enabled === false || result.auth_enabled === false) {
+            if (result.tokens?.access) {
+              setTokens(result.tokens.access, result.tokens.refresh);
+              setSessionMeta({
+                userUuid: result.user_uuid,
+                sessionUuid: result.session_uuid,
+              });
+              clearOtpChallenge();
+              this.otpChallenge = null;
+              this.postLoginRedirect = normalizeAuthRedirect(result.redirect_path);
+              await this.fetchProfile();
+              return { user: this.user, redirectPath: this.postLoginRedirect };
+            }
+          }
+
           clearTokens();
           biometricsStore.setPendingAuth(result);
           trustedStore.setRiskReasons(result.risk_reasons || []);
@@ -152,6 +168,22 @@ export const useAuthStore = defineStore("auth", {
           const { useBiometricsStore } = await import("@/stores/biometrics");
           const { clearTokens } = await import("@/api/helpers");
           const biometricsStore = useBiometricsStore();
+
+          if (result.module_enabled === false || result.auth_enabled === false) {
+            if (result.tokens?.access) {
+              setTokens(result.tokens.access, result.tokens.refresh);
+              setSessionMeta({
+                userUuid: result.user_uuid,
+                sessionUuid: result.session_uuid,
+              });
+              clearOtpChallenge();
+              this.otpChallenge = null;
+              this.postLoginRedirect = normalizeAuthRedirect(result.redirect_path);
+              await this.fetchProfile();
+              return { user: this.user, redirectPath: this.postLoginRedirect };
+            }
+          }
+
           clearTokens();
           biometricsStore.setPendingAuth(result);
           clearOtpChallenge();

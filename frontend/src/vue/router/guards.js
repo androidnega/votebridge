@@ -26,6 +26,18 @@ export function setupRouterGuards(router) {
       const { useBiometricsStore } = await import("@/stores/biometrics");
       const biometricsStore = useBiometricsStore();
       biometricsStore.loadPendingAuth();
+
+      try {
+        await biometricsStore.fetchStatus();
+      } catch {
+        /* status optional for guard */
+      }
+
+      if (biometricsStore.status && !biometricsStore.status.module_enabled) {
+        biometricsStore.clearPendingAuth();
+        return { name: "auth-login", query: { redirect: to.query.redirect } };
+      }
+
       if (!biometricsStore.pendingAuth?.pending_auth_token) {
         return { name: "auth-login", query: { redirect: to.query.redirect } };
       }
