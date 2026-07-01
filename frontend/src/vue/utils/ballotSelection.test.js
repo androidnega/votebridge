@@ -19,6 +19,6 @@ describe("applyMultiSelection", () => {
   it("adds up to max votes", () => {
     expect(applyMultiSelection([], "a", 2)).toEqual(["a"]);
     expect(applyMultiSelection(["a"], "b", 2)).toEqual(["a", "b"]);
-    expect(applyMultiSelection(["a"], "c", 2)).toEqual(["a"]);
+    expect(applyMultiSelection(["a", "b"], "c", 2)).toEqual(["a", "b"]);
   });
 });
