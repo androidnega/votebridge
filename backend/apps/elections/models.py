@@ -49,6 +49,16 @@ class Election(models.Model):
     allow_web_voting = models.BooleanField(default=True)
     allow_ussd_voting = models.BooleanField(default=False)
     allow_sms_notifications = models.BooleanField(default=False)
+    demo_seed = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="True for elections created by demo seed commands only.",
+    )
+    created_by_system = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="True when created by automated system seeders.",
+    )
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.PROTECT,
