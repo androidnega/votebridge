@@ -18,7 +18,7 @@ const isBiometricPage = computed(() => Boolean(route.meta.authBiometric));
           isInfoPage
             ? 'vb-auth-info-card max-w-lg'
             : isBiometricPage
-              ? 'vb-auth-biometric-card max-w-sm'
+              ? 'vb-auth-biometric-card max-w-2xl'
               : 'max-w-md'
         "
       >

@@ -1,12 +1,11 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useCamera } from "@/composables/useCamera";
-import { useFaceMesh } from "@/composables/useFaceMesh";
+import { useBiometricLiveness } from "@/composables/useFaceMesh";
 import { buildProgressSteps } from "@/config/biometricProgressDisplay";
-import { faceBoundingBox, MESH_CONNECTIONS } from "@/utils/faceDetectionUtils";
+import { drawScannerOverlay, faceStatusLabel } from "@/utils/biometricScannerOverlay";
 import { bioDebug } from "@/utils/biometricDebug";
 import { VButton } from "@/components/ui";
-import BiometricDevOverlay from "@/components/biometrics/BiometricDevOverlay.vue";
 
 const props = defineProps({
   challenge: { type: Object, default: null },
@@ -17,16 +16,17 @@ const props = defineProps({
     default: "verify",
     validator: (v) => ["verify", "enrollment"].includes(v),
   },
+  autoCapture: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(["frame", "error"]);
+const emit = defineEmits(["frame", "error", "challenge-complete"]);
 
 const canvasRef = ref(null);
 const initError = ref("");
-const showDevOverlay = import.meta.env.DEV;
 
 const { videoRef, error: cameraError, isActive, start, stop, captureFrame } = useCamera({
   autoStart: false,
+  highQuality: true,
 });
 
 const {
@@ -34,19 +34,19 @@ const {
   engineReady,
   cameraReady,
   landmarks,
+  faceDetected,
   liveHint,
   warning,
   completedSteps,
-  blinkHighlight,
-  faceAligned: meshFaceAligned,
-  blinkMetrics,
+  faceAligned,
+  challengeComplete,
   initEngine,
   startLoop,
   stopLoop,
   pauseLoop,
   resumeLoop,
   resetChallengeTracking,
-} = useFaceMesh();
+} = useBiometricLiveness();
 
 const challengeType = computed(() => {
   if (props.mode === "enrollment") return "enrollment_sequence";
@@ -63,23 +63,43 @@ const progress = computed(() =>
   })
 );
 
+const faceStatus = computed(() =>
+  faceStatusLabel({
+    hasFace: faceDetected.value,
+    faceAligned: faceAligned.value,
+    warning: warning.value,
+  })
+);
+
 const loadingMessage = computed(() => {
   if (cameraError.value) return "";
   if (!isActive.value && loadingPhase.value === "idle") return "Starting camera…";
-  if (loadingPhase.value === "engine") return "Loading scanner…";
-  if (loadingPhase.value === "detection") return "Preparing detection…";
-  if (!engineReady.value) return "Initializing…";
+  if (!engineReady.value) return "Preparing secure scanner…";
   return "";
 });
 
-const faceAligned = computed(() => meshFaceAligned.value);
+const friendlyCameraError = computed(() => {
+  const msg = cameraError.value || initError.value;
+  if (!msg) return "";
+  if (/denied|permission/i.test(msg)) {
+    return "Camera blocked — allow permission and retry.";
+  }
+  if (/not found|devices/i.test(msg)) {
+    return "No camera found on this device.";
+  }
+  return "Unable to access camera.";
+});
 
 const statusLine = computed(() => {
   if (cameraError.value || initError.value) return "";
-  if (loadingMessage.value && !engineReady.value) return loadingMessage.value;
+  if (loadingMessage.value) return loadingMessage.value;
+  if (props.mode === "verify" && challengeComplete.value) {
+    return props.framesCaptured >= props.framesRequired
+      ? "Verification frames captured"
+      : "Capturing verification frames…";
+  }
   if (warning.value) return warning.value;
-  if (engineReady.value && liveHint.value) return liveHint.value;
-  return "";
+  return liveHint.value || "";
 });
 
 const captureLabel = computed(() => {
@@ -90,6 +110,7 @@ const captureLabel = computed(() => {
 });
 
 const canCapture = computed(() => {
+  if (!challengeComplete.value || !faceAligned.value) return false;
   if (props.mode === "enrollment") {
     return (
       completedSteps.value.has("blink") &&
@@ -100,17 +121,7 @@ const canCapture = computed(() => {
   return completedSteps.value.has("ready");
 });
 
-const friendlyCameraError = computed(() => {
-  const msg = cameraError.value || initError.value;
-  if (!msg) return "";
-  if (/denied|permission/i.test(msg)) {
-    return "Camera blocked — allow permission and tap Retry.";
-  }
-  if (/not found|devices/i.test(msg)) {
-    return "No camera found on this device.";
-  }
-  return "Unable to access camera.";
-});
+const showManualCapture = computed(() => props.mode === "enrollment" || !props.autoCapture);
 
 watch(cameraError, (val) => {
   if (val) {
@@ -123,42 +134,6 @@ watch(
   () => props.challenge?.challenge_id,
   () => resetChallengeTracking()
 );
-
-function drawMesh(ctx, pts, width, height, aligned) {
-  const color = aligned ? "rgba(46, 125, 50, 0.35)" : "rgba(255, 255, 255, 0.18)";
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1;
-
-  const drawPaths = (paths) => {
-    for (const [a, b] of paths) {
-      const p1 = pts[a];
-      const p2 = pts[b];
-      if (!p1 || !p2) continue;
-      ctx.beginPath();
-      ctx.moveTo(p1.x * width, p1.y * height);
-      ctx.lineTo(p2.x * width, p2.y * height);
-      ctx.stroke();
-    }
-  };
-
-  drawPaths(MESH_CONNECTIONS.faceOval);
-  drawPaths(MESH_CONNECTIONS.leftEye);
-  drawPaths(MESH_CONNECTIONS.rightEye);
-}
-
-function drawGuideOverlays(ctx, width, height, aligned) {
-  const cx = width / 2;
-  const cy = height * 0.46;
-  ctx.save();
-  ctx.strokeStyle = aligned ? "rgba(46, 125, 50, 0.45)" : "rgba(255,255,255,0.25)";
-  ctx.lineWidth = 1;
-  ctx.setLineDash(aligned ? [] : [5, 4]);
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, width * 0.28, height * 0.36, 0, 0, Math.PI * 2);
-  ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.restore();
-}
 
 function drawOverlay() {
   const canvas = canvasRef.value;
@@ -175,20 +150,12 @@ function drawOverlay() {
   }
 
   const ctx = canvas.getContext("2d");
-  ctx.clearRect(0, 0, width, height);
-
-  const aligned = faceAligned.value;
-  drawGuideOverlays(ctx, width, height, aligned);
-
-  const pts = landmarks.value;
-  if (!pts) return;
-
-  drawMesh(ctx, pts, width, height, aligned);
-
-  const box = faceBoundingBox(pts);
-  ctx.strokeStyle = aligned ? "rgba(22, 163, 74, 0.85)" : "rgba(217, 119, 6, 0.75)";
-  ctx.lineWidth = 1;
-  ctx.strokeRect(box.minX * width, box.minY * height, box.width * width, box.height * height);
+  drawScannerOverlay(ctx, {
+    width,
+    height,
+    landmarks: landmarks.value,
+    faceAligned: faceAligned.value,
+  });
 }
 
 function handleVisibilityChange() {
@@ -198,6 +165,10 @@ function handleVisibilityChange() {
     resumeLoop();
     drawOverlay();
   }
+}
+
+function onLivenessComplete() {
+  emit("challenge-complete");
 }
 
 async function bootstrap() {
@@ -210,7 +181,11 @@ async function bootstrap() {
       bioDebug.log("camera_started");
     }
     if (!engineReady.value) await initEngine();
-    startLoop(videoRef, () => challengeType.value, { onFrame: drawOverlay });
+    startLoop(videoRef, () => challengeType.value, {
+      mode: () => props.mode,
+      onFrame: drawOverlay,
+      onChallengeComplete: onLivenessComplete,
+    });
     drawOverlay();
   } catch (err) {
     initError.value = err?.message || "Scanner failed to start.";
@@ -235,7 +210,7 @@ onUnmounted(() => {
   stop();
 });
 
-defineExpose({ captureFrame, start, stop });
+defineExpose({ captureFrame, start, stop, canCapture, challengeComplete });
 </script>
 
 <template>
@@ -251,10 +226,17 @@ defineExpose({ captureFrame, start, stop });
         />
         <canvas ref="canvasRef" class="vb-bio-scanner__canvas mirror" aria-hidden="true" />
 
-        <BiometricDevOverlay v-if="showDevOverlay" :metrics="blinkMetrics" />
+        <div
+          class="vb-bio-scanner__status-badge"
+          :class="`vb-bio-scanner__status-badge--${faceStatus.tone}`"
+          role="status"
+          aria-live="polite"
+        >
+          {{ faceStatus.text }}
+        </div>
 
         <div
-          v-if="friendlyCameraError || (loadingMessage && !engineReady)"
+          v-if="friendlyCameraError || loadingMessage"
           class="vb-bio-scanner__loading"
         >
           <p v-if="friendlyCameraError" class="vb-bio-scanner__loading-error">{{ friendlyCameraError }}</p>
@@ -293,7 +275,7 @@ defineExpose({ captureFrame, start, stop });
       </ul>
     </div>
 
-    <div class="vb-bio-scanner__actions">
+    <div v-if="showManualCapture" class="vb-bio-scanner__actions">
       <VButton
         type="button"
         variant="secondary"
@@ -305,7 +287,7 @@ defineExpose({ captureFrame, start, stop });
         {{ captureLabel }}
       </VButton>
       <VButton v-if="!isActive || cameraError" type="button" variant="ghost" size="sm" @click="bootstrap">
-        Retry
+        Retry camera
       </VButton>
     </div>
   </div>
@@ -317,15 +299,15 @@ defineExpose({ captureFrame, start, stop });
 }
 
 .vb-bio-scanner {
-  @apply flex w-full flex-col items-center gap-2;
+  @apply flex w-full flex-col items-center gap-3;
 }
 
 .vb-bio-scanner__frame {
-  @apply relative w-full max-w-[12rem] rounded-card border border-border bg-slate-900 shadow-card;
+  @apply relative w-full max-w-[36rem] rounded-card border border-border bg-slate-900 shadow-card;
 }
 
 .vb-bio-scanner__viewport {
-  @apply relative aspect-square overflow-hidden rounded-card bg-slate-950;
+  @apply relative aspect-[4/3] overflow-hidden rounded-card bg-slate-950;
 }
 
 .vb-bio-scanner__video,
@@ -333,8 +315,24 @@ defineExpose({ captureFrame, start, stop });
   @apply absolute inset-0 h-full w-full object-cover;
 }
 
+.vb-bio-scanner__status-badge {
+  @apply absolute left-3 top-3 z-10 rounded-md px-2.5 py-1 text-xs font-medium;
+}
+
+.vb-bio-scanner__status-badge--ok {
+  @apply bg-success-700/90 text-white;
+}
+
+.vb-bio-scanner__status-badge--warning {
+  @apply bg-warning-600/90 text-white;
+}
+
+.vb-bio-scanner__status-badge--lost {
+  @apply bg-slate-700/90 text-slate-100;
+}
+
 .vb-bio-scanner__loading {
-  @apply absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-slate-900/90 px-3 text-center text-[11px] text-slate-200;
+  @apply absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-slate-900/90 px-6 text-center text-sm text-slate-200;
 }
 
 .vb-bio-scanner__loading-error {
@@ -342,28 +340,28 @@ defineExpose({ captureFrame, start, stop });
 }
 
 .vb-bio-scanner__spinner {
-  @apply h-4 w-4 rounded-full border-2 border-slate-500 border-t-white;
+  @apply h-6 w-6 rounded-full border-2 border-slate-500 border-t-white;
   animation: vb-spin 0.8s linear infinite;
 }
 
 .vb-bio-scanner__status-line {
-  @apply w-full max-w-[12rem] truncate text-center text-[11px] font-medium text-slate-600;
+  @apply w-full max-w-[36rem] text-center text-sm font-medium text-slate-600;
 }
 
 .vb-bio-scanner__progress {
-  @apply w-full max-w-[12rem] space-y-1;
+  @apply w-full max-w-[36rem] space-y-1.5;
 }
 
 .vb-bio-scanner__progress-heading {
-  @apply text-[11px] font-semibold text-brand;
+  @apply text-sm font-semibold text-brand;
 }
 
 .vb-bio-scanner__progress-list {
-  @apply space-y-0.5 text-[10px] text-slate-600;
+  @apply space-y-1 text-sm text-slate-600;
 }
 
 .vb-bio-scanner__progress-item {
-  @apply flex items-center gap-1.5;
+  @apply flex items-center gap-2;
 }
 
 .vb-bio-scanner__progress-item--done {
@@ -371,11 +369,11 @@ defineExpose({ captureFrame, start, stop });
 }
 
 .vb-bio-scanner__progress-item--active {
-  @apply font-medium text-slate-700;
+  @apply font-medium text-slate-800;
 }
 
 .vb-bio-scanner__actions {
-  @apply flex w-full max-w-[12rem] items-center gap-1.5;
+  @apply flex w-full max-w-[36rem] items-center gap-2;
 }
 
 @keyframes vb-spin {

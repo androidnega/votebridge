@@ -2,6 +2,15 @@
 
 const PREFIX = "[VoteBridge Bio]";
 
+export function isBiometricDebugEnabled() {
+  if (!import.meta.env.DEV) return false;
+  try {
+    return localStorage.getItem("vb_bio_debug") === "1";
+  } catch {
+    return false;
+  }
+}
+
 export const bioDebug = {
   log(event, detail = {}) {
     if (!import.meta.env.DEV) return;
@@ -14,5 +23,9 @@ export const bioDebug = {
   error(event, detail = {}) {
     if (!import.meta.env.DEV) return;
     console.error(PREFIX, event, detail);
+  },
+  metrics(event, detail = {}) {
+    if (!isBiometricDebugEnabled()) return;
+    console.info(PREFIX, event, detail);
   },
 };

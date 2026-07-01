@@ -1,7 +1,7 @@
 import { onMounted, onUnmounted, ref } from "vue";
 
 export function useCamera(options = {}) {
-  const { autoStart = true } = options;
+  const { autoStart = true, highQuality = false } = options;
   const videoRef = ref(null);
   const stream = ref(null);
   const error = ref("");
@@ -13,9 +13,9 @@ export function useCamera(options = {}) {
       const media = await navigator.mediaDevices.getUserMedia({
         video: {
           facingMode: "user",
-          width: { ideal: 320, max: 480 },
-          height: { ideal: 240, max: 360 },
-          frameRate: { ideal: 12, max: 15 },
+          width: highQuality ? { ideal: 1280, max: 1920 } : { ideal: 320, max: 480 },
+          height: highQuality ? { ideal: 720, max: 1080 } : { ideal: 240, max: 360 },
+          frameRate: { ideal: highQuality ? 24 : 12, max: highQuality ? 30 : 15 },
         },
         audio: false,
       });

@@ -2,6 +2,7 @@
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import BiometricScanner from "@/components/biometrics/BiometricScanner.vue";
+import { useBiometricCapture } from "@/composables/useBiometricCapture";
 import { VAlert, VButton } from "@/components/ui";
 import { toastMessages } from "@/config/toastMessages";
 import { normalizeAuthRedirect } from "@/config/routes";
@@ -19,18 +20,22 @@ const toast = useToast();
 
 const FRAMES_REQUIRED = 3;
 
+const scannerRef = ref(null);
 const frames = ref([]);
 const submitError = ref("");
-const capturing = ref(false);
 const submitting = ref(false);
+const autoCaptureStarted = ref(false);
 
 const challenge = computed(() => biometricsStore.pendingAuth?.challenge || biometricsStore.challenge);
 const pendingToken = computed(() => biometricsStore.pendingAuth?.pending_auth_token);
-const instruction = computed(
-  () => challenge.value?.instruction || "Follow the on-screen prompts to verify your identity."
-);
+const instruction = computed(() => challenge.value?.instruction || "Blink when prompted to verify your identity.");
 const showRiskHint = computed(() => (trustedStore.lastRiskReasons?.length ?? 0) > 0);
 const framesCaptured = computed(() => frames.value.length);
+
+const { capturing, captureSequence, resetCapture } = useBiometricCapture({
+  framesRequired: FRAMES_REQUIRED,
+  onFrame: handleFrame,
+});
 
 async function ensureChallenge() {
   if (!pendingToken.value) return;
@@ -58,14 +63,18 @@ onMounted(async () => {
 });
 
 async function handleFrame(frame) {
-  if (capturing.value || submitting.value) return;
-  capturing.value = true;
+  if (submitting.value) return;
   frames.value.push(frame);
-  capturing.value = false;
 
   if (frames.value.length >= FRAMES_REQUIRED) {
     await submitVerification();
   }
+}
+
+async function onChallengeComplete() {
+  if (autoCaptureStarted.value || submitting.value) return;
+  autoCaptureStarted.value = true;
+  await captureSequence(() => scannerRef.value?.captureFrame?.());
 }
 
 async function submitVerification() {
@@ -100,6 +109,8 @@ async function submitVerification() {
   } catch (error) {
     submitError.value = error.message || biometricsStore.error;
     frames.value = [];
+    autoCaptureStarted.value = false;
+    resetCapture();
     await tryAgain();
   } finally {
     submitting.value = false;
@@ -124,11 +135,12 @@ async function tryAgain() {
 
 <template>
   <div class="vb-biometric-verify">
-    <h1 class="vb-biometric-verify__title">Verify your identity</h1>
-
-    <p class="vb-biometric-verify__subtitle">
-      Complete the live face check to continue signing in.
-    </p>
+    <header class="vb-biometric-verify__header">
+      <h1 class="vb-biometric-verify__title">Verify your identity</h1>
+      <p class="vb-biometric-verify__subtitle">
+        Secure face verification required to continue.
+      </p>
+    </header>
 
     <p class="vb-biometric-verify__instruction">{{ instruction }}</p>
 
@@ -143,52 +155,51 @@ async function tryAgain() {
     </VAlert>
 
     <p v-else-if="showRiskHint" class="vb-biometric-verify__hint">
-      Extra verification required for this sign-in.
+      Additional verification is required for this sign-in.
     </p>
 
     <BiometricScanner
+      ref="scannerRef"
       mode="verify"
+      auto-capture
       :challenge="challenge"
       :frames-captured="framesCaptured"
       :frames-required="FRAMES_REQUIRED"
       @frame="handleFrame"
+      @challenge-complete="onChallengeComplete"
     />
-
-    <VButton
-      variant="primary"
-      block
-      size="sm"
-      :loading="biometricsStore.actionLoading || submitting"
-      :disabled="frames.length < 1 || submitting"
-      @click="submitVerification"
-    >
-      Verify &amp; continue
-    </VButton>
 
     <VButton
       v-if="submitError"
       variant="ghost"
       block
-      size="sm"
-      :disabled="biometricsStore.actionLoading || submitting"
+      :disabled="biometricsStore.actionLoading || submitting || capturing"
       @click="tryAgain"
     >
       Try again
     </VButton>
+
+    <p v-else-if="capturing || submitting" class="vb-biometric-verify__processing">
+      {{ submitting ? "Verifying identity…" : "Capturing frames…" }}
+    </p>
   </div>
 </template>
 
 <style scoped>
 .vb-biometric-verify {
-  @apply flex w-full flex-col gap-3;
+  @apply mx-auto flex w-full max-w-[38rem] flex-col gap-4;
+}
+
+.vb-biometric-verify__header {
+  @apply space-y-1 text-center;
 }
 
 .vb-biometric-verify__title {
-  @apply text-center text-lg font-semibold text-brand;
+  @apply text-xl font-semibold text-brand;
 }
 
 .vb-biometric-verify__subtitle {
-  @apply text-center text-xs text-slate-600;
+  @apply text-sm text-slate-600;
 }
 
 .vb-biometric-verify__instruction {
@@ -201,5 +212,9 @@ async function tryAgain() {
 
 .vb-biometric-verify__alert {
   @apply text-sm;
+}
+
+.vb-biometric-verify__processing {
+  @apply text-center text-sm font-medium text-brand;
 }
 </style>
