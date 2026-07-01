@@ -1,13 +1,19 @@
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import { storeToRefs } from "pinia";
 import {
-  commandChartColors,
-  commandQuickActions,
-  electionLifecycleStages,
+  adminQuickActionsPhase51,
+  chartTimeRanges,
+  dashboardChartColors,
+  greetingForHour,
+  isSameCalendarDay,
+  sliceTrendByRange,
+} from "@/config/dashboardExperience";
+import {
   isElectionActivityItem,
-  resolveLifecycleStage,
   resolveWorkspaceRoute,
 } from "@/config/adminCommandCenter";
+import { useAuthStore } from "@/stores/auth";
+import { useAnalyticsStore } from "@/stores/analytics";
 import { useDashboardStore } from "@/stores/dashboard";
 import { useElectionStore } from "@/stores/election";
 import { useOperationsStore } from "@/stores/operations";
@@ -25,17 +31,24 @@ function electionStatus(election) {
   return election?.status || election?.election_status || "draft";
 }
 
-function channelHealth(enabled, issueCount) {
-  if (!enabled) return { label: "Off", tone: "neutral" };
-  if (issueCount > 0) return { label: "Degraded", tone: "warning" };
-  return { label: "Healthy", tone: "success" };
+function formatCountdown(election) {
+  const target = resolveElectionCountdownTarget(election);
+  if (!target) return "";
+  const diff = new Date(target).getTime() - Date.now();
+  if (diff <= 0) return "Now";
+  const hours = Math.floor(diff / 3_600_000);
+  const mins = Math.floor((diff % 3_600_000) / 60_000);
+  return hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
 }
 
 export function useAdminCommandCenter() {
+  const authStore = useAuthStore();
   const dashboardStore = useDashboardStore();
   const electionStore = useElectionStore();
   const operationsStore = useOperationsStore();
   const resultsStore = useResultsStore();
+  const analyticsStore = useAnalyticsStore();
+  const chartRange = ref("today");
 
   const { adminOverview, adminTrends, activityFeed, isRealtimeLive, openElectionsList, scheduledElections } =
     storeToRefs(dashboardStore);
@@ -44,211 +57,173 @@ export function useAdminCommandCenter() {
   const primaryElection = computed(() => openElectionsList.value[0] || null);
   const primaryUuid = computed(() => electionUuid(primaryElection.value));
 
-  const monitorByElection = computed(() => {
-    const map = new Map();
-    for (const row of operationsStore.elections || []) {
-      map.set(row.election_uuid, row);
-    }
-    return map;
-  });
+  const allTrackedElections = computed(() => [
+    ...openElectionsList.value,
+    ...(scheduledElections.value || []),
+  ]);
 
-  const primaryResult = computed(() => {
-    if (!primaryUuid.value) return null;
-    return (resultsStore.results || []).find((row) => row.election_uuid === primaryUuid.value);
-  });
-
-  const pendingTasks = computed(() => {
-    let count = 0;
-    const election = primaryElection.value;
-    if (!election) return 0;
-
-    const status = electionStatus(election);
-    if (["draft", "scheduled"].includes(status)) {
-      if (electionStore.readinessReport && !electionStore.readinessReport.is_ready) {
-        count += electionStore.readinessReport.blocking_issues?.length || 1;
-      } else if (!electionStore.readinessReport) {
-        count += 1;
-      }
-    }
-    if (status === "paused") count += 1;
-    if ((monitoring.value.fraud_alerts ?? 0) > 0) count += monitoring.value.fraud_alerts;
-    if ((monitoring.value.security_alerts ?? 0) > 0) count += monitoring.value.security_alerts;
-    return count;
-  });
-
-  const kpiCards = computed(() => {
-    const election = primaryElection.value;
-    const status = electionStatus(election);
-    const countdownTarget = resolveElectionCountdownTarget(election);
-    const countdownLabel = resolveCountdownLabel(election);
-    let countdownValue = "—";
-    if (countdownTarget) {
-      const diff = new Date(countdownTarget).getTime() - Date.now();
-      if (diff <= 0) {
-        countdownValue = status === "scheduled" ? "Opening window" : "Closing window";
-      } else {
-        const hours = Math.floor(diff / 3_600_000);
-        const mins = Math.floor((diff % 3_600_000) / 60_000);
-        countdownValue = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
-      }
-    }
-
-    return [
-      {
-        id: "active-elections",
-        title: "Active Elections",
-        value: openElectionsList.value.length,
-        hint: "Open or paused elections",
-        healthStatus: openElectionsList.value.length > 0 ? "healthy" : "unknown",
-      },
-      {
-        id: "turnout",
-        title: "Turnout",
-        value: `${monitoring.value.turnout_percentage ?? dashboardStore.turnoutPercentage}%`,
-        hint: "Live eligible voter participation",
-        healthStatus: (monitoring.value.turnout_percentage ?? 0) > 0 ? "healthy" : "unknown",
-      },
-      {
-        id: "votes-eligible",
-        title: "Votes Cast / Eligible",
-        value: `${monitoring.value.voters_participated ?? 0} / ${monitoring.value.eligible_voters ?? dashboardStore.registeredVoters}`,
-        hint: "Distinct voters who have voted",
-        healthStatus: "unknown",
-      },
-      {
-        id: "pending-tasks",
-        title: "Pending Operational Tasks",
-        value: pendingTasks.value,
-        hint: pendingTasks.value ? "Requires election officer attention" : "No outstanding tasks",
-        healthStatus: pendingTasks.value > 0 ? "attention" : "healthy",
-      },
-      {
-        id: "election-status",
-        title: "Current Election Status",
-        value: status.charAt(0).toUpperCase() + status.slice(1),
-        detail: countdownValue,
-        hint: countdownLabel,
-        healthStatus: status === "open" ? "healthy" : status === "paused" ? "attention" : "unknown",
-      },
-    ];
-  });
-
-  const activeElectionCards = computed(() =>
-    openElectionsList.value.map((election) => {
-      const uuid = electionUuid(election);
-      const snapshot = monitorByElection.value.get(uuid) || {};
-      const turnout = snapshot.turnout_percentage ?? (uuid === primaryUuid.value ? monitoring.value.turnout_percentage : null);
-      return {
-        election,
-        uuid,
-        status: electionStatus(election),
-        turnout: turnout ?? 0,
-        countdownTarget: resolveElectionCountdownTarget(election),
-        countdownLabel: resolveCountdownLabel(election),
-        monitorRoute: uuid ? `/dashboard/elections/${uuid}/monitor` : null,
-      };
-    })
+  const electionsClosingToday = computed(() =>
+    allTrackedElections.value.filter((election) =>
+      isSameCalendarDay(election.end_date)
+    ).length
   );
 
-  const showReadiness = computed(() => {
-    const election = primaryElection.value;
-    if (!election) return false;
-    return ["draft", "scheduled"].includes(electionStatus(election));
+  const pendingCandidateApprovals = computed(() =>
+    allTrackedElections.value.reduce((sum, election) => {
+      const total = election.candidate_count ?? 0;
+      const approved = election.approved_candidate_count ?? 0;
+      return sum + Math.max(0, total - approved);
+    }, 0)
+  );
+
+  const welcomeBanner = computed(() => {
+    const election = primaryElection.value || scheduledElections.value?.[0];
+    const status = election ? electionStatus(election) : "none";
+    const phaseLabel = election
+      ? `${(election.title || election.election_title || "Election").slice(0, 40)} · ${status}`
+      : "No active election phase";
+    return {
+      greeting: greetingForHour(),
+      name: authStore.user?.first_name || authStore.fullName?.split(" ")[0] || "",
+      dateLabel: new Date().toLocaleDateString(undefined, {
+        weekday: "long",
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      }),
+      phaseLabel,
+      phaseStatus: status === "none" ? "draft" : status,
+    };
   });
 
-  const turnoutLabels = computed(() => {
-    const live = adminTrends.value.turnoutLive || [];
-    const hourly = adminTrends.value.turnoutHourly || [];
-    const useLive = live.length > 1 && isRealtimeLive.value;
-    return (useLive ? live : hourly).map((point) => point.label);
+  const kpiCards = computed(() => [
+    {
+      id: "active-elections",
+      title: "Active Elections",
+      value: openElectionsList.value.length,
+      hint: "Open or paused elections",
+      icon: "elections",
+      accent: "green",
+      clickable: true,
+      route: "/dashboard/elections",
+    },
+    {
+      id: "registered-voters",
+      title: "Registered Voters",
+      value: monitoring.value.eligible_voters ?? dashboardStore.registeredVoters,
+      hint: "Eligible voters across active elections",
+      icon: "profile",
+      accent: "blue",
+    },
+    {
+      id: "votes-cast",
+      title: "Votes Cast",
+      value: monitoring.value.voters_participated ?? dashboardStore.totalVotesCast,
+      hint: "Distinct voters who have voted",
+      icon: "analytics",
+      accent: "blue",
+      trend: (adminTrends.value.votesHourly || []).slice(-8).map((p) => p.value),
+    },
+    {
+      id: "turnout",
+      title: "Current Turnout",
+      value: `${monitoring.value.turnout_percentage ?? dashboardStore.turnoutPercentage}%`,
+      hint: "Live eligible voter participation",
+      icon: "analytics",
+      accent: "green",
+      trend: (adminTrends.value.turnoutHourly || []).slice(-8).map((p) => p.value),
+    },
+    {
+      id: "closing-today",
+      title: "Elections Closing Today",
+      value: electionsClosingToday.value,
+      hint: electionsClosingToday.value ? "Requires close-of-poll planning" : "No elections closing today",
+      icon: "tasks",
+      accent: electionsClosingToday.value ? "amber" : "slate",
+    },
+    {
+      id: "candidate-approvals",
+      title: "Pending Candidate Approvals",
+      value: pendingCandidateApprovals.value,
+      hint: "Nominated candidates awaiting approval",
+      icon: "profile",
+      accent: pendingCandidateApprovals.value > 0 ? "amber" : "green",
+      clickable: Boolean(primaryUuid.value),
+      route: primaryUuid.value ? `/dashboard/elections/${primaryUuid.value}/candidates` : null,
+    },
+    {
+      id: "security-alerts",
+      title: "Recent Security Alerts",
+      value: dashboardStore.pendingSecurityAlerts,
+      hint: "Open security incidents requiring review",
+      icon: "security",
+      accent: dashboardStore.pendingSecurityAlerts > 0 ? "red" : "green",
+      clickable: true,
+      route: "/dashboard/reports",
+    },
+  ]);
+
+  const votingActivityLabels = computed(() => {
+    const votes = sliceTrendByRange(adminTrends.value.votesHourly || [], chartRange.value);
+    const turnout = sliceTrendByRange(
+      isRealtimeLive.value && adminTrends.value.turnoutLive?.length > 1
+        ? adminTrends.value.turnoutLive
+        : adminTrends.value.turnoutHourly || [],
+      chartRange.value
+    );
+    const source = votes.length >= turnout.length ? votes : turnout;
+    return source.map((point) => point.label);
   });
 
-  const turnoutSeries = computed(() => {
-    const live = adminTrends.value.turnoutLive || [];
-    const hourly = adminTrends.value.turnoutHourly || [];
-    const useLive = live.length > 1 && isRealtimeLive.value;
-    const points = useLive ? live : hourly;
+  const votingActivitySeries = computed(() => {
+    const votes = sliceTrendByRange(adminTrends.value.votesHourly || [], chartRange.value);
+    const turnout = sliceTrendByRange(
+      isRealtimeLive.value && adminTrends.value.turnoutLive?.length > 1
+        ? adminTrends.value.turnoutLive
+        : adminTrends.value.turnoutHourly || [],
+      chartRange.value
+    );
     return [
       {
-        name: "Turnout %",
-        data: points.map((point) => point.value),
+        name: "Votes Cast",
+        data: votes.map((point) => point.value),
         area: true,
         smooth: true,
-        itemStyle: { color: commandChartColors[0] },
+        itemStyle: { color: dashboardChartColors[0] },
+        lineStyle: { width: 2 },
+      },
+      {
+        name: "Turnout %",
+        data: turnout.map((point) => point.value),
+        area: true,
+        smooth: true,
+        itemStyle: { color: dashboardChartColors[1] },
         lineStyle: { width: 2 },
       },
     ];
   });
 
-  const channelDistribution = computed(() => {
-    const web = monitoring.value.web_votes ?? 0;
-    const ussd = monitoring.value.ussd_votes ?? 0;
-    if (!web && !ussd) return [];
+  const electionStatusItems = computed(() => {
+    const status = analyticsStore.overview?.election_status || {};
+    const published = (resultsStore.results || []).filter((row) => row.result_status === "published").length;
     return [
-      { name: "Web", value: web },
-      { name: "USSD", value: ussd },
-    ];
+      { name: "Draft", value: status.draft ?? 0 },
+      { name: "Scheduled", value: status.scheduled ?? 0 },
+      { name: "Open", value: (status.open ?? 0) + (status.paused ?? 0) },
+      { name: "Closed", value: status.closed ?? 0 },
+      { name: "Published", value: published },
+    ].filter((item) => item.value > 0);
   });
-
-  const liveMonitoringItems = computed(() => {
-    const channels = monitoring.value.voting_channels || {};
-    const failed = monitoring.value.failed_sessions ?? 0;
-    const duplicateAttempts = (activityFeed.value || []).filter(
-      (item) => /duplicate/i.test(item.title || "") || /duplicate/i.test(item.description || "")
-    ).length;
-
-    return [
-      {
-        id: "sessions",
-        label: "Active voting sessions",
-        value: monitoring.value.active_sessions ?? 0,
-        tone: "default",
-      },
-      {
-        id: "web-health",
-        label: "Web channel health",
-        value: channelHealth(channels.web_enabled, 0).label,
-        tone: channelHealth(channels.web_enabled, 0).tone,
-      },
-      {
-        id: "ussd-health",
-        label: "USSD channel health",
-        value: channelHealth(channels.ussd_enabled, failed).label,
-        tone: channelHealth(channels.ussd_enabled, failed).tone,
-      },
-      {
-        id: "failed-sessions",
-        label: "Failed sessions",
-        value: failed,
-        tone: failed > 0 ? "danger" : "success",
-      },
-      {
-        id: "fraud-alerts",
-        label: "Fraud alerts",
-        value: monitoring.value.fraud_alerts ?? dashboardStore.openFraudCases,
-        tone: (monitoring.value.fraud_alerts ?? 0) > 0 ? "warning" : "success",
-      },
-      {
-        id: "duplicate-votes",
-        label: "Duplicate vote attempts",
-        value: duplicateAttempts,
-        tone: duplicateAttempts > 0 ? "danger" : "success",
-      },
-    ];
-  });
-
-  const lifecycleStage = computed(() =>
-    resolveLifecycleStage(primaryElection.value, primaryResult.value)
-  );
 
   const electionActivity = computed(() =>
     (activityFeed.value || [])
       .filter(isElectionActivityItem)
-      .slice(0, 8)
+      .slice(0, 10)
       .map((item) => ({
         id: item.id || item.created_at || item.timestamp,
         title: item.title || item.message || item.event,
-        meta: item.description || (item.created_at ? new Date(item.created_at).toLocaleString() : ""),
+        meta: item.description || "",
+        timestamp: item.created_at || item.timestamp,
       }))
   );
 
@@ -256,14 +231,16 @@ export function useAdminCommandCenter() {
     (scheduledElections.value || []).slice(0, 5).map((election) => ({
       id: election.uuid,
       title: election.title || election.election_title,
+      faculty: election.faculty_name || election.department_name || election.institution_unit || "",
       startDate: election.start_date,
       status: electionStatus(election),
+      countdown: formatCountdown(election),
       route: `/dashboard/elections/${election.uuid}`,
     }))
   );
 
   const quickActions = computed(() =>
-    commandQuickActions.map((action) => {
+    adminQuickActionsPhase51.map((action) => {
       if (action.route) return action;
       const route = resolveWorkspaceRoute(primaryUuid.value, action.routeKey);
       return { ...action, route };
@@ -275,9 +252,10 @@ export function useAdminCommandCenter() {
       dashboardStore.fetchAdminDashboard(),
       operationsStore.fetchElectionMonitor(),
       resultsStore.fetchResults(),
+      analyticsStore.fetchOverview().catch(() => {}),
     ]);
 
-    if (primaryUuid.value && showReadiness.value) {
+    if (primaryUuid.value && ["draft", "scheduled"].includes(electionStatus(primaryElection.value))) {
       await electionStore.fetchReadiness(primaryUuid.value).catch(() => {});
     }
   }
@@ -286,22 +264,18 @@ export function useAdminCommandCenter() {
     dashboardStore,
     electionStore,
     isLive: isRealtimeLive,
-    primaryElection,
-    primaryUuid,
+    chartRange,
+    chartTimeRanges,
+    welcomeBanner,
     kpiCards,
-    activeElectionCards,
-    showReadiness,
-    turnoutLabels,
-    turnoutSeries,
-    hasTurnoutTrend: computed(() => turnoutLabels.value.length > 0),
-    channelDistribution,
-    liveMonitoringItems,
-    lifecycleStages: electionLifecycleStages,
-    lifecycleStage,
+    votingActivityLabels,
+    votingActivitySeries,
+    hasVotingActivity: computed(() => votingActivityLabels.value.length > 0),
+    electionStatusItems,
     electionActivity,
     upcomingElections,
     quickActions,
-    chartColors: commandChartColors,
+    chartColors: dashboardChartColors,
     loadCommandCenter,
   };
 }

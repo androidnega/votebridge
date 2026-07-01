@@ -14,6 +14,8 @@ const props = defineProps({
 const option = computed(() => ({
   color: CHART_COLORS,
   animation: props.animated,
+  animationDuration: 200,
+  animationDurationUpdate: 200,
   title: props.title ? { text: props.title, left: 0, textStyle: { fontSize: 14, fontWeight: 600 } } : undefined,
   tooltip: { trigger: "axis" },
   grid: { left: 40, right: 16, top: props.title ? 48 : 24, bottom: 32 },
@@ -23,7 +25,7 @@ const option = computed(() => ({
     type: "line",
     smooth: s.smooth ?? props.smooth,
     showSymbol: false,
-    areaStyle: s.area ? { opacity: 0.08 } : undefined,
+    areaStyle: s.area ? { opacity: 0.12 } : undefined,
     ...s,
   })),
 }));

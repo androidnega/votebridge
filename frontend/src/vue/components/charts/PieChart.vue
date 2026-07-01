@@ -14,6 +14,8 @@ const props = defineProps({
 const option = computed(() => ({
   color: props.colors?.length ? props.colors : CHART_COLORS,
   animation: props.animated,
+  animationDuration: 200,
+  animationDurationUpdate: 200,
   title: props.title ? { text: props.title, left: 0, textStyle: { fontSize: 14, fontWeight: 600 } } : undefined,
   tooltip: { trigger: "item" },
   legend: { bottom: 0, type: "scroll" },

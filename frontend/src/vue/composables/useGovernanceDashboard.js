@@ -6,9 +6,12 @@ import { useOperationsStore } from "@/stores/operations";
 import { useResultsStore } from "@/stores/results";
 import { useSystemControlStore } from "@/stores/systemControl";
 import {
+  dashboardChartColors,
+  governanceQuickActionsPhase51,
+  greetingForHour,
+} from "@/config/dashboardExperience";
+import {
   formatUptime,
-  governanceChartColors,
-  governanceQuickActions,
   healthLabel,
   healthToVariant,
   infrastructureLabels,
@@ -25,6 +28,18 @@ function asResultList(results) {
 function componentMap(healthPayload) {
   const components = healthPayload?.components || [];
   return Object.fromEntries(components.map((item) => [item.name, item]));
+}
+
+function isToday(value) {
+  if (!value) return false;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return false;
+  const today = new Date();
+  return (
+    date.getFullYear() === today.getFullYear()
+    && date.getMonth() === today.getMonth()
+    && date.getDate() === today.getDate()
+  );
 }
 
 export function useGovernanceDashboard() {
@@ -59,18 +74,6 @@ export function useGovernanceDashboard() {
     () => initialLoading.value || (dashboardStore.loading && !dashboardStore.adminOverview)
   );
 
-  const currentTimeLabel = computed(() =>
-    now.value.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
-  );
-
-  const todayLabel = computed(() =>
-    now.value.toLocaleDateString(undefined, {
-      weekday: "long",
-      month: "long",
-      day: "numeric",
-    })
-  );
-
   const platformState = computed(() => systemOverview.value.platform_state || {});
 
   const platformStatusLabel = computed(() => {
@@ -89,7 +92,7 @@ export function useGovernanceDashboard() {
     const integrations = systemOverview.value.integrations || {};
     const map = healthComponents.value;
 
-    const resolve = (key, fallback) => {
+    const resolve = (key) => {
       if (key === "database") return healthToVariant(map.database?.status);
       if (key === "redis") return healthToVariant(integrations.redis?.status || map.redis?.status);
       if (key === "websockets") return healthToVariant(integrations.websockets?.status || map.websockets?.status);
@@ -97,7 +100,7 @@ export function useGovernanceDashboard() {
       if (key === "email") return healthToVariant(integrations.email?.status || systemOverview.value.email_provider);
       if (key === "ussd") return healthToVariant(integrations.ussd?.status || systemOverview.value.ussd_provider);
       if (key === "storage") return healthToVariant(map.storage?.status || "unknown");
-      return healthToVariant(fallback);
+      return "unknown";
     };
 
     return infrastructureLabels.map(({ key, label }) => ({
@@ -105,6 +108,18 @@ export function useGovernanceDashboard() {
       label,
       status: resolve(key),
     }));
+  });
+
+  const platformServicesChart = computed(() => {
+    const counts = { Healthy: 0, Warning: 0, Offline: 0 };
+    for (const item of infrastructureItems.value) {
+      if (item.status === "healthy") counts.Healthy += 1;
+      else if (item.status === "warning") counts.Warning += 1;
+      else counts.Offline += 1;
+    }
+    return Object.entries(counts)
+      .map(([name, value]) => ({ name, value }))
+      .filter((item) => item.value > 0);
   });
 
   const healthyServiceCount = computed(() =>
@@ -133,29 +148,141 @@ export function useGovernanceDashboard() {
 
   const electionCounts = computed(() => {
     const status = analytics.value.election_status || operations.value.elections || {};
-    return {
-      open: (status.open ?? 0) + (status.paused ?? 0),
-      scheduled: status.scheduled ?? 0,
-      closed: status.closed ?? 0,
-      draft: status.draft ?? 0,
-    };
+    return (status.open ?? 0) + (status.paused ?? 0);
   });
 
-  const publishedCount = computed(
-    () => resultRows.value.filter((row) => row.result_status === "published").length
-  );
+  const auditEventsToday = computed(() => {
+    const events = systemOverview.value.admin_activity || [];
+    return events.filter((item) => isToday(item.timestamp)).length;
+  });
 
-  const certifiedCount = computed(
-    () => resultRows.value.filter((row) => row.result_status === "certified").length
-  );
+  const ussdHealthLabel = computed(() => {
+    const status = healthToVariant(
+      systemOverview.value.integrations?.ussd?.status || systemOverview.value.ussd_provider
+    );
+    return healthLabel(status);
+  });
 
-  const governanceSummary = computed(() => [
-    { label: "Open elections", value: electionCounts.value.open },
-    { label: "Scheduled elections", value: electionCounts.value.scheduled },
-    { label: "Closed elections", value: electionCounts.value.closed },
-    { label: "Pending certification", value: pendingCertificationCount.value },
-    { label: "Published", value: publishedCount.value },
-  ]);
+  const smsDeliveryLabel = computed(() => {
+    const status = healthToVariant(
+      systemOverview.value.integrations?.sms?.status || systemOverview.value.sms_provider
+    );
+    const fallback = systemOverview.value.integrations?.sms?.fallback_status;
+    const base = healthLabel(status);
+    if (fallback && fallback !== status) {
+      return `${base} · Fallback ${healthLabel(healthToVariant(fallback))}`;
+    }
+    return base;
+  });
+
+  const onlineAdministrators = computed(() => {
+    const byRole = operations.value.sessions_by_role || {};
+    return (
+      (byRole.admin ?? 0) +
+      (byRole.super_admin ?? 0) +
+      (byRole.election_officer ?? 0)
+    ) || dashboardStore.activeUsersCount || 0;
+  });
+
+  const welcomeBanner = computed(() => ({
+    greeting: greetingForHour(now.value.getHours()),
+    name: authStore.user?.first_name || authStore.fullName?.split(" ")[0] || "",
+    dateLabel: now.value.toLocaleDateString(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    }),
+    phaseLabel: platformStatusLabel.value,
+    phaseStatus: platformState.value.has_active_election ? "open" : "draft",
+  }));
+
+  const kpiCards = computed(() => {
+    const total = infrastructureItems.value.length;
+    const healthy = healthyServiceCount.value;
+
+    return [
+      {
+        id: "active-elections",
+        title: "Active Elections",
+        value: electionCounts.value,
+        hint: "Open or paused elections platform-wide",
+        icon: "elections",
+        accent: "green",
+        clickable: true,
+        route: "/dashboard/elections",
+      },
+      {
+        id: "platform-health",
+        title: "Platform Health",
+        value: `${healthy}/${total}`,
+        detail: healthLabel(platformHealth.value),
+        hint: "Core services reporting healthy",
+        icon: "operations",
+        accent: platformHealth.value === "healthy" ? "green" : "amber",
+        clickable: true,
+        route: "/dashboard/operations",
+      },
+      {
+        id: "pending-certification",
+        title: "Pending Certifications",
+        value: pendingCertificationCount.value,
+        hint: "Closed elections awaiting certification",
+        icon: "results",
+        accent: pendingCertificationCount.value > 0 ? "amber" : "green",
+        clickable: true,
+        route: "/dashboard/results?filter=certification",
+      },
+      {
+        id: "security-alerts",
+        title: "Security Alerts",
+        value: securityAlertsOpen.value,
+        hint: "Unresolved security incidents",
+        icon: "security",
+        accent: securityAlertsOpen.value > 0 ? "red" : "green",
+        clickable: true,
+        route: "/dashboard/reports",
+      },
+      {
+        id: "audit-events",
+        title: "Audit Events Today",
+        value: auditEventsToday.value,
+        hint: "Administrative actions recorded today",
+        icon: "analytics",
+        accent: "blue",
+        clickable: true,
+        route: { name: "platform-logs" },
+      },
+      {
+        id: "ussd-health",
+        title: "USSD Health",
+        value: ussdHealthLabel.value,
+        hint: "Arkesel USSD gateway status",
+        icon: "communications",
+        accent: ussdHealthLabel.value === "Healthy" ? "green" : "amber",
+        clickable: true,
+        route: `${r.integrations.hub}?focus=ussd`,
+      },
+      {
+        id: "sms-delivery",
+        title: "SMS Delivery",
+        value: smsDeliveryLabel.value,
+        hint: "Primary and fallback SMS gateways",
+        icon: "communications",
+        accent: smsDeliveryLabel.value.startsWith("Healthy") ? "green" : "amber",
+        clickable: true,
+        route: r.integrations.sms,
+      },
+      {
+        id: "online-admins",
+        title: "Online Administrators",
+        value: onlineAdministrators.value,
+        hint: "Active admin and officer sessions",
+        icon: "profile",
+        accent: "blue",
+      },
+    ];
+  });
 
   const participationLabels = computed(
     () => analytics.value.trends?.votes_hourly?.map((point) => point.label) || []
@@ -165,182 +292,88 @@ export function useGovernanceDashboard() {
     {
       name: "Votes processed",
       data: analytics.value.trends?.votes_hourly?.map((point) => point.value) || [],
-      area: false,
-      smooth: false,
-      itemStyle: { color: governanceChartColors[0] },
+      area: true,
+      smooth: true,
+      itemStyle: { color: dashboardChartColors[0] },
       lineStyle: { width: 2 },
     },
   ]);
 
-  const lifecycleItems = computed(() => {
-    const status = analytics.value.election_status || operations.value.elections || {};
-    return [
-      { name: "Draft", value: status.draft ?? 0 },
-      { name: "Scheduled", value: status.scheduled ?? 0 },
-      { name: "Open", value: (status.open ?? 0) + (status.paused ?? 0) },
-      { name: "Closed", value: status.closed ?? 0 },
-      { name: "Certified", value: certifiedCount.value },
-      { name: "Published", value: publishedCount.value },
-    ].filter((item) => item.value > 0);
-  });
-
   const adminActivity = computed(() => {
     const fromSystem = systemOverview.value.admin_activity || [];
     if (fromSystem.length) {
-      return fromSystem.slice(0, 8).map((item) => ({
+      return fromSystem.slice(0, 10).map((item) => ({
         id: item.id,
         title: item.title,
-        meta: [item.actor, item.timestamp ? new Date(item.timestamp).toLocaleString() : ""]
-          .filter(Boolean)
-          .join(" · "),
+        meta: item.actor || "",
+        timestamp: item.timestamp,
       }));
     }
     return (dashboardStore.activityFeed || [])
       .filter((item) => !item.event_type?.includes("ballot"))
-      .slice(0, 8)
+      .slice(0, 10)
       .map((item) => ({
         id: item.id || item.timestamp,
         title: item.title || item.message || item.event,
-        meta: item.timestamp ? new Date(item.timestamp).toLocaleString() : "",
+        meta: "",
+        timestamp: item.timestamp || item.created_at,
       }));
   });
 
-  const pendingActions = computed(() => {
-    const actions = [];
-    if (pendingCertificationCount.value > 0) {
-      actions.push({
-        id: "certification",
-        title: `${pendingCertificationCount.value} election${pendingCertificationCount.value === 1 ? "" : "s"} awaiting certification`,
-        route: { name: "results", query: { filter: "certification" } },
+  const securityItems = computed(() => {
+    const items = [];
+    const summary = dashboardStore.securityFeed?.summary || {};
+    const alerts = dashboardStore.securityFeed?.alerts || [];
+
+    if (summary.failed_logins ?? summary.failed_login_attempts) {
+      items.push({
+        id: "failed-logins",
+        title: "Failed logins",
+        meta: "Authentication attempts blocked in the last 24 hours",
+        count: String(summary.failed_logins ?? summary.failed_login_attempts ?? 0),
+        severity: (summary.failed_logins ?? 0) > 0 ? "warning" : "healthy",
+        label: String(summary.failed_logins ?? summary.failed_login_attempts ?? 0),
       });
     }
 
-    const ussdStatus = healthToVariant(
-      systemOverview.value.integrations?.ussd?.status || systemOverview.value.ussd_provider
-    );
-    if (ussdStatus !== "healthy") {
-      actions.push({
-        id: "ussd",
-        title: "USSD provider requires attention",
-        route: `${r.integrations.hub}?focus=ussd`,
-      });
-    }
+    items.push({
+      id: "fraud-alerts",
+      title: "Fraud alerts",
+      meta: "Open fraud investigations requiring review",
+      count: String(dashboardStore.openFraudCases ?? overview.value.fraud_cases?.open_cases ?? 0),
+      severity: (dashboardStore.openFraudCases ?? 0) > 0 ? "warning" : "healthy",
+      label: String(dashboardStore.openFraudCases ?? overview.value.fraud_cases?.open_cases ?? 0),
+    });
 
-    const smsStatus = healthToVariant(
-      systemOverview.value.integrations?.sms?.status || systemOverview.value.sms_provider
-    );
-    if (smsStatus !== "healthy") {
-      actions.push({
-        id: "sms",
-        title: "SMS gateway requires validation",
-        route: `${r.integrations.hub}?focus=sms`,
-      });
-    }
+    const strongroomPending = operations.value.pending_workloads?.pending_strongroom_requests ?? 0;
+    items.push({
+      id: "strongroom",
+      title: "Strong Room requests",
+      meta: "Vault access requests awaiting governance approval",
+      count: String(strongroomPending),
+      severity: strongroomPending > 0 ? "warning" : "healthy",
+      label: String(strongroomPending),
+    });
 
-    if (!systemOverview.value.last_backup) {
-      actions.push({
-        id: "backup",
-        title: "Backup overdue — no recent snapshot",
-        route: r.advanced.backup,
-      });
-    }
+    items.push({
+      id: "otp-failures",
+      title: "OTP failures",
+      meta: "Failed OTP delivery or verification attempts",
+      count: String(summary.otp_failures ?? summary.failed_otp ?? 0),
+      severity: (summary.otp_failures ?? summary.failed_otp ?? 0) > 0 ? "warning" : "healthy",
+      label: String(summary.otp_failures ?? summary.failed_otp ?? 0),
+    });
 
-    if (systemOverview.value.maintenance_status?.is_enabled) {
-      actions.push({
-        id: "maintenance",
-        title: "Maintenance mode is active",
-        route: r.advanced.maintenance,
-      });
-    } else if (systemOverview.value.maintenance_status?.expected_return_at) {
-      actions.push({
-        id: "maintenance-scheduled",
-        title: "Maintenance window scheduled",
-        route: r.advanced.maintenance,
-      });
-    }
+    items.push({
+      id: "trusted-devices",
+      title: "Trusted device changes",
+      meta: "Recent trusted device enrollments or revocations",
+      count: String(summary.trusted_device_changes ?? alerts.filter((a) => /trusted device/i.test(a.title || "")).length),
+      severity: "info",
+      label: String(summary.trusted_device_changes ?? 0),
+    });
 
-    if (securityAlertsOpen.value > 0) {
-      actions.push({
-        id: "security",
-        title: `${securityAlertsOpen.value} open security alert${securityAlertsOpen.value === 1 ? "" : "s"}`,
-        route: { name: "reports" },
-      });
-    }
-
-    return actions;
-  });
-
-  const platformInfo = computed(() => [
-    { label: "Environment", value: systemOverview.value.environment || environment.value.deployment_mode || "—" },
-    { label: "Version", value: systemOverview.value.application_version || "—" },
-    { label: "Institution", value: systemOverview.value.institution || "—" },
-    { label: "Release", value: systemOverview.value.release_channel || "—" },
-    {
-      label: "Last backup",
-      value: systemOverview.value.last_backup
-        ? new Date(systemOverview.value.last_backup).toLocaleString()
-        : "None recorded",
-    },
-    { label: "Redis", value: environment.value.redis_status || "—" },
-    { label: "Database", value: environment.value.postgresql_version || "—" },
-    { label: "Application uptime", value: formatUptime(environment.value.uptime_seconds) },
-    { label: "Build", value: systemOverview.value.build_number || "—" },
-    { label: "Git commit", value: environment.value.git_commit || import.meta.env.VITE_GIT_COMMIT || "—" },
-  ]);
-
-  const kpiCards = computed(() => {
-    const total = infrastructureItems.value.length;
-    const healthy = healthyServiceCount.value;
-    const unhealthy = Math.max(0, total - healthy);
-
-    return [
-      {
-        id: "platform-health",
-        title: "Platform health",
-        value: `${healthy}/${total}`,
-        detail: healthLabel(platformHealth.value),
-        hint: `${healthy} of ${total} services reporting healthy`,
-        healthStatus: platformHealth.value,
-        clickable: true,
-        route: { name: "operations" },
-      },
-      {
-        id: "platform-state",
-        title: "Current platform state",
-        value: platformState.value.primary || "Unknown",
-        detail: platformState.value.secondary || "",
-        healthStatus: platformState.value.has_active_election ? "warning" : "healthy",
-        clickable: false,
-      },
-      {
-        id: "pending-certification",
-        title: "Pending certifications",
-        value: pendingCertificationCount.value,
-        hint: "Closed elections awaiting official certification",
-        healthStatus: pendingCertificationCount.value > 0 ? "warning" : "healthy",
-        clickable: true,
-        route: { name: "results", query: { filter: "certification" } },
-      },
-      {
-        id: "security-alerts",
-        title: "Security alerts",
-        value: securityAlertsOpen.value,
-        hint: "Unresolved security incidents",
-        healthStatus: securityAlertsOpen.value > 0 ? "critical" : "healthy",
-        clickable: true,
-        route: { name: "reports" },
-      },
-      {
-        id: "infrastructure",
-        title: "Infrastructure",
-        value: unhealthy > 0 ? `${unhealthy} issue${unhealthy === 1 ? "" : "s"}` : "All clear",
-        detail: unhealthy > 0 ? `${healthy}/${total} services healthy` : `${healthy}/${total} services healthy`,
-        hint: "Database · Redis · WebSockets · USSD · SMS",
-        healthStatus: unhealthy > 0 ? "warning" : "healthy",
-        clickable: true,
-        route: r.integrations.hub,
-      },
-    ];
+    return items;
   });
 
   async function loadDashboard() {
@@ -373,21 +406,28 @@ export function useGovernanceDashboard() {
   return {
     loading,
     error: computed(() => dashboardStore.error || systemStore.error || analyticsStore.error),
-    todayLabel,
-    currentTimeLabel,
+    currentTimeLabel: computed(() =>
+      now.value.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit" })
+    ),
+    todayLabel: computed(() =>
+      now.value.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })
+    ),
     platformStatusLabel,
-    platformHealth,
+    welcomeBanner,
     kpiCards,
-    governanceSummary,
-    infrastructureItems,
+    platformServicesChart,
     participationLabels,
     participationSeries,
-    lifecycleItems,
+    hasParticipationTrend: computed(() => participationLabels.value.length > 0),
     adminActivity,
-    pendingActions,
-    platformInfo,
-    quickActions: governanceQuickActions,
-    chartColors: governanceChartColors,
+    securityItems,
+    quickActions: governanceQuickActionsPhase51,
+    chartColors: dashboardChartColors,
+    platformInfo: computed(() => [
+      { label: "Environment", value: systemOverview.value.environment || environment.value.deployment_mode || "—" },
+      { label: "Version", value: systemOverview.value.application_version || "—" },
+      { label: "Uptime", value: formatUptime(environment.value.uptime_seconds) },
+    ]),
     loadDashboard,
   };
 }
