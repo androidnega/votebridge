@@ -133,6 +133,96 @@ class ArkeselProviderTests(TestCase):
         self.assertEqual(sender_id, "VoteBridge")
 
 
+class MoolreProviderTests(TestCase):
+    @patch("apps.notifications.providers.base.httpx.post")
+    def test_moolre_send_success(self, mock_post):
+        from apps.notifications.providers.base import MoolreSmsProvider
+
+        mock_response = MagicMock()
+        mock_response.raise_for_status = MagicMock()
+        mock_response.status_code = 200
+        mock_response.content = b'{"status":1}'
+        mock_response.json.return_value = {"status": 1}
+        mock_post.return_value = mock_response
+
+        log = DeliveryLog.objects.create(
+            recipient="0241234567",
+            channel=DeliveryLog.Channel.SMS,
+            body_snapshot="Test SMS",
+            status=DeliveryLog.Status.PENDING,
+        )
+
+        with override_settings(MOOLRE_VAS_KEY="vas-key", MOOLRE_SENDER_ID="VoteBridge"):
+            provider = MoolreSmsProvider()
+            result = provider.send(log)
+            self.assertEqual(result["provider"], "moolre_sms")
+            payload = mock_post.call_args.kwargs["json"]
+            self.assertEqual(payload["messages"][0]["recipient"], "233241234567")
+
+    @patch("apps.notifications.providers.base.httpx.post")
+    def test_sms_fallback_to_moolre_when_arkesel_fails(self, mock_post):
+        import httpx
+        from apps.notifications.models import CommunicationProvider
+
+        NotificationTemplate.objects.get_or_create(
+            code="otp_sms_fallback",
+            defaults={
+                "name": "OTP SMS",
+                "channel": NotificationTemplate.Channel.SMS,
+                "sms_body": "Code {otp_code}",
+                "is_active": True,
+            },
+        )
+
+        CommunicationProvider.objects.create(
+            name="Arkesel Primary",
+            provider_type=CommunicationProvider.ProviderType.ARKESEL_SMS,
+            is_active=True,
+            is_default=True,
+            config={"api_key": "test", "sender_id": "VoteBridge"},
+        )
+        CommunicationProvider.objects.create(
+            name="Moolre Fallback",
+            provider_type=CommunicationProvider.ProviderType.MOOLRE_SMS,
+            is_active=True,
+            is_default=False,
+            config={"vas_key": "vas-key", "sender_id": "VoteBridge"},
+        )
+
+        calls = {"count": 0}
+
+        def side_effect(*args, **kwargs):
+            calls["count"] += 1
+            if calls["count"] == 1:
+                raise httpx.ConnectError("Arkesel timeout", request=MagicMock())
+            mock_response = MagicMock()
+            mock_response.raise_for_status = MagicMock()
+            mock_response.status_code = 200
+            mock_response.content = b'{"status":1}'
+            mock_response.json.return_value = {"status": 1}
+            return mock_response
+
+        mock_post.side_effect = side_effect
+
+        service = CommunicationService()
+        with override_settings(
+            ARKESEL_API_KEY="test-key",
+            ARKESEL_SENDER_ID="VoteBridge",
+            MOOLRE_VAS_KEY="vas-key",
+            MOOLRE_SENDER_ID="VoteBridge",
+        ):
+            log = service.send_raw(
+                channel="sms",
+                recipient="233241234567",
+                body="Code 123456",
+                template_code="otp_sms_fallback",
+            )
+
+        self.assertEqual(log.status, DeliveryLog.Status.DELIVERED)
+        self.assertTrue(log.provider_response.get("fallback_used"))
+        self.assertEqual(mock_post.call_count, 2)
+
+
 class SmsProductionReadinessTests(TestCase):
     @patch("apps.notifications.providers.base.httpx.post")
     def test_otp_sms_delivery_via_communication_service(self, mock_post):

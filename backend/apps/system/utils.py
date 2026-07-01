@@ -28,6 +28,7 @@ def mask_config(config: dict | None) -> dict:
         return {}
     sensitive_keys = {
         "api_key",
+        "vas_key",
         "password",
         "secret",
         "webhook_secret",

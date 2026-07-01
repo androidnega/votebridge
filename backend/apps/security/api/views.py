@@ -4,8 +4,10 @@ from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
 
 from apps.security.api.serializers import (
+    SVTAccessStatusSerializer,
     SVTBallotSessionSerializer,
     SVTConfirmationSerializer,
+    SVTIssuePublicSerializer,
     SVTIssueSerializer,
     SVTListSerializer,
     SVTReissueSerializer,
@@ -38,10 +40,38 @@ class RequestSVTView(APIView):
             ip_address=ip_address,
             user_agent=user_agent,
         )
+        public = {**result}
+        public.pop("token_code", None)
         return Response(
-            {"success": True, "data": SVTIssueSerializer(result).data},
+            {"success": True, "data": SVTIssuePublicSerializer(public).data},
             status=status.HTTP_201_CREATED,
         )
+
+
+class ResendSVTView(APIView):
+    permission_classes = [CanRequestSVT]
+    throttle_classes = [SVTRequestRateThrottle]
+
+    def post(self, request, election_uuid):
+        ip_address, user_agent = _client_meta(request)
+        result = svt_service.resend_svt(
+            election_uuid=election_uuid,
+            user=request.user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        return Response(
+            {"success": True, "data": SVTIssuePublicSerializer(result).data},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class VotingAccessStatusView(APIView):
+    permission_classes = [CanRequestSVT]
+
+    def get(self, request, election_uuid):
+        result = svt_service.get_voting_access_status(election_uuid, request.user)
+        return Response({"success": True, "data": SVTAccessStatusSerializer(result).data})
 
 
 class ValidateSVTView(APIView):
@@ -60,6 +90,26 @@ class ValidateSVTView(APIView):
         )
         return Response(
             {"success": True, "data": SVTBallotSessionSerializer(result).data}
+        )
+
+
+class StartVotingSessionView(APIView):
+    """Phase 55 — auto SVT when student begins web voting (Vote Now)."""
+
+    permission_classes = [CanRequestSVT]
+    throttle_classes = [SVTRequestRateThrottle]
+
+    def post(self, request, election_uuid):
+        ip_address, user_agent = _client_meta(request)
+        result = svt_service.start_voting_session(
+            election_uuid=election_uuid,
+            user=request.user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        return Response(
+            {"success": True, "data": SVTBallotSessionSerializer(result).data},
+            status=status.HTTP_201_CREATED,
         )
 
 

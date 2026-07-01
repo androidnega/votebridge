@@ -41,14 +41,62 @@ class AuthService:
     def login(
         self,
         identity: str,
-        password: str,
+        password: str | None = None,
         ip_address: str | None = None,
         user_agent: str | None = None,
     ) -> dict:
-        """Universal identity login — resolves index, username, or email server-side."""
-        user = self._resolve_user_by_identity(identity)
+        """Intelligent login — students skip password; staff require password before OTP."""
+        return self.continue_authentication(
+            identity=identity,
+            password=password,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
 
-        if not user or not user.check_password(password):
+    def continue_authentication(
+        self,
+        identity: str,
+        password: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> dict:
+        self._ensure_platform_available()
+
+        user = self._resolve_user_by_identity(identity)
+        if not user:
+            self._log_failed_login(identity, ip_address, user_agent, None)
+            raise AuthenticationError(
+                message=INVALID_CREDENTIALS_MESSAGE,
+                code="invalid_credentials",
+            )
+
+        if not user.is_active:
+            raise PermissionDeniedError(
+                message="User account is deactivated.",
+                code="account_deactivated",
+            )
+
+        role_name = user.role.name
+
+        if role_name in self.STUDENT_ROLES:
+            if not self._looks_like_index_number(identity):
+                raise ValidationError(
+                    message="Students must sign in with their index number.",
+                    code="student_index_required",
+                )
+            return self._initiate_login_for_user(
+                user=user,
+                ip_address=ip_address,
+                user_agent=user_agent,
+            )
+
+        if not password:
+            return {
+                "requires_password": True,
+                "account_type": role_name,
+            }
+
+        if not user.check_password(password):
             self._log_failed_login(identity, ip_address, user_agent, user)
             raise AuthenticationError(
                 message=INVALID_CREDENTIALS_MESSAGE,
@@ -60,6 +108,22 @@ class AuthService:
             ip_address=ip_address,
             user_agent=user_agent,
         )
+
+    @staticmethod
+    def _looks_like_index_number(identity: str) -> bool:
+        return "/" in (identity or "").strip()
+
+    def _ensure_platform_available(self) -> None:
+        try:
+            from apps.system.services.system_service import maintenance_service
+
+            if maintenance_service.is_maintenance_active():
+                raise PermissionDeniedError(
+                    message="The platform is temporarily unavailable. Please try again later.",
+                    code="platform_maintenance",
+                )
+        except ImportError:
+            pass
 
     def _resolve_user_by_identity(self, identity: str) -> User | None:
         raw = (identity or "").strip()
@@ -85,6 +149,20 @@ class AuthService:
         user_agent: str | None,
     ) -> dict:
         role_name = user.role.name
+
+        if role_name in self.STUDENT_ROLES:
+            if not feature_flag_service.is_otp_enabled():
+                return self._complete_passwordless_login(
+                    user=user,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                )
+            return self._initiate_otp_login(
+                user=user,
+                purpose=OTPRequest.Purpose.LOGIN,
+                ip_address=ip_address,
+                user_agent=user_agent,
+            )
 
         if role_name == Role.Name.SUPER_ADMIN:
             self.mfa_service.log(
@@ -191,11 +269,69 @@ class AuthService:
     def authenticate_student_for_ussd(
         self,
         index_number: str,
+        msisdn: str,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> User:
+        """USSD channel — index + registered phone match; no account password."""
+        user = self.user_repository.get_queryset().filter(
+            index_number=index_number,
+            role__name__in=self.STUDENT_ROLES,
+        ).first()
+
+        if not user or not user.is_active:
+            self.mfa_service.log(
+                event_type=MFALog.EventType.LOGIN_FAILED,
+                ip_address=ip_address,
+                user_agent=user_agent or "ussd",
+                metadata={"login_type": "ussd", "index_number": index_number},
+            )
+            raise AuthenticationError(
+                message="Invalid index number.",
+                code="invalid_credentials",
+            )
+
+        if not self._phone_matches_msisdn(user.phone_number, msisdn):
+            self.mfa_service.log(
+                event_type=MFALog.EventType.LOGIN_FAILED,
+                user=user,
+                ip_address=ip_address,
+                user_agent=user_agent or "ussd",
+                metadata={"login_type": "ussd", "reason": "msisdn_mismatch"},
+            )
+            raise AuthenticationError(
+                message=(
+                    "This phone number is not registered for this election. "
+                    "Please contact the Election Office."
+                ),
+                code="msisdn_mismatch",
+            )
+
+        self.mfa_service.log(
+            event_type=MFALog.EventType.LOGIN_SUCCESS,
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent or "ussd",
+            metadata={"login_type": "ussd", "channel": "ussd"},
+        )
+        return user
+
+    @staticmethod
+    def _phone_matches_msisdn(registered: str, msisdn: str) -> bool:
+        from apps.accounts.utils.phone import normalize_phone, phones_match
+
+        if not registered or not msisdn:
+            return False
+        return phones_match(normalize_phone(registered), normalize_phone(msisdn))
+
+    def authenticate_student_for_ussd_legacy(
+        self,
+        index_number: str,
         password: str,
         ip_address: str | None = None,
         user_agent: str | None = None,
     ) -> User:
-        """USSD channel authentication — password check only, no OTP step."""
+        """Deprecated password-based USSD auth — kept for backward compatibility in tests."""
         user = self.user_repository.get_queryset().filter(
             index_number=index_number,
             role__name__in=self.STUDENT_ROLES,
@@ -492,6 +628,8 @@ class AuthService:
         if previous.is_verified:
             raise ValidationError(message="OTP has already been used.", code="otp_already_used")
 
+        self.otp_service.enforce_resend_policy(previous.user, previous.purpose)
+
         channel, recipient = self.otp_service.resolve_channel_and_recipient(previous.user)
         otp_request = self.otp_service.create_and_send(
             user=previous.user,
@@ -500,12 +638,14 @@ class AuthService:
             recipient=recipient,
             ip_address=ip_address,
             user_agent=user_agent,
+            is_resend=True,
         )
 
         return {
             "otp_request_uuid": str(otp_request.uuid),
             "expires_at": otp_request.expires_at,
             "channel": otp_request.channel,
+            "masked_destination": self._mask_recipient(recipient, otp_request.channel),
         }
 
     def _initiate_otp_login(
@@ -545,12 +685,52 @@ class AuthService:
             "otp_request_uuid": str(otp_request.uuid),
             "expires_at": otp_request.expires_at,
             "channel": otp_request.channel,
+            "masked_destination": self._mask_recipient(recipient, otp_request.channel),
         }
 
         if mfa_required:
             response["mfa_required"] = True
 
         return response
+
+    @staticmethod
+    def _mask_recipient(recipient: str, channel: str) -> str:
+        if not recipient:
+            return "your registered contact"
+        if channel == OTPRequest.Channel.EMAIL and "@" in recipient:
+            local, _, domain = recipient.partition("@")
+            masked_local = local[:1] + "***" if local else "***"
+            return f"{masked_local}@{domain}"
+        digits = "".join(ch for ch in recipient if ch.isdigit())
+        if len(digits) >= 4:
+            return f"***{digits[-4:]}"
+        return "your registered contact"
+
+    def _complete_passwordless_login(
+        self,
+        user: User,
+        ip_address: str | None,
+        user_agent: str | None,
+    ) -> dict:
+        session, tokens = self.session_service.create_session(
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        self.mfa_service.log(
+            event_type=MFALog.EventType.LOGIN_SUCCESS,
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            metadata={"session_uuid": str(session.uuid), "flow": "student_passwordless"},
+        )
+        return {
+            "user_uuid": str(user.uuid),
+            "session_uuid": str(session.uuid),
+            "tokens": tokens,
+            "redirect_path": self.dashboard_path_for_role(user.role.name),
+            "trusted_login": False,
+        }
 
     def _complete_password_login(
         self,

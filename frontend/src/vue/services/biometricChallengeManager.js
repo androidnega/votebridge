@@ -29,8 +29,8 @@ export function verifyChallengeLabel(type) {
 
 export function verifyChallengeInstruction(type) {
   return normalizeVerifyChallengeType(type) === "blink_twice"
-    ? "Blink twice when prompted"
-    : "Blink once when prompted";
+    ? "Blink twice to continue"
+    : "Blink once to continue";
 }
 
 export function challengeNeeds(type, action, mode = "verify") {
@@ -71,7 +71,7 @@ export function nextActionHint(type, completedSteps, warning, mode = "verify") {
   if (warning) return warning;
 
   if (challengeNeeds(type, "blink", mode) && !completedSteps.has("blink")) {
-    return "Blink naturally when prompted";
+    return "Blink now";
   }
   if (normalizeVerifyChallengeType(type) === "blink_twice" && completedSteps.has("blink") && !completedSteps.has("blink2")) {
     return "Blink once more";

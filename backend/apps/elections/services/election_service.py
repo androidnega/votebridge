@@ -122,8 +122,18 @@ class ElectionService:
 
         election = self.repository.update(election, status=new_status)
         logger.info("Election %s transitioned to %s", election.uuid, new_status)
+        if new_status == Election.Status.OPEN:
+            self._on_election_opened(election)
         self._broadcast_status_change(election, new_status)
         return election
+
+    def _on_election_opened(self, election: Election) -> None:
+        try:
+            from apps.elections.services.election_pin_service import election_pin_service
+
+            election_pin_service.generate_pins_for_election(election)
+        except Exception:
+            logger.exception("Election PIN generation failed for %s", election.uuid)
 
     def _broadcast_status_change(self, election, new_status: str) -> None:
         try:

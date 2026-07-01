@@ -226,6 +226,9 @@ class SVTToken(models.Model):
     issued_at = models.DateTimeField(default=timezone.now, db_column="issued_at")
     expires_at = models.DateTimeField(db_column="expires_at")
     used_at = models.DateTimeField(null=True, blank=True, db_column="used_at")
+    validated_at = models.DateTimeField(null=True, blank=True, db_column="validated_at")
+    validation_attempts = models.PositiveSmallIntegerField(default=0, db_column="validation_attempts")
+    last_resent_at = models.DateTimeField(null=True, blank=True, db_column="last_resent_at")
     status = models.CharField(
         max_length=20,
         choices=Status.choices,
@@ -249,7 +252,8 @@ class SVTToken(models.Model):
 
     @staticmethod
     def generate_token_code() -> str:
-        return secrets.token_urlsafe(32)
+        """Phase 56 — six-digit numeric Secure Voting Token."""
+        return f"{secrets.randbelow(1_000_000):06d}"
 
     @staticmethod
     def hash_token_code(token_code: str) -> str:

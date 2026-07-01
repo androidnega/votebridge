@@ -125,6 +125,11 @@ class Position(models.Model):
     max_votes_allowed = models.PositiveSmallIntegerField(default=1)
     display_order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True, db_index=True)
+    is_votable = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text="When false, the position is excluded from student ballots (e.g. appointed roles).",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -200,3 +205,54 @@ class VoterEligibility(models.Model):
     def __str__(self):
         status = "eligible" if self.is_eligible else "ineligible"
         return f"{self.user.email} — {self.election.title} ({status})"
+
+
+class ElectionVoterPin(models.Model):
+    """Per-election USSD PIN for eligible voters (hashed, 6 digits)."""
+
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
+    election = models.ForeignKey(
+        Election,
+        on_delete=models.CASCADE,
+        related_name="voter_pins",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="election_pins",
+    )
+    pin_hash = models.CharField(max_length=128)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    max_attempts = models.PositiveSmallIntegerField(default=3)
+    issued_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "elections_voter_pin"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["election", "user"],
+                name="elections_unique_pin_per_voter",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["election", "is_active"]),
+        ]
+
+    @staticmethod
+    def generate_pin_code() -> str:
+        import secrets
+
+        return f"{secrets.randbelow(1_000_000):06d}"
+
+    @staticmethod
+    def hash_pin(pin_code: str) -> str:
+        from django.contrib.auth.hashers import make_password
+
+        return make_password(pin_code)
+
+    def verify_pin(self, pin_code: str) -> bool:
+        from django.contrib.auth.hashers import check_password
+
+        return check_password(pin_code, self.pin_hash)

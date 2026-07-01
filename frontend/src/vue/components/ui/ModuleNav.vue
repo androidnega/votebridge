@@ -114,8 +114,8 @@ onUnmounted(() => {
             class="relative inline-flex items-center whitespace-nowrap rounded-input px-3 py-2.5 text-sm font-medium transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-600"
             :class="
               isActive(item)
-                ? 'text-brand-700'
-                : 'text-slate-500 hover:text-slate-800'
+                ? 'text-shell-accent'
+                : 'text-ink-secondary hover:text-ink-primary'
             "
           >
             {{ item.label }}
@@ -124,7 +124,7 @@ onUnmounted(() => {
       </ul>
 
       <span
-        class="pointer-events-none absolute bottom-0 h-0.5 rounded-full bg-brand-600 transition-[left,width,opacity] duration-300 ease-out"
+        class="pointer-events-none absolute bottom-0 h-0.5 rounded-full bg-shell-accent transition-[left,width,opacity] duration-200 ease-out"
         :class="indicator.ready ? 'opacity-100' : 'opacity-0'"
         :style="{
           left: `${indicator.left}px`,

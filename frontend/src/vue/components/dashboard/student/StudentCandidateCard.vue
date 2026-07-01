@@ -1,11 +1,15 @@
 <script setup>
-import { parseCandidateMeta } from "@/utils/candidateDisplay";
+import { computed } from "vue";
+import { getCandidatePhotoUrl } from "@/utils/candidateDisplay";
+import CandidateInfoPanel from "@/components/candidates/CandidateInfoPanel.vue";
 
-defineProps({
+const props = defineProps({
   candidate: { type: Object, required: true },
 });
 
 const emit = defineEmits(["select"]);
+
+const photoUrl = computed(() => getCandidatePhotoUrl(props.candidate));
 
 function initials(name = "") {
   return name
@@ -15,44 +19,36 @@ function initials(name = "") {
     .map((part) => part[0]?.toUpperCase() || "")
     .join("");
 }
-
-function meta(candidate) {
-  return parseCandidateMeta(candidate.manifesto, candidate.department);
-}
 </script>
 
 <template>
-  <button
-    type="button"
-    class="flex w-full min-h-[44px] flex-col rounded-card border border-border bg-surface p-4 text-left shadow-card transition hover:border-brand-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
+  <div
+    role="button"
+    tabindex="0"
+    class="vb-candidate-card flex h-full min-w-0 cursor-pointer flex-col overflow-hidden rounded-lg border border-border bg-surface text-left shadow-sm transition hover:border-brand-200 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500"
     @click="emit('select', candidate)"
+    @keydown.enter.prevent="emit('select', candidate)"
+    @keydown.space.prevent="emit('select', candidate)"
   >
-    <div class="flex items-start gap-4">
+    <div class="vb-candidate-photo">
+      <img
+        v-if="photoUrl"
+        :src="photoUrl"
+        :alt="`${candidate.full_name} portrait`"
+        class="vb-candidate-photo-img"
+        loading="lazy"
+      />
       <div
-        class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-input bg-brand-50 text-lg font-bold text-brand-700"
-        aria-hidden="true"
+        v-else
+        class="flex h-full w-full items-center justify-center bg-brand-50 text-lg font-bold text-brand-700"
       >
-        <img
-          v-if="candidate.image_url"
-          :src="candidate.image_url"
-          :alt="`${candidate.full_name} photo`"
-          class="h-full w-full object-cover"
-        />
-        <span v-else>{{ initials(candidate.full_name) }}</span>
-      </div>
-      <div class="min-w-0 flex-1">
-        <p class="text-base font-semibold text-slate-900">{{ candidate.full_name }}</p>
-        <p class="mt-0.5 text-sm font-medium text-brand-700">{{ candidate.position_title }}</p>
-        <p v-if="meta(candidate).faculty" class="mt-1 text-xs text-slate-600">
-          {{ meta(candidate).faculty }}
-        </p>
-        <p v-if="meta(candidate).department" class="text-xs text-slate-500">
-          {{ meta(candidate).department }}
-        </p>
+        {{ initials(candidate.full_name) }}
       </div>
     </div>
-    <p v-if="meta(candidate).manifestoSummary" class="mt-3 line-clamp-3 text-sm leading-relaxed text-slate-600">
-      {{ meta(candidate).manifestoSummary }}
-    </p>
-  </button>
+
+    <CandidateInfoPanel
+      :candidate="candidate"
+      :position-title="candidate.position_title"
+    />
+  </div>
 </template>

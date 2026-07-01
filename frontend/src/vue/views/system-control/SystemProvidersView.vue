@@ -8,6 +8,7 @@ import {
   buildProviderConfigPayload,
   draftFromProvider,
   getProviderConfigFields,
+  hasStoredProviderSecret,
 } from "@/config/providerConfig";
 import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { settingsNav } from "@/config/moduleNav";
@@ -73,12 +74,9 @@ function initDrafts(providers) {
 
 function providerLabel(providerType) {
   if (providerType === "arkesel_sms") return "Arkesel SMS";
+  if (providerType === "moolre_sms") return "Moolre SMS";
   if (providerType === "smtp_email") return "SMTP Email";
   return providerType.replace(/_/g, " ");
-}
-
-function hasStoredSecret(provider) {
-  return provider.config?.api_key === "***";
 }
 
 function validateDraft(provider) {
@@ -86,7 +84,7 @@ function validateDraft(provider) {
   const fields = getProviderConfigFields(provider.provider_type);
   for (const field of fields) {
     if (!field.required) continue;
-    if (field.type === "password" && hasStoredSecret(provider)) continue;
+    if (field.type === "password" && hasStoredProviderSecret(provider, field.key)) continue;
     if (!draft?.[field.key]) {
       toast.error(`${field.label} is required.`);
       return false;
@@ -189,7 +187,7 @@ function testProvider(uuid) {
           v-if="configDrafts[provider.uuid]"
           v-model="configDrafts[provider.uuid]"
           :provider-type="provider.provider_type"
-          :has-stored-secret="hasStoredSecret(provider)"
+          :provider="provider"
         />
 
         <p v-if="provider.last_error" class="mt-4 rounded-input border border-danger-200 bg-danger-50 px-3 py-2 text-xs text-danger-700">

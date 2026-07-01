@@ -132,44 +132,44 @@ async function handleLogout() {
 
 <template>
   <nav class="flex flex-1 flex-col">
-    <ul role="list" class="flex flex-1 flex-col gap-y-1">
+    <ul role="list" class="flex flex-1 flex-col gap-y-2">
       <li v-for="item in visibleItems" :key="item.name" :class="collapsed ? 'flex justify-center' : ''">
         <template v-if="visibleChildren(item).length && !collapsed">
           <button
             type="button"
-            class="group flex min-h-touch w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition duration-200"
-            :class="
-              groupIsActive(item)
-                ? 'bg-navy-700/60 text-white'
-                : 'text-slate-400 hover:bg-navy-700 hover:text-white'
-            "
+            class="vb-sidebar-group-btn"
+            :class="groupIsActive(item) ? 'vb-sidebar-group-btn--active' : ''"
             :aria-expanded="groupExpanded(item)"
             @click="onGroupToggle(item)"
           >
-            <VIcon :name="item.icon" class="h-5 w-5 shrink-0" />
+            <VIcon
+              :name="item.icon"
+              class="vb-sidebar-icon"
+              :class="groupIsActive(item) ? 'vb-sidebar-icon--active' : ''"
+            />
             <span class="flex-1 truncate text-left">{{ item.name }}</span>
             <VIcon
               name="chevronDown"
-              class="h-4 w-4 shrink-0 transition-transform duration-200"
-              :class="groupExpanded(item) ? 'rotate-180' : ''"
+              class="h-4 w-4 shrink-0 text-shell-sidebar-icon transition-transform duration-200"
+              :class="[
+                groupExpanded(item) ? 'rotate-180' : '',
+                groupIsActive(item) ? 'text-shell-accent' : '',
+              ]"
             />
           </button>
           <ul
             v-show="groupExpanded(item)"
-            class="mt-1 space-y-0.5 border-l border-navy-border pl-3"
+            class="mt-1.5 space-y-1 border-l border-shell-sidebar-border pl-3"
             role="list"
           >
             <li v-for="child in visibleChildren(item)" :key="child.to">
               <router-link
                 :to="childLinkTo(child)"
-                class="flex min-h-touch items-center rounded-lg py-2 pl-3 pr-2 text-sm transition duration-200"
-                :class="
-                  isChildActive(child)
-                    ? 'bg-brand-600 text-white'
-                    : child.disabled
-                      ? 'cursor-not-allowed text-slate-500 opacity-60'
-                      : 'text-slate-400 hover:bg-navy-700 hover:text-white'
-                "
+                class="vb-sidebar-child-link"
+                :class="[
+                  isChildActive(child) ? 'vb-sidebar-child-link--active' : '',
+                  child.disabled ? 'cursor-not-allowed opacity-50' : '',
+                ]"
                 :aria-disabled="child.disabled ? 'true' : undefined"
               >
                 <span class="truncate">{{ child.name }}</span>
@@ -183,51 +183,49 @@ async function handleLogout() {
             <router-link
               :to="item.to"
               :aria-label="item.name"
-              class="group flex h-11 w-11 items-center justify-center rounded-lg text-sm font-medium transition duration-200"
-              :class="
-                groupIsActive(item)
-                  ? 'bg-brand-600 text-white'
-                  : 'text-slate-400 hover:bg-navy-700 hover:text-white'
-              "
+              class="vb-sidebar-link vb-sidebar-link--collapsed"
+              :class="groupIsActive(item) ? 'vb-sidebar-link--active' : ''"
             >
-              <VIcon :name="item.icon" class="h-5 w-5 shrink-0" />
+              <VIcon
+                :name="item.icon"
+                class="vb-sidebar-icon"
+                :class="groupIsActive(item) ? 'vb-sidebar-icon--active' : ''"
+              />
             </router-link>
           </VTooltip>
           <router-link
             v-else
             :to="item.to"
-            class="group flex min-h-touch items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition duration-200"
-            :class="
-              isActive(item)
-                ? 'bg-brand-600 text-white'
-                : 'text-slate-400 hover:bg-navy-700 hover:text-white'
-            "
+            class="vb-sidebar-link"
+            :class="isActive(item) ? 'vb-sidebar-link--active' : ''"
           >
-            <VIcon :name="item.icon" class="h-5 w-5 shrink-0" />
+            <VIcon
+              :name="item.icon"
+              class="vb-sidebar-icon"
+              :class="isActive(item) ? 'vb-sidebar-icon--active' : ''"
+            />
             <span class="truncate">{{ item.name }}</span>
           </router-link>
         </template>
       </li>
     </ul>
 
-    <div class="mt-auto border-t border-navy-border pt-4" :class="collapsed ? 'flex justify-center' : ''">
+    <div
+      class="mt-8 border-t border-shell-sidebar-border pt-5"
+      :class="collapsed ? 'flex justify-center' : ''"
+    >
       <VTooltip v-if="collapsed" label="Sign out" position="right">
         <button
           type="button"
-          class="flex h-11 w-11 items-center justify-center rounded-lg text-sm font-medium text-slate-400 transition duration-200 hover:bg-navy-700 hover:text-white"
+          class="vb-sidebar-link vb-sidebar-link--collapsed vb-sidebar-footer-btn !justify-center"
           aria-label="Sign out"
           @click="handleLogout"
         >
-          <VIcon name="logout" class="h-5 w-5 shrink-0" />
+          <VIcon name="logout" class="vb-sidebar-icon" />
         </button>
       </VTooltip>
-      <button
-        v-else
-        type="button"
-        class="mt-1 flex min-h-touch w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-400 transition duration-200 hover:bg-navy-700 hover:text-white"
-        @click="handleLogout"
-      >
-        <VIcon name="logout" class="h-5 w-5 shrink-0" />
+      <button v-else type="button" class="vb-sidebar-footer-btn w-full" @click="handleLogout">
+        <VIcon name="logout" class="vb-sidebar-icon" />
         <span>Sign out</span>
       </button>
     </div>

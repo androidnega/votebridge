@@ -4,6 +4,7 @@ import { RouterLink, useRoute, useRouter } from "vue-router";
 import AuthSecurityTerminal from "@/components/auth/AuthSecurityTerminal.vue";
 import { VAlert, VButton, VCheckbox, VInput, VPasswordInput } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth";
+import { navigateAfterLogin } from "@/utils/postLoginNavigation";
 import { getRememberedIdentifier, setRememberedIdentifier } from "@/utils/auth";
 import { minLength, required, validateFields } from "@/utils/validators";
 
@@ -33,22 +34,12 @@ onMounted(() => {
   form.remember = Boolean(form.identity);
 });
 
-function goToPassword() {
+async function continueIdentity() {
   submitError.value = "";
   const { valid, errors: fieldErrors } = validateFields(form, {
-    identity: [required("Enter your index number.")],
+    identity: [required("Enter your index number or administrator username.")],
   });
   errors.identity = fieldErrors.identity || "";
-  if (!valid) return;
-  step.value = "password";
-}
-
-async function submitCredentials() {
-  submitError.value = "";
-  const { valid, errors: fieldErrors } = validateFields(form, {
-    password: [required("Password is required."), minLength(8)],
-  });
-  errors.password = fieldErrors.password || "";
   if (!valid) return;
 
   if (form.remember) {
@@ -58,10 +49,52 @@ async function submitCredentials() {
   }
 
   try {
-    const challenge = await authStore.initiateLogin({
+    const result = await authStore.continueLogin({
+      identity: form.identity,
+    });
+
+    if (result?.completed) {
+      await navigateAfterLogin(router, result.redirectPath || route.query.redirect);
+      return;
+    }
+
+    if (result?.requires_password) {
+      step.value = "password";
+      return;
+    }
+
+    if (result?.mfa_required) {
+      step.value = "auth-check";
+      return;
+    }
+
+    await router.push({
+      name: "auth-otp",
+      query: { redirect: route.query.redirect },
+    });
+  } catch (error) {
+    submitError.value = error.message;
+  }
+}
+
+async function submitPassword() {
+  submitError.value = "";
+  const { valid, errors: fieldErrors } = validateFields(form, {
+    password: [required("Password is required."), minLength(8)],
+  });
+  errors.password = fieldErrors.password || "";
+  if (!valid) return;
+
+  try {
+    const challenge = await authStore.continueLogin({
       identity: form.identity,
       password: form.password,
     });
+
+    if (challenge?.completed) {
+      await navigateAfterLogin(router, challenge.redirectPath || route.query.redirect);
+      return;
+    }
 
     if (challenge?.mfa_required) {
       step.value = "auth-check";
@@ -96,28 +129,30 @@ function backFromPassword() {
       {{ submitError }}
     </VAlert>
 
-    <form v-if="step === 'identity'" class="space-y-4" @submit.prevent="goToPassword">
+    <form v-if="step === 'identity'" class="space-y-4" @submit.prevent="continueIdentity">
       <div>
         <h2 class="text-base font-semibold text-slate-800">Sign in</h2>
-        <p class="mt-1 text-sm text-slate-500">Enter your index number or email to begin.</p>
+        <p class="mt-1 text-sm text-slate-500">
+          Enter your student index number or administrator username.
+        </p>
       </div>
 
       <VInput
         id="identity"
         v-model="form.identity"
-        label="Index number or email"
+        label="Index number or username"
         autocomplete="username"
-        placeholder="BC/ITS/24/047"
+        placeholder="BC/ITS/24/047 or admin@ttu.edu.gh"
         :error="errors.identity"
         required
       />
 
-      <VButton type="submit" block>Next</VButton>
+      <VButton type="submit" block :loading="authStore.loading">Continue</VButton>
     </form>
 
-    <form v-else-if="step === 'password'" class="space-y-4" @submit.prevent="submitCredentials">
+    <form v-else-if="step === 'password'" class="space-y-4" @submit.prevent="submitPassword">
       <div>
-        <h2 class="text-base font-semibold text-slate-800">Authenticate</h2>
+        <h2 class="text-base font-semibold text-slate-800">Enter password</h2>
         <p class="mt-1 truncate text-sm text-slate-500">{{ form.identity.trim() }}</p>
       </div>
 
@@ -138,7 +173,7 @@ function backFromPassword() {
         </RouterLink>
       </div>
 
-      <VButton type="submit" block :loading="authStore.loading">Sign in</VButton>
+      <VButton type="submit" block :loading="authStore.loading">Continue</VButton>
 
       <button
         type="button"

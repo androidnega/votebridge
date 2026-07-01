@@ -16,11 +16,11 @@ const links = [
       v-for="link in links"
       :key="link.route"
       type="button"
-      class="inline-flex min-h-touch items-center gap-1.5 rounded-input px-2 text-xs font-medium text-slate-600 transition hover:bg-surface-muted hover:text-slate-900"
+      class="inline-flex min-h-touch items-center gap-1.5 rounded-input px-2 text-xs font-medium text-ink-secondary transition duration-150 hover:bg-shell-sidebar-hover hover:text-shell-accent"
       :title="link.label"
       @click="router.push(link.route)"
     >
-      <VIcon :name="link.icon" class="h-4 w-4 shrink-0" />
+      <VIcon :name="link.icon" class="h-4 w-4 shrink-0 text-shell-sidebar-icon" />
       <span class="hidden 2xl:inline">{{ link.label }}</span>
     </button>
   </nav>

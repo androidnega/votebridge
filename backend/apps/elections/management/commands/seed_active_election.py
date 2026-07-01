@@ -10,6 +10,8 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+from django.core.cache import cache
+from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
@@ -39,7 +41,6 @@ INSTITUTION = "Takoradi Technical University"
 
 POSITIONS = [
     "President",
-    "Vice President",
     "General Secretary",
     "Financial Secretary",
     "Women's Commissioner",
@@ -54,11 +55,6 @@ CANDIDATE_ROSTER: dict[str, list[tuple[str, str, str, str]]] = {
         ("Kofi Boateng", "BC/ITN/24/112", "Faculty of Applied Sciences", "Information Technology"),
         ("Ama Serwaa", "BC/ITS/24/051", "Faculty of Applied Sciences", "Computer Science"),
         ("Kwame Ansah", "BC/ITD/24/044", "Faculty of Applied Sciences", "Information Technology"),
-    ],
-    "Vice President": [
-        ("Yaw Mensah", "BC/MEE/24/011", "Faculty of Engineering", "Mechanical Engineering"),
-        ("Abena Ofori", "BC/ICT/24/063", "Faculty of Applied Sciences", "Computer Technology"),
-        ("Fiifi Amoah", "BC/MEE/24/022", "Faculty of Engineering", "Mechanical Engineering"),
     ],
     "General Secretary": [
         ("Efua Adjei", "BC/ACC/24/092", "Faculty of Business Studies", "Accounting"),
@@ -97,10 +93,21 @@ class Command(BaseCommand):
     help = "Seed (or refresh) a complete OPEN demo election for demonstrations and testing."
 
     def handle(self, *args, **options):
+        if not User.objects.filter(role__name=Role.Name.ADMIN, is_active=True).exists():
+            call_command("seed_demo_users")
+
         admin = User.objects.filter(role__name=Role.Name.ADMIN, is_active=True).first()
         if not admin:
-            self.stdout.write(self.style.ERROR("No active admin user found. Run seed_demo_users first."))
+            self.stdout.write(self.style.ERROR("No active admin user found after seed_demo_users."))
             return
+
+        student_count = User.objects.filter(role__name=Role.Name.STUDENT, is_active=True).count()
+        if student_count == 0:
+            self.stdout.write(
+                self.style.WARNING(
+                    "  ! no active students found — run seed_demo_data for a fuller demo roster"
+                )
+            )
 
         self._ensure_platform_readiness()
 
@@ -213,6 +220,7 @@ class Command(BaseCommand):
                         "description": f"Candidates for {title} — {INSTITUTION} SRC.",
                         "display_order": order,
                         "is_active": True,
+                        "is_votable": True,
                     },
                 )
             else:
@@ -223,10 +231,16 @@ class Command(BaseCommand):
                         "description": f"Candidates for {title} — {INSTITUTION} SRC.",
                         "display_order": order,
                         "is_active": True,
+                        "is_votable": True,
                     },
                 )
                 created += 1
-        return Position.objects.filter(election=election, is_active=True).count()
+
+        Position.objects.filter(election=election, title__iexact="Vice President").update(
+            is_votable=False,
+            is_active=False,
+        )
+        return Position.objects.filter(election=election, is_active=True, is_votable=True).count()
 
     def _sync_candidates(self, election: Election) -> int:
         total = 0
@@ -235,11 +249,13 @@ class Command(BaseCommand):
             if not position:
                 continue
 
-            for name, index_number, faculty, department in roster:
+            for i, (name, index_number, faculty, department) in enumerate(roster):
+                academic_level = ("Level 200", "Level 300", "Level 400")[i % 3]
                 manifesto = (
                     f"Index: {index_number}\n"
                     f"Faculty: {faculty}\n"
-                    f"Department: {department}\n\n"
+                    f"Department: {department}\n"
+                    f"Academic Level: {academic_level}\n\n"
                     "I am committed to transparent SRC governance, accountable leadership, "
                     "and improving student welfare across campus."
                 )
@@ -351,6 +367,9 @@ class Command(BaseCommand):
                     pass
 
     def _refresh_dashboard_cache(self) -> None:
+        cache.delete("analytics:overview")
+        cache.delete("operations:overview")
+
         try:
             from core.realtime.broadcasting import realtime_broadcast_service
 

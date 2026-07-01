@@ -1,11 +1,9 @@
-import { computed, onMounted, onUnmounted, ref, unref } from "vue";
-import { electionsApi, notificationsApi } from "@/api";
+import { computed, onMounted, onUnmounted, ref } from "vue";
+import { dashboardApi } from "@/api";
 import { greetingForHour } from "@/config/dashboardExperience";
 import { useAuthStore } from "@/stores/auth";
 import { useDashboardStore } from "@/stores/dashboard";
-import { groupCandidatesByPosition } from "@/utils/candidateDisplay";
 import {
-  resolveCountdownLabel,
   resolveElectionCountdownTarget,
 } from "@/composables/useElectionCountdown";
 
@@ -26,26 +24,47 @@ function countdownParts(target) {
   };
 }
 
-function formatDateTime(value) {
-  if (!value) return "—";
+function formatCloseDate(value) {
+  if (!value) return "Closing date to be announced";
   return new Date(value).toLocaleString(undefined, {
-    weekday: "short",
-    month: "short",
     day: "numeric",
-    hour: "2-digit",
+    month: "long",
+    year: "numeric",
+    hour: "numeric",
     minute: "2-digit",
   });
+}
+
+function formatPositionPreview(titles = []) {
+  if (!titles.length) return "Multiple positions";
+  const preview = titles.slice(0, 3).join(", ");
+  if (titles.length > 3) return `${preview}…`;
+  return preview;
+}
+
+function electionInitials(title = "") {
+  const words = title.split(/\s+/).filter(Boolean);
+  if (words.length >= 2) return `${words[0][0]}${words[1][0]}`.toUpperCase();
+  return title.slice(0, 2).toUpperCase();
+}
+
+function relativeTime(value) {
+  if (!value) return "";
+  const diff = Date.now() - new Date(value).getTime();
+  const days = Math.floor(diff / 86_400_000);
+  if (days > 0) return `${days} day${days === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(diff / 3_600_000);
+  if (hours > 0) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  return "Just now";
 }
 
 export function useStudentVotePortal() {
   const authStore = useAuthStore();
   const dashboardStore = useDashboardStore();
 
-  const electionDetails = ref(null);
-  const candidateGroups = ref([]);
-  const notifications = ref([]);
-  const portalLoading = ref(false);
+  const electionDetailsMap = ref({});
   const portalError = ref(null);
+  const portalLoading = ref(false);
   const countdown = ref(countdownParts(null));
   let countdownTimer = null;
 
@@ -55,112 +74,152 @@ export function useStudentVotePortal() {
     () => authStore.user?.first_name || authStore.fullName?.split(" ")[0] || "Student"
   );
 
-  const activeElections = computed(
+  const activeElectionRows = computed(
     () => dashboardStore.studentOverview?.active_elections || []
   );
 
+  const openElectionRows = computed(() =>
+    activeElectionRows.value.filter((row) => row.election_status === "open")
+  );
+
+  function hasRecordedVote(row) {
+    return row.ballot_complete || row.confirmation_status === "recorded";
+  }
+
+  function hasPartialOrActiveVote(row) {
+    return ["in_progress", "token_issued"].includes(row.confirmation_status);
+  }
+
+  const actionableElectionRows = computed(() =>
+    openElectionRows.value.filter((row) => !hasRecordedVote(row))
+  );
+
   const primaryElection = computed(() => {
-    const open = activeElections.value.find((row) => row.election_status === "open");
-    if (open) return open;
-    return activeElections.value.find((row) => row.election_status === "paused") || null;
+    const match2026 = actionableElectionRows.value.find((row) =>
+      /2026/i.test(row.election_title || "")
+    );
+    return (
+      match2026 ||
+      actionableElectionRows.value[0] ||
+      openElectionRows.value[0] ||
+      activeElectionRows.value[0] ||
+      null
+    );
   });
 
-  const hasActiveElection = computed(() => Boolean(primaryElection.value));
+  const hasActiveElection = computed(() => actionableElectionRows.value.length > 0);
 
-  const electionTitle = computed(
-    () =>
-      electionDetails.value?.title ||
-      primaryElection.value?.election_title ||
-      "Campus election"
-  );
+  const electionTitle = computed(() => primaryElection.value?.election_title || "Campus elections");
 
-  const electionStatus = computed(
-    () =>
-      electionDetails.value?.status ||
-      primaryElection.value?.election_status ||
-      "draft"
-  );
-
-  const electionUuid = computed(
-    () => primaryElection.value?.election_uuid || electionDetails.value?.uuid || null
-  );
-
-  const countdownTarget = computed(() => {
-    const details = electionDetails.value;
-    const row = primaryElection.value;
-    if (!details && !row) return null;
-    return resolveElectionCountdownTarget({
-      status: details?.status || row?.election_status,
-      election_status: row?.election_status || details?.status,
-      start_date: details?.start_date,
-      end_date: details?.end_date,
-    });
+  const portalSubtitle = computed(() => {
+    const title = primaryElection.value?.election_title;
+    if (!title) return "Sign in to vote when elections open";
+    if (/2026/.test(title)) return `${title} — 2025/2026 Academic Year`;
+    return title;
   });
 
-  const countdownLabel = computed(() =>
-    resolveCountdownLabel({
-      status: electionDetails.value?.status || primaryElection.value?.election_status,
-      election_status: primaryElection.value?.election_status || electionDetails.value?.status,
-    })
+  const votesCastCount = computed(
+    () => activeElectionRows.value.filter((row) => hasRecordedVote(row)).length
   );
 
-  const hasVoted = computed(
-    () =>
-      primaryElection.value?.ballot_submitted === true ||
-      primaryElection.value?.confirmation_status === "recorded"
-  );
+  const activeElectionCount = computed(() => actionableElectionRows.value.length);
 
-  const votingStatusLabel = computed(() => (hasVoted.value ? "Vote Recorded" : "Not Yet Voted"));
+  const countdownText = computed(() => {
+    const { days, hours, minutes, expired } = countdown.value;
+    if (expired) return "Closed";
+    if (days > 0) return `${days}d ${hours}h`;
+    return `${hours}h ${minutes}m`;
+  });
 
-  const voteRoute = computed(() =>
-    electionUuid.value ? `/dashboard/elections/${electionUuid.value}/vote` : null
-  );
+  function buildElectionCard(row) {
+    const details = electionDetailsMap.value[row.election_uuid] || {};
+    const positionTitles = details.position_titles || [];
+    const positions = positionTitles.length
+      ? formatPositionPreview(positionTitles)
+      : details.position_count
+        ? `${details.position_count} positions`
+        : "Multiple positions";
+    const voted = hasRecordedVote(row);
+    const partial = hasPartialOrActiveVote(row);
+    return {
+      uuid: row.election_uuid,
+      title: row.election_title || details.title || "Election",
+      initials: electionInitials(row.election_title || details.title || "EL"),
+      status: row.election_status,
+      positionsLabel: positions,
+      closesLabel: `Closes ${formatCloseDate(details.end_date)}`,
+      endDate: details.end_date,
+      canVote: row.election_status === "open" && !voted,
+      hasVoted: voted,
+      hasPartialVote: partial,
+      confirmationReference: row.confirmation_reference || null,
+      voteRoute: `/dashboard/elections/${row.election_uuid}/vote`,
+    };
+  }
 
-  const canVoteNow = computed(
-    () => hasActiveElection.value && electionStatus.value === "open" && !hasVoted.value
+  const electionCards = computed(() => openElectionRows.value.map(buildElectionCard));
+
+  const activeElectionCards = computed(() => electionCards.value.filter((card) => card.canVote));
+
+  const historyElectionCards = computed(() => electionCards.value.filter((card) => card.hasVoted));
+
+  const recentActivity = computed(() =>
+    activeElectionRows.value
+      .filter((row) => hasRecordedVote(row))
+      .map((row) => ({
+        id: row.election_uuid,
+        title: `Vote recorded — ${row.election_title}`,
+        timestamp: electionDetailsMap.value[row.election_uuid]?.updated_at || null,
+        relative:
+          relativeTime(electionDetailsMap.value[row.election_uuid]?.updated_at) || "Recently",
+      }))
   );
 
   function updateCountdown() {
-    countdown.value = countdownParts(countdownTarget.value);
+    const primary = primaryElection.value;
+    const details = primary ? electionDetailsMap.value[primary.election_uuid] : null;
+    const target = resolveElectionCountdownTarget({
+      status: primary?.election_status,
+      election_status: primary?.election_status,
+      start_date: details?.start_date,
+      end_date: details?.end_date,
+    });
+    countdown.value = countdownParts(target);
   }
 
-  async function loadPortalExtras() {
+  async function loadElectionDetails() {
     portalLoading.value = true;
     portalError.value = null;
-    candidateGroups.value = [];
-    electionDetails.value = null;
-    notifications.value = [];
+
+    const uuids = [...new Set(activeElectionRows.value.map((row) => row.election_uuid).filter(Boolean))];
+    if (!uuids.length) {
+      electionDetailsMap.value = {};
+      updateCountdown();
+      portalLoading.value = false;
+      return;
+    }
 
     try {
-      const tasks = [
-        notificationsApi
-          .getNotificationCenter({ limit: 3 })
-          .then((data) => {
-            notifications.value = data?.items || [];
-          })
-          .catch(() => {
-            notifications.value = [];
-          }),
-      ];
-
-      if (primaryElection.value?.election_uuid) {
-        const uuid = primaryElection.value.election_uuid;
-        tasks.push(
-          electionsApi.get(uuid).then((election) => {
-            electionDetails.value = election;
-          }),
-          electionsApi
-            .listCandidates(uuid, { status: "approved", page_size: 100 })
-            .then((result) => {
-              candidateGroups.value = groupCandidatesByPosition(result.items || []);
-            })
-            .catch(() => {
-              candidateGroups.value = [];
-            })
-        );
-      }
-
-      await Promise.allSettled(tasks);
+      const results = await Promise.allSettled(
+        uuids.map(async (uuid) => {
+          const detail = await dashboardApi.getStudentElectionDetail(uuid);
+          const positionTitles = (detail.positions || []).map((position) => position.title).filter(Boolean);
+          return {
+            ...detail,
+            title: detail.election_title,
+            status: detail.election_status,
+            position_count: detail.positions_count,
+            position_titles: positionTitles,
+          };
+        })
+      );
+      const map = {};
+      results.forEach((result, index) => {
+        if (result.status === "fulfilled") {
+          map[uuids[index]] = result.value;
+        }
+      });
+      electionDetailsMap.value = map;
     } catch (error) {
       portalError.value = error.message || "Unable to load election details.";
     } finally {
@@ -171,7 +230,7 @@ export function useStudentVotePortal() {
 
   async function loadDashboard() {
     await dashboardStore.fetchStudentDashboard();
-    await loadPortalExtras();
+    await loadElectionDetails();
   }
 
   onMounted(() => {
@@ -187,25 +246,21 @@ export function useStudentVotePortal() {
     dashboardStore,
     greeting,
     studentName,
+    portalSubtitle,
     hasActiveElection,
     primaryElection,
     electionTitle,
-    electionStatus,
-    electionUuid,
-    electionDetails,
-    candidateGroups,
-    notifications,
-    countdown,
-    countdownLabel,
-    countdownTarget,
-    hasVoted,
-    votingStatusLabel,
-    voteRoute,
-    canVoteNow,
+    activeElectionCount,
+    votesCastCount,
+    countdownText,
+    electionCards,
+    activeElectionCards,
+    historyElectionCards,
+    recentActivity,
     portalLoading,
     portalError,
-    formatDateTime,
     loadDashboard,
     refresh: loadDashboard,
+    formatCloseDate,
   };
 }

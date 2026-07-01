@@ -100,7 +100,7 @@ onUnmounted(() => document.removeEventListener("keydown", onGlobalKeydown));
   <div class="relative w-full">
     <label class="sr-only" for="global-search">Search pages</label>
     <div class="relative">
-      <VIcon name="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+      <VIcon name="search" class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-shell-sidebar-icon" />
       <input
         id="global-search"
         ref="searchRef"

@@ -33,7 +33,16 @@ module.exports = {
         },
         surface: {
           DEFAULT: "#FFFFFF",
-          muted: "#F8FAFC",
+          muted: "#F9FAFB",
+        },
+        shell: {
+          sidebar: "#F3F4F6",
+          "sidebar-border": "#E5E7EB",
+          "sidebar-text": "#374151",
+          "sidebar-icon": "#6B7280",
+          "sidebar-hover": "#E8F5EE",
+          active: "#E8F5EE",
+          accent: "#166534",
         },
         success: {
           50: "#F0FDF4",
@@ -56,11 +65,11 @@ module.exports = {
           700: "#1D4ED8",
         },
         border: {
-          DEFAULT: "#E2E8F0",
+          DEFAULT: "#E5E7EB",
         },
         ink: {
-          primary: "#0F172A",
-          secondary: "#64748B",
+          primary: "#1F2937",
+          secondary: "#6B7280",
         },
       },
       fontFamily: {

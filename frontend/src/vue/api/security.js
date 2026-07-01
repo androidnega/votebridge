@@ -2,9 +2,27 @@ import apiClient from "./client";
 import { unwrapResponse } from "./helpers";
 
 export const securityApi = {
+  getVotingAccess(electionUuid) {
+    return apiClient
+      .get(`/security/elections/${electionUuid}/svt/access/`)
+      .then(unwrapResponse);
+  },
+
+  startVotingSession(electionUuid) {
+    return apiClient
+      .post(`/security/elections/${electionUuid}/svt/start/`)
+      .then(unwrapResponse);
+  },
+
   requestSvt(electionUuid) {
     return apiClient
       .post(`/security/elections/${electionUuid}/svt/request/`)
+      .then(unwrapResponse);
+  },
+
+  resendSvt(electionUuid) {
+    return apiClient
+      .post(`/security/elections/${electionUuid}/svt/resend/`)
       .then(unwrapResponse);
   },
 

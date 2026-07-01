@@ -130,6 +130,7 @@ class PositionSerializer(serializers.ModelSerializer):
             "max_votes_allowed",
             "display_order",
             "is_active",
+            "is_votable",
             "choice_type",
             "created_at",
             "updated_at",
@@ -149,6 +150,7 @@ class PositionCreateUpdateSerializer(serializers.ModelSerializer):
             "max_votes_allowed",
             "display_order",
             "is_active",
+            "is_votable",
         ]
 
 

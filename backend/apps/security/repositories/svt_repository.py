@@ -12,7 +12,10 @@ class SVTRepository:
         return self.get_queryset().filter(svt_id=svt_id).first()
 
     def get_by_token_code(self, token_code: str) -> SVTToken | None:
-        token_hash = SVTToken.hash_token_code(token_code)
+        normalized = str(token_code or "").strip()
+        if normalized.isdigit():
+            normalized = normalized.zfill(6)
+        token_hash = SVTToken.hash_token_code(normalized)
         return self.get_queryset().filter(token_code=token_hash).first()
 
     def list_for_election(self, election, status: str | None = None):
@@ -28,6 +31,25 @@ class SVTRepository:
             status=SVTToken.Status.ISSUED,
             expires_at__gt=timezone.now(),
         )
+
+    def get_active_svt_for_user_election(self, user, election) -> SVTToken | None:
+        """Return an issued (non-expired) or validated SVT that blocks re-issue."""
+        candidates = self.get_queryset().filter(
+            user=user,
+            election=election,
+            status__in=[SVTToken.Status.ISSUED, SVTToken.Status.VALIDATED],
+        ).order_by("-issued_at")
+
+        for svt in candidates:
+            svt.mark_expired_if_needed()
+            if svt.status == SVTToken.Status.VALIDATED:
+                return svt
+            if svt.status == SVTToken.Status.ISSUED and not svt.is_expired:
+                return svt
+        return None
+
+    def has_active_svt_for_user_election(self, user, election) -> bool:
+        return self.get_active_svt_for_user_election(user, election) is not None
 
     def create(self, **data) -> SVTToken:
         return SVTToken.objects.create(**data)

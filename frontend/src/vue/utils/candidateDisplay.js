@@ -1,9 +1,44 @@
 /** Parse seeded / structured manifesto lines for student-facing candidate cards. */
 
+/** Recommended uploads: 512×512 px (1:1), JPG/WebP, plain light background, head + shoulders centered. */
+
+const CANDIDATE_PHOTOS = {
+  "Kofi Boateng": "/candidates/male-1.png",
+  "Kwame Ansah": "/candidates/male-2.png",
+  "Daniel Owusu": "/candidates/male-3.png",
+  "Isaac Tetteh": "/candidates/male-2.png",
+  "Prince Boakye": "/candidates/male-1.png",
+  "Samuel Osei": "/candidates/male-3.png",
+  "Michael Addo": "/candidates/male-2.png",
+  "Kojo Sarpong": "/candidates/male-1.png",
+  "Kwesi Appiah": "/candidates/male-3.png",
+  "Yaw Darko": "/candidates/male-2.png",
+  "Kofi Asante": "/candidates/male-1.png",
+  "Ama Serwaa": "/candidates/female-1.png",
+  "Efua Adjei": "/candidates/female-2.png",
+  "Selina Agyeman": "/candidates/female-3.png",
+  "Adwoa Mensah": "/candidates/female-1.png",
+  "Rebecca Antwi": "/candidates/female-2.png",
+  "Akosua Frimpong": "/candidates/female-3.png",
+  "Gifty Asare": "/candidates/female-1.png",
+  "Naana Dankwa": "/candidates/female-2.png",
+  "Abena Boateng": "/candidates/female-3.png",
+  "Ama Kwarteng": "/candidates/female-2.png",
+};
+
+const META_LINE =
+  /^(Faculty|Department|Index|Academic Level):/i;
+
+export function getCandidatePhotoUrl(candidate = {}) {
+  if (candidate.image_url) return candidate.image_url;
+  return CANDIDATE_PHOTOS[candidate.full_name] || null;
+}
+
 export function parseCandidateMeta(manifesto = "", department = "") {
   const lines = String(manifesto || "").split("\n");
   let faculty = "";
   let dept = department || "";
+  let academicLevel = "";
   let indexNumber = "";
 
   for (const line of lines) {
@@ -11,15 +46,30 @@ export function parseCandidateMeta(manifesto = "", department = "") {
     if (trimmed.startsWith("Faculty:")) faculty = trimmed.replace(/^Faculty:\s*/i, "");
     if (trimmed.startsWith("Department:")) dept = trimmed.replace(/^Department:\s*/i, "");
     if (trimmed.startsWith("Index:")) indexNumber = trimmed.replace(/^Index:\s*/i, "");
+    if (/^Academic Level:/i.test(trimmed)) {
+      academicLevel = trimmed.replace(/^Academic Level:\s*/i, "");
+    }
   }
 
-  const manifestoSummary = lines
-    .filter((line) => !/^(Faculty|Department|Index):/i.test(line.trim()))
-    .join(" ")
-    .trim()
-    .slice(0, 220);
+  const manifestoText = lines
+    .filter((line) => !META_LINE.test(line.trim()))
+    .join("\n")
+    .trim();
 
-  return { faculty, department: dept, indexNumber, manifestoSummary };
+  const manifestoSummary = manifestoText.replace(/\s+/g, " ").trim();
+
+  return {
+    faculty,
+    department: dept,
+    academicLevel,
+    indexNumber,
+    manifestoText,
+    manifestoSummary,
+  };
+}
+
+export function candidateNeedsReadMore(meta = {}, limit = 88) {
+  return (meta.manifestoSummary || "").length > limit;
 }
 
 export function groupCandidatesByPosition(candidates = []) {

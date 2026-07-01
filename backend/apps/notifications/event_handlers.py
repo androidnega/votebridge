@@ -123,12 +123,8 @@ def on_svt_saved(sender, instance, created, **kwargs):
     previous = getattr(instance, "_previous_status", None)
 
     if instance.status == SVTToken.Status.ISSUED and (created or previous != SVTToken.Status.ISSUED):
-        context = {
-            "election_name": instance.election.title,
-            "svt": instance.token_code,
-            "expiry_time": instance.expires_at.isoformat() if instance.expires_at else "",
-        }
-        _safe_dispatch("svt_issued", instance.user, context, election=instance.election)
+        # Phase 56: SMS is sent from SVTService with the plain token code.
+        pass
 
     if instance.status == SVTToken.Status.USED and previous != SVTToken.Status.USED:
         context = {

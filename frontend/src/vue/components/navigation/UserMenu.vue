@@ -8,7 +8,6 @@ import { useAuthStore } from "@/stores/auth";
 
 defineProps({
   compact: { type: Boolean, default: false },
-  inverted: { type: Boolean, default: false },
 });
 
 const router = useRouter();
@@ -67,30 +66,26 @@ onUnmounted(() => {
     <VButton
       variant="ghost"
       size="sm"
-      :class="[
-        compact ? '!min-h-touch !px-1.5' : '!min-h-touch gap-2 !px-2',
-        inverted ? 'vb-user-menu-trigger' : '',
-      ]"
+      :class="compact ? '!min-h-touch !px-1.5' : '!min-h-touch gap-2 !px-2'"
       :aria-expanded="open"
       aria-haspopup="menu"
       aria-label="User menu"
       @click="toggle"
     >
       <span
-        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold"
-        :class="inverted ? 'vb-user-avatar' : 'bg-brand-50 text-brand-700'"
+        class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-shell-active text-xs font-semibold text-shell-accent"
         aria-hidden="true"
       >
         {{ initials }}
       </span>
       <template v-if="!compact">
         <span class="hidden min-w-0 text-left md:block">
-          <span class="block max-w-[10rem] truncate text-sm font-medium" :class="inverted ? 'vb-user-name' : 'text-ink-primary'">
+          <span class="block max-w-[10rem] truncate text-sm font-medium text-ink-primary">
             {{ userLabel }}
           </span>
-          <span v-if="roleLabel" class="block truncate text-xs" :class="inverted ? 'vb-user-role' : 'text-ink-secondary'">{{ roleLabel }}</span>
+          <span v-if="roleLabel" class="block truncate text-xs text-ink-secondary">{{ roleLabel }}</span>
         </span>
-        <VIcon name="chevronDown" class="hidden h-4 w-4 md:block" :class="inverted ? 'text-slate-400' : 'text-ink-secondary'" />
+        <VIcon name="chevronDown" class="hidden h-4 w-4 text-ink-secondary md:block" />
       </template>
     </VButton>
 
@@ -108,28 +103,28 @@ onUnmounted(() => {
         class="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-card border border-border bg-white py-1 shadow-card"
       >
         <div class="border-b border-border px-4 py-3" :class="compact ? '' : 'md:hidden'">
-          <p class="truncate text-sm font-medium text-slate-800">{{ userLabel }}</p>
-          <p v-if="roleLabel" class="truncate text-xs text-slate-500">{{ roleLabel }}</p>
+          <p class="truncate text-sm font-medium text-ink-primary">{{ userLabel }}</p>
+          <p v-if="roleLabel" class="truncate text-xs text-ink-secondary">{{ roleLabel }}</p>
         </div>
         <button
           type="button"
           role="menuitem"
-          class="flex min-h-touch w-full items-center gap-3 px-4 text-left text-sm text-slate-700 transition hover:bg-surface-muted"
+          class="flex min-h-touch w-full items-center gap-3 px-4 text-left text-sm text-ink-primary transition duration-150 hover:bg-shell-sidebar-hover"
           @click="goProfile"
         >
-          <VIcon name="profile" class="h-4 w-4" />
+          <VIcon name="profile" class="h-4 w-4 text-shell-sidebar-icon" />
           Profile
         </button>
         <button
           type="button"
           role="menuitem"
-          class="flex min-h-touch w-full items-center gap-3 px-4 text-left text-sm text-danger-600 transition hover:bg-danger-50"
+          class="flex min-h-touch w-full items-center gap-3 px-4 text-left text-sm text-danger-600 transition duration-150 hover:bg-danger-50"
           @click="handleLogout"
         >
           <VIcon name="logout" class="h-4 w-4" />
           Sign out
         </button>
-        <p class="border-t border-border px-4 py-2 text-xs text-slate-400">
+        <p class="border-t border-border px-4 py-2 text-xs text-ink-secondary">
           {{ branding.institutionName }}
         </p>
       </div>

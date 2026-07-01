@@ -143,7 +143,7 @@ function formatDate(value) {
       </p>
       <div class="mt-4">
         <VButton variant="secondary" @click="router.push({ name: 'profile-verify-ballot' })">
-          Verify ballot
+          Verify My Ballot
         </VButton>
       </div>
     </VCard>

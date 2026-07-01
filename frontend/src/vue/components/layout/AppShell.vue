@@ -38,7 +38,7 @@ const contentClass = {
     >
       <div
         v-if="mobileOpen"
-        class="fixed inset-0 z-40 bg-slate-900/60 lg:hidden"
+        class="fixed inset-0 z-40 bg-slate-900/40 lg:hidden"
         aria-hidden="true"
         @click="closeMobileSidebar"
       />
@@ -46,7 +46,7 @@ const contentClass = {
 
     <!-- Sidebar: fixed on all breakpoints; drawer on mobile -->
     <aside
-      class="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-navy-border bg-navy transition-all duration-200 lg:z-30"
+      class="fixed inset-y-0 left-0 z-50 flex flex-col border-r border-shell-sidebar-border bg-shell-sidebar transition-all duration-200 lg:z-30"
       :class="[
         mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0',
         collapsed ? 'w-sidebar-collapsed' : 'w-sidebar',
@@ -54,16 +54,12 @@ const contentClass = {
       :aria-label="`${branding.systemName} navigation`"
     >
       <div
-        class="flex h-topbar shrink-0 items-center border-b border-navy-border"
+        class="flex h-topbar shrink-0 items-center border-b border-shell-sidebar-border bg-shell-sidebar"
         :class="collapsed ? 'justify-center' : 'gap-3 px-5'"
       >
         <div
           class="flex shrink-0 items-center justify-center overflow-hidden"
-          :class="
-            collapsed
-              ? 'h-11 w-11'
-              : 'h-9 w-9 rounded-lg bg-brand-600 text-xs font-bold text-white'
-          "
+          :class="collapsed ? 'h-11 w-11' : 'vb-sidebar-brand'"
           aria-hidden="true"
         >
           <img
@@ -72,16 +68,16 @@ const contentClass = {
             :alt="`${branding.institutionName} logo`"
             :class="collapsed ? 'h-9 w-9 object-contain' : 'h-full w-full object-contain p-1'"
           />
-          <span v-else :class="collapsed ? 'text-xs font-bold text-white' : ''">VB</span>
+          <span v-else>VB</span>
         </div>
         <div v-if="!collapsed" class="min-w-0">
-          <p class="truncate text-sm font-semibold text-white">{{ branding.systemName }}</p>
-          <p class="truncate text-xs text-slate-400">{{ branding.institutionName }}</p>
+          <p class="truncate text-sm font-semibold text-ink-primary">{{ branding.systemName }}</p>
+          <p class="truncate text-xs text-ink-secondary">{{ branding.institutionName }}</p>
         </div>
       </div>
 
       <div
-        class="flex flex-1 flex-col overflow-y-auto py-4"
+        class="flex flex-1 flex-col overflow-y-auto py-5"
         :class="collapsed ? '' : 'px-3'"
         @click="closeMobileSidebar"
       >

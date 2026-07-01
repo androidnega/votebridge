@@ -205,11 +205,10 @@ class CommunicationService:
         if delivery_log.channel == DeliveryLog.Channel.IN_APP:
             return self._deliver_in_app(delivery_log, in_app_title, in_app_body)
 
-        provider_type = (
-            CommunicationProvider.ProviderType.ARKESEL_SMS
-            if delivery_log.channel == DeliveryLog.Channel.SMS
-            else CommunicationProvider.ProviderType.SMTP_EMAIL
-        )
+        if delivery_log.channel == DeliveryLog.Channel.SMS:
+            return self._deliver_sms(delivery_log)
+
+        provider_type = CommunicationProvider.ProviderType.SMTP_EMAIL
         provider_record = self.provider_repository.get_default_for_type(provider_type)
         provider = get_provider_instance(provider_record, provider_type)
 
@@ -236,6 +235,59 @@ class CommunicationService:
         self._record_audit(None, delivery_log, "communication_delivered")
         self._broadcast_delivery(delivery_log)
         return delivery_log
+
+    def _deliver_sms(self, delivery_log: DeliveryLog) -> DeliveryLog:
+        """Try Arkesel first, then Moolre fallback."""
+        chain = self.provider_repository.get_sms_delivery_chain()
+        if not chain:
+            raise ValidationError(
+                message="SMS delivery is not configured.",
+                code="sms_not_configured",
+            )
+
+        last_exc: Exception | None = None
+        for index, provider_record in enumerate(chain):
+            provider = get_provider_instance(provider_record, provider_record.provider_type)
+            delivery_log.provider = provider_record
+            delivery_log.provider_name = provider_record.name
+            delivery_log.save(update_fields=["provider", "provider_name"])
+
+            try:
+                response = provider.send(delivery_log)
+                if index > 0:
+                    response = {**response, "fallback_used": True, "primary_failed": True}
+                delivery_log.status = DeliveryLog.Status.DELIVERED
+                delivery_log.delivered_at = timezone.now()
+                delivery_log.provider_response = response
+                delivery_log.save(
+                    update_fields=["status", "delivered_at", "provider_response"]
+                )
+                provider_record.connection_status = CommunicationProvider.ConnectionStatus.CONNECTED
+                provider_record.last_success_at = timezone.now()
+                provider_record.last_error = ""
+                provider_record.save(
+                    update_fields=["connection_status", "last_success_at", "last_error"]
+                )
+                self._record_audit(None, delivery_log, "communication_delivered")
+                self._broadcast_delivery(delivery_log)
+                return delivery_log
+            except Exception as exc:
+                last_exc = exc
+                logger.warning(
+                    "SMS delivery via %s failed%s",
+                    provider_record.provider_type,
+                    "; trying fallback" if index < len(chain) - 1 else "",
+                )
+                provider_record.connection_status = CommunicationProvider.ConnectionStatus.ERROR
+                provider_record.last_error = str(getattr(exc, "message", exc))
+                provider_record.last_error_at = timezone.now()
+                provider_record.save(
+                    update_fields=["connection_status", "last_error", "last_error_at"]
+                )
+
+        if last_exc:
+            raise last_exc
+        raise ValidationError(message="SMS delivery failed.", code="sms_delivery_failed")
 
     def _deliver_in_app(
         self,

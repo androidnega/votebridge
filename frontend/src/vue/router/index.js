@@ -110,6 +110,18 @@ const router = createRouter({
           meta: { title: "Verify Ballot" },
         },
         {
+          path: "vote-history",
+          name: "student-vote-history",
+          component: () => import("@/views/dashboard/StudentVoteHistoryView.vue"),
+          meta: { title: "Vote history", roles: ["student", "candidate"] },
+        },
+        {
+          path: "my-elections",
+          name: "student-my-elections",
+          component: () => import("@/views/dashboard/StudentMyElectionsView.vue"),
+          meta: { title: "My elections", roles: ["student", "candidate"] },
+        },
+        {
           path: "forbidden",
           name: "forbidden",
           component: () => import("@/views/errors/ForbiddenView.vue"),

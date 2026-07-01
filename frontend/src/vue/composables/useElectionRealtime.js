@@ -1,8 +1,10 @@
 import { onUnmounted, unref, watch } from "vue";
+import { storeToRefs } from "pinia";
 import { useVotingStore } from "@/stores/voting";
 
 export function useElectionRealtime(electionUuidRef) {
   const votingStore = useVotingStore();
+  const { electionStatus, realtimeStatus } = storeToRefs(votingStore);
 
   watch(
     () => unref(electionUuidRef),
@@ -18,7 +20,7 @@ export function useElectionRealtime(electionUuidRef) {
   );
 
   return {
-    electionStatus: votingStore.electionStatus,
-    realtimeStatus: votingStore.realtimeStatus,
+    electionStatus,
+    realtimeStatus,
   };
 }

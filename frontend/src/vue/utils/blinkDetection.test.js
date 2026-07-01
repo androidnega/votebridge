@@ -15,11 +15,11 @@ function pt(x, y) {
   return { x, y };
 }
 
-function makeLandmarks({ leftOpen = true, rightOpen = true } = {}) {
+function makeLandmarks({ leftOpen = true, rightOpen = true, eyeScale = 1 } = {}) {
   const landmarks = Array.from({ length: 478 }, () => pt(0.5, 0.5));
 
-  const leftWide = leftOpen ? 0.04 : 0.006;
-  const rightWide = rightOpen ? 0.04 : 0.006;
+  const leftWide = (leftOpen ? 0.04 : 0.006) * eyeScale;
+  const rightWide = (rightOpen ? 0.04 : 0.006) * eyeScale;
 
   landmarks[33] = pt(0.35, 0.42);
   landmarks[133] = pt(0.45, 0.42);
@@ -61,7 +61,7 @@ describe("blinkDetection EAR", () => {
 
 describe("createBlinkDetector", () => {
   it("detects closed→open transition within duration window", () => {
-    const detector = createBlinkDetector();
+    const detector = createBlinkDetector({ profile: "enrollment" });
     const open = makeLandmarks();
     const closed = makeLandmarks({ leftOpen: false, rightOpen: false });
     let t = 1000;
@@ -80,7 +80,7 @@ describe("createBlinkDetector", () => {
   });
 
   it("rejects eyes held closed too long", () => {
-    const detector = createBlinkDetector();
+    const detector = createBlinkDetector({ profile: "enrollment" });
     const open = makeLandmarks();
     const closed = makeLandmarks({ leftOpen: false, rightOpen: false });
     let t = 0;
@@ -98,7 +98,7 @@ describe("createBlinkDetector", () => {
   });
 
   it("rejects partial one-eye closure", () => {
-    const detector = createBlinkDetector();
+    const detector = createBlinkDetector({ profile: "enrollment" });
     const open = makeLandmarks();
     const partial = makeLandmarks({ leftOpen: false, rightOpen: true });
     let t = 0;
@@ -114,7 +114,7 @@ describe("createBlinkDetector", () => {
   });
 
   it("rejects head movement during closure", () => {
-    const detector = createBlinkDetector();
+    const detector = createBlinkDetector({ profile: "enrollment" });
     const open = makeLandmarks();
     const closed = makeLandmarks({ leftOpen: false, rightOpen: false });
     let t = 0;
@@ -133,5 +133,25 @@ describe("createBlinkDetector", () => {
 
   it("uses hysteresis between closed and open thresholds", () => {
     expect(BLINK_EAR_OPEN_THRESHOLD).toBeGreaterThan(BLINK_EAR_CLOSED_THRESHOLD);
+  });
+
+  it("verify adaptive profile detects blinks with high resting EAR", () => {
+    const detector = createBlinkDetector({ profile: "verify" });
+    const open = makeLandmarks({ eyeScale: 1.25 });
+    const closed = makeLandmarks({ leftOpen: false, rightOpen: false, eyeScale: 1.25 });
+    let t = 1000;
+
+    for (let i = 0; i < 6; i += 1) {
+      detector.update(open, { yaw: 0, offsetY: 0 }, t);
+      t += 40;
+    }
+    t += 100;
+
+    detector.update(closed, { yaw: 0, offsetY: 0 }, t);
+    t += 80;
+    const result = detector.update(open, { yaw: 0, offsetY: 0 }, t);
+    expect(result.blinked).toBe(true);
+    expect(result.count).toBe(1);
+    expect(result.baseline).toBeGreaterThan(0.3);
   });
 });

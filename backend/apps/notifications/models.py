@@ -10,6 +10,7 @@ class CommunicationProvider(models.Model):
 
     class ProviderType(models.TextChoices):
         ARKESEL_SMS = "arkesel_sms", "Arkesel SMS"
+        MOOLRE_SMS = "moolre_sms", "Moolre SMS"
         SMTP_EMAIL = "smtp_email", "SMTP Email"
 
     class ConnectionStatus(models.TextChoices):

@@ -1,12 +1,23 @@
 <script setup>
+import { computed } from "vue";
 import { RouterView, useRoute } from "vue-router";
 import AppShell from "@/components/layout/AppShell.vue";
+import StudentAppShell from "@/components/layout/StudentAppShell.vue";
+import { useAuthStore } from "@/stores/auth";
 
 const route = useRoute();
+const authStore = useAuthStore();
+const isStudentPortal = computed(() => authStore.isStudent);
 </script>
 
 <template>
-  <AppShell :title="route.meta.title || 'Dashboard'">
+  <StudentAppShell v-if="isStudentPortal" :title="(route.meta.title || 'Dashboard')">
+    <RouterView v-slot="{ Component, route: activeRoute }">
+      <component :is="Component" :key="activeRoute.path" />
+    </RouterView>
+  </StudentAppShell>
+
+  <AppShell v-else :title="route.meta.title || 'Dashboard'">
     <template #topbar-actions>
       <slot name="topbar-actions" />
     </template>

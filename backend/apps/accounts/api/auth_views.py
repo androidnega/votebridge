@@ -32,6 +32,17 @@ def _client_meta(request) -> tuple:
     return ip_address, user_agent
 
 
+def _serialize_auth_result(result: dict) -> dict:
+    """Return OTP challenge, password gate, or completed session payload for login endpoints."""
+    if result.get("requires_password"):
+        from apps.accounts.api.auth_serializers import AuthPasswordRequiredSerializer
+
+        return AuthPasswordRequiredSerializer(result).data
+    if result.get("tokens"):
+        return AuthSuccessSerializer(result).data
+    return AuthOTPChallengeSerializer(result).data
+
+
 class UniversalLoginView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [LoginRateThrottle]
@@ -42,12 +53,12 @@ class UniversalLoginView(APIView):
         ip_address, user_agent = _client_meta(request)
         result = auth_service.login(
             identity=serializer.validated_data["identity"],
-            password=serializer.validated_data["password"],
+            password=serializer.validated_data.get("password") or None,
             ip_address=ip_address,
             user_agent=user_agent,
         )
         return Response(
-            {"success": True, "data": AuthOTPChallengeSerializer(result).data},
+            {"success": True, "data": _serialize_auth_result(result)},
             status=status.HTTP_200_OK,
         )
 
@@ -66,7 +77,7 @@ class StudentLoginView(APIView):
             user_agent=user_agent,
         )
         return Response(
-            {"success": True, "data": AuthOTPChallengeSerializer(result).data},
+            {"success": True, "data": _serialize_auth_result(result)},
             status=status.HTTP_200_OK,
         )
 
@@ -85,7 +96,7 @@ class AdminLoginView(APIView):
             user_agent=user_agent,
         )
         return Response(
-            {"success": True, "data": AuthOTPChallengeSerializer(result).data},
+            {"success": True, "data": _serialize_auth_result(result)},
             status=status.HTTP_200_OK,
         )
 
@@ -104,7 +115,7 @@ class SuperAdminLoginView(APIView):
             user_agent=user_agent,
         )
         return Response(
-            {"success": True, "data": AuthOTPChallengeSerializer(result).data},
+            {"success": True, "data": _serialize_auth_result(result)},
             status=status.HTTP_200_OK,
         )
 

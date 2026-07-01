@@ -33,6 +33,17 @@ class CommunicationProviderRepository:
             .first()
         )
 
+    def get_sms_delivery_chain(self) -> list[CommunicationProvider]:
+        """Primary Arkesel SMS, then Moolre SMS fallback when configured."""
+        chain: list[CommunicationProvider] = []
+        primary = self.get_default_for_type(CommunicationProvider.ProviderType.ARKESEL_SMS)
+        fallback = self.get_default_for_type(CommunicationProvider.ProviderType.MOOLRE_SMS)
+        if primary:
+            chain.append(primary)
+        if fallback and (not primary or fallback.pk != primary.pk):
+            chain.append(fallback)
+        return chain
+
     def get_by_uuid(self, provider_uuid) -> CommunicationProvider | None:
         return self.get_queryset().filter(uuid=provider_uuid).first()
 

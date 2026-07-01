@@ -13,7 +13,6 @@ const panelRef = ref(null);
 const previewRef = ref(null);
 
 const unreadCount = computed(() => store.unreadCount || 0);
-const badgeLabel = computed(() => (unreadCount.value > 9 ? "9+" : unreadCount.value));
 
 function toggle() {
   open.value = !open.value;
@@ -59,13 +58,12 @@ onUnmounted(() => {
       aria-label="Notifications"
       @click.stop="toggle"
     >
-      <VIcon name="notifications" class="h-5 w-5" />
+      <VIcon name="notifications" class="h-[1.125rem] w-[1.125rem]" />
       <span
         v-if="unreadCount > 0"
-        class="absolute right-1 top-1 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-danger-600 px-1 text-[10px] font-bold leading-none text-white"
-      >
-        {{ badgeLabel }}
-      </span>
+        class="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-danger-600 ring-2 ring-white"
+        :aria-label="`${unreadCount} unread notifications`"
+      />
     </button>
 
     <Transition

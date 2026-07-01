@@ -10,6 +10,12 @@ export const dashboardApi = {
     return apiClient.get("/dashboard/student/").then(unwrapResponse);
   },
 
+  getStudentElectionDetail(electionUuid) {
+    return apiClient
+      .get(`/dashboard/student/elections/${electionUuid}/`)
+      .then(unwrapResponse);
+  },
+
   getSecurityFeed() {
     return apiClient.get("/dashboard/security-feed/").then(unwrapResponse);
   },

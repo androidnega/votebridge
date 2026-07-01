@@ -6,9 +6,7 @@ export function setupRouterGuards(router) {
   router.beforeEach(async (to) => {
     const authStore = useAuthStore();
 
-    if (!authStore.initialized) {
-      await authStore.initialize();
-    }
+    await authStore.initialize();
 
     const requiresAuth = to.matched.some((record) => record.meta.requiresAuth);
     const guestOnly = to.matched.some((record) => record.meta.guest);
@@ -91,6 +89,9 @@ export function setupRouterGuards(router) {
     }
 
     if (guestOnly && authStore.isAuthenticated && !requiresOtp && !requiresBiometric && !requiresEnrollment) {
+      if (to.matched.some((record) => record.meta.infoPage)) {
+        return true;
+      }
       const redirect = normalizeAuthRedirect(
         typeof to.query.redirect === "string" ? to.query.redirect : DASHBOARD_ROOT
       );

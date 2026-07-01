@@ -5,6 +5,7 @@ from django.db.models.functions import TruncHour
 from django.utils import timezone
 
 from apps.accounts.models import Role
+from apps.candidates.models import Candidate
 from apps.elections.models import Election, VoterEligibility, VotingChannel
 from apps.elections.repositories.election_repository import ElectionRepository
 from apps.elections.repositories.eligibility_repository import VoterEligibilityRepository
@@ -15,6 +16,7 @@ from apps.security.models import SVTToken
 from apps.ussd.models import USSDSession
 from apps.voting.models import Vote
 from apps.voting.repositories.vote_repository import VoteRepository
+from apps.voting.services.vote_service import VoteService
 
 
 class DashboardService:
@@ -334,6 +336,60 @@ class DashboardService:
             return {}
         return self._student_election_row(user, election)
 
+    def get_student_election_detail(self, user, election_uuid) -> dict:
+        election = self.election_repository.get_by_uuid(election_uuid)
+        if not election:
+            return {}
+        if not self.eligibility_repository.is_user_eligible(election, user):
+            return {}
+
+        status_row = self._student_election_row(user, election)
+        positions = (
+            self.eligibility_repository.get_eligible_positions_for_user(election, user)
+            .order_by("display_order", "title")
+            .prefetch_related("candidates")
+        )
+
+        position_rows = []
+        for position in positions:
+            candidate_count = position.candidates.filter(status=Candidate.Status.APPROVED).count()
+            if candidate_count == 0:
+                continue
+
+            votes_cast = self.vote_repository.count_for_user_position(user, position)
+            max_votes = position.max_votes_allowed or 1
+            position_rows.append(
+                {
+                    "uuid": str(position.uuid),
+                    "title": position.title,
+                    "description": position.description,
+                    "choice_type": "single" if position.is_single_choice else "multi",
+                    "max_votes_allowed": max_votes,
+                    "candidate_count": candidate_count,
+                    "votes_cast": votes_cast,
+                    "has_voted": votes_cast >= max_votes,
+                }
+            )
+
+        voting_open = election.status == Election.Status.OPEN
+        pending_positions = [row for row in position_rows if not row["has_voted"]]
+
+        return {
+            **status_row,
+            "election_type": election.election_type,
+            "election_type_display": election.get_election_type_display(),
+            "election_status_display": election.get_status_display(),
+            "description": election.description,
+            "start_date": election.start_date.isoformat() if election.start_date else None,
+            "end_date": election.end_date.isoformat() if election.end_date else None,
+            "positions": position_rows,
+            "positions_count": len(position_rows),
+            "pending_positions_count": len(pending_positions),
+            "can_vote": voting_open and bool(pending_positions),
+            "next_position_uuid": pending_positions[0]["uuid"] if pending_positions else None,
+            "next_position_title": pending_positions[0]["title"] if pending_positions else None,
+        }
+
     def get_security_feed_snapshot(self) -> dict:
         alerts = security_alert_service.list_alerts()[:20]
         return {
@@ -348,14 +404,26 @@ class DashboardService:
             "summary": fraud_case_service.get_integrity_report(),
         }
 
+    def _user_completed_all_positions(self, user, election) -> bool:
+        positions = self.eligibility_repository.get_eligible_positions_for_user(election, user)
+        position_list = list(positions)
+        if not position_list:
+            return False
+        return all(
+            self.vote_repository.count_for_user_position(user, position)
+            >= (position.max_votes_allowed or 1)
+            for position in position_list
+        )
+
     def _student_election_row(self, user, election) -> dict:
-        has_submitted = self.vote_repository.list_for_user_in_election(user, election).exists()
         latest_svt = (
             SVTToken.objects.filter(user=user, election=election)
             .order_by("-issued_at")
             .first()
         )
         svt_status = latest_svt.status if latest_svt else None
+        has_submitted = bool(latest_svt and latest_svt.status == SVTToken.Status.USED)
+        ballot_complete = has_submitted
 
         if has_submitted:
             confirmation_status = "recorded"
@@ -366,18 +434,33 @@ class DashboardService:
         else:
             confirmation_status = "not_started"
 
+        confirmation_reference = None
+        submitted_at = None
+        if has_submitted and latest_svt:
+            submitted_at = latest_svt.used_at
+            confirmation_reference = VoteService._build_confirmation_reference(latest_svt)
+
         return {
             "election_uuid": str(election.uuid),
             "election_title": election.title,
             "election_status": election.status,
             "ballot_submitted": has_submitted,
+            "ballot_complete": ballot_complete,
             "svt_status": svt_status,
             "confirmation_status": confirmation_status,
+            "confirmation_reference": confirmation_reference,
+            "submitted_at": submitted_at,
         }
 
     def _vote_confirmation_summary(self, user, active_elections: list[dict]) -> dict:
-        recorded = sum(1 for row in active_elections if row["confirmation_status"] == "recorded")
-        in_progress = sum(1 for row in active_elections if row["confirmation_status"] == "in_progress")
+        recorded = sum(
+            1 for row in active_elections if row.get("ballot_complete") or row["confirmation_status"] == "recorded"
+        )
+        in_progress = sum(
+            1
+            for row in active_elections
+            if row["confirmation_status"] in {"in_progress", "partial"}
+        )
         pending = sum(
             1
             for row in active_elections

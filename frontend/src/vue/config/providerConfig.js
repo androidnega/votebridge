@@ -27,6 +27,34 @@ export const providerConfigFields = {
       placeholder: ARKESEL_SMS_DEFAULT_URL,
     },
   ],
+  moolre_sms: [
+    {
+      key: "vas_key",
+      label: "VAS key",
+      type: "password",
+      required: true,
+      placeholder: "Enter your Moolre VAS key",
+      help: "Leave blank when saving to keep the existing key.",
+    },
+    {
+      key: "sender_id",
+      label: "Sender ID",
+      type: "text",
+      required: true,
+      placeholder: "e.g. VoteBridge",
+      help: "Max 11 characters. Must be registered with Moolre.",
+    },
+    {
+      key: "environment",
+      label: "Environment",
+      type: "select",
+      required: true,
+      options: [
+        { value: "live", label: "Live" },
+        { value: "sandbox", label: "Sandbox" },
+      ],
+    },
+  ],
   smtp_email: [
     {
       key: "from_email",
@@ -42,9 +70,18 @@ export function getProviderConfigFields(providerType) {
   return providerConfigFields[providerType] || [];
 }
 
+export function getProviderSecretKeys(providerType) {
+  return getProviderConfigFields(providerType)
+    .filter((field) => field.type === "password")
+    .map((field) => field.key);
+}
+
 export function defaultProviderConfig(providerType) {
   if (providerType === "arkesel_sms") {
     return { api_key: "", sender_id: "", url: ARKESEL_SMS_DEFAULT_URL };
+  }
+  if (providerType === "moolre_sms") {
+    return { vas_key: "", sender_id: "", environment: "live" };
   }
   if (providerType === "smtp_email") {
     return { from_email: "" };
@@ -66,7 +103,7 @@ export function buildProviderConfigPayload(providerType, draft, existingConfig =
     }
     if (value !== undefined && value !== "") {
       config[field.key] = value;
-    } else if (existingConfig[field.key] && field.key !== "api_key") {
+    } else if (existingConfig[field.key] && field.type !== "password") {
       config[field.key] = existingConfig[field.key];
     }
   }
@@ -77,11 +114,16 @@ export function buildProviderConfigPayload(providerType, draft, existingConfig =
 export function draftFromProvider(provider) {
   const base = defaultProviderConfig(provider.provider_type);
   const config = provider.config || {};
+  const secretKeys = getProviderSecretKeys(provider.provider_type);
   return {
     ...base,
     ...Object.fromEntries(
-      Object.entries(config).filter(([key]) => key !== "api_key")
+      Object.entries(config).filter(([key]) => !secretKeys.includes(key))
     ),
-    api_key: "",
+    ...Object.fromEntries(secretKeys.map((key) => [key, ""])),
   };
+}
+
+export function hasStoredProviderSecret(provider, fieldKey) {
+  return provider.config?.[fieldKey] === "***";
 }

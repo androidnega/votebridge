@@ -1,15 +1,15 @@
 import { onUnmounted, ref, shallowRef } from "vue";
+import { createBlinkDetector } from "@/utils/blinkDetection";
 import {
-  BLINK_EAR_CLOSED_THRESHOLD,
-  BLINK_EAR_OPEN_THRESHOLD,
-  createBlinkDetector,
-} from "@/utils/blinkDetection";
-import {
+  ENROLL_MIN_FACE_WIDTH,
   estimateLighting,
   faceCenterOffset,
   headYaw,
   isFaceInsideGuide,
   isFaceLargeEnough,
+  isValidLandmarkSet,
+  normalizeLandmarkSet,
+  VERIFY_MIN_FACE_WIDTH,
 } from "@/utils/faceDetectionUtils";
 import { detectFaceSnapshot, getFaceLandmarker } from "@/services/faceLandmarkerEngine";
 import {
@@ -20,13 +20,19 @@ import {
   normalizeVerifyChallengeType,
 } from "@/services/biometricChallengeManager";
 import { bioDebug } from "@/utils/biometricDebug";
+import { createSignalStabilizer } from "@/utils/signalStabilizer";
 
 const DETECT_GAP_MS = 120;
-const DETECT_GAP_BLINK_MS = 66;
+const DETECT_GAP_BLINK_MS = 80;
 const DETECT_IDLE_GAP_MS = 2000;
 const LIGHTING_INTERVAL_MS = 3000;
+const LANDMARK_HOLD_MS = 900;
 const YAW_LEFT_MARK = 0.32;
 const YAW_RIGHT_MARK = -0.32;
+const FACE_STABLE_ENTER = 3;
+const FACE_STABLE_EXIT = 12;
+const ALIGNED_STABLE_ENTER = 3;
+const ALIGNED_STABLE_EXIT = 8;
 
 export function useBiometricLiveness() {
   const loadingPhase = ref("idle");
@@ -51,8 +57,23 @@ export function useBiometricLiveness() {
   let onFrameCallback = null;
   let onChallengeComplete = null;
   let cachedLighting = { level: "ok", score: 0.5 };
-  let hadFace = false;
-  const blinkDetector = createBlinkDetector();
+  let hadStableFace = false;
+  let lastGoodLandmarks = null;
+  let lastGoodLandmarksAt = 0;
+  const facePresence = createSignalStabilizer({
+    enterCount: FACE_STABLE_ENTER,
+    exitCount: FACE_STABLE_EXIT,
+  });
+  const faceAlignment = createSignalStabilizer({
+    enterCount: ALIGNED_STABLE_ENTER,
+    exitCount: ALIGNED_STABLE_EXIT,
+  });
+  let blinkDetector = createBlinkDetector({ profile: "verify" });
+
+  function rebuildBlinkDetector() {
+    const profile = resolveMode() === "verify" ? "verify" : "enrollment";
+    blinkDetector = createBlinkDetector({ profile });
+  }
 
   async function initEngine() {
     loadingPhase.value = "detection";
@@ -73,8 +94,15 @@ export function useBiometricLiveness() {
   }
 
   function resetChallengeTracking() {
-    blinkDetector.reset();
-    hadFace = false;
+    rebuildBlinkDetector();
+    facePresence.reset();
+    faceAlignment.reset();
+    hadStableFace = false;
+    lastGoodLandmarks = null;
+    lastGoodLandmarksAt = 0;
+    faceDetected.value = false;
+    faceAligned.value = false;
+    landmarks.value = null;
     warning.value = "";
     challengeComplete.value = false;
     completedSteps.value = new Set();
@@ -105,14 +133,18 @@ export function useBiometricLiveness() {
     bioDebug.metrics("ear_frame", {
       left: result.left.toFixed(2),
       right: result.right.toFixed(2),
-      threshold: BLINK_EAR_CLOSED_THRESHOLD,
-      open: BLINK_EAR_OPEN_THRESHOLD,
+      min: result.min.toFixed(2),
+      baseline: result.baseline ? result.baseline.toFixed(2) : null,
+      closeAt: result.closeAt ? result.closeAt.toFixed(2) : null,
+      openAt: result.openAt ? result.openAt.toFixed(2) : null,
       phase: result.phase,
     });
 
     if (result.blinked) {
       bioDebug.log("blink_detected", { count: result.count });
       markStep(result.count >= 2 ? "blink2" : "blink");
+    } else if (result.rejected) {
+      bioDebug.metrics("blink_rejected", { reason: result.rejected, phase: result.phase });
     }
   }
 
@@ -133,6 +165,32 @@ export function useBiometricLiveness() {
     return DETECT_GAP_BLINK_MS;
   }
 
+  function evaluateRawAlignment(pts, mode) {
+    if (!isValidLandmarkSet(pts)) return false;
+    const minWidth = mode === "verify" ? VERIFY_MIN_FACE_WIDTH : ENROLL_MIN_FACE_WIDTH;
+    if (!isFaceLargeEnough(pts, { minWidth })) return false;
+    if (mode === "verify") return true;
+    if (cachedLighting.level === "low") return false;
+    return isFaceInsideGuide(pts, { relaxed: false });
+  }
+
+  function alignmentHint(pts, mode) {
+    if (mode !== "verify" && cachedLighting.level === "low") {
+      return { warning: "Improve lighting", hint: "Improve lighting" };
+    }
+    const minWidth = mode === "verify" ? VERIFY_MIN_FACE_WIDTH : ENROLL_MIN_FACE_WIDTH;
+    if (!isFaceLargeEnough(pts, { minWidth })) {
+      return { warning: "", hint: "Move closer to the camera" };
+    }
+    if (mode !== "verify" && !isFaceInsideGuide(pts, { relaxed: false })) {
+      return { warning: "Center your face in the frame", hint: "Center your face in the frame" };
+    }
+    if (mode === "verify" && cachedLighting.level === "low") {
+      return { warning: "Improve lighting", hint: "Blink now — more light helps" };
+    }
+    return { warning: "", hint: "Position your face in the frame" };
+  }
+
   function analyzeFrame(video, challengeType, mode, checkLighting) {
     const result = detectFaceSnapshot(video);
     if (!result) return;
@@ -140,17 +198,55 @@ export function useBiometricLiveness() {
     const type = challengeType || "";
     const count = result.faceLandmarks?.length || 0;
     const now = performance.now();
+    const rawHasFace = count > 0;
 
-    if (count === 0) {
+    let pts = null;
+    if (rawHasFace) {
+      const candidate = normalizeLandmarkSet(result.faceLandmarks[0]);
+      if (candidate) {
+        pts = candidate;
+        lastGoodLandmarks = candidate;
+        lastGoodLandmarksAt = now;
+      }
+    } else if (
+      isValidLandmarkSet(lastGoodLandmarks) &&
+      now - lastGoodLandmarksAt < LANDMARK_HOLD_MS
+    ) {
+      pts = lastGoodLandmarks;
+    }
+
+    const faceStable = facePresence.update(isValidLandmarkSet(pts));
+    faceDetected.value = faceStable;
+
+    if (pts && (rawHasFace || faceStable)) {
+      landmarks.value = pts;
+    } else if (!faceStable) {
       landmarks.value = null;
-      faceDetected.value = false;
+    }
+
+    if (!faceStable) {
+      faceAlignment.update(false);
       faceAligned.value = false;
-      if (hadFace) bioDebug.log("face_lost");
-      hadFace = false;
+      if (hadStableFace) bioDebug.log("face_lost");
+      hadStableFace = false;
       setWarning("");
       setHint("Position your face in the frame");
       return;
     }
+
+    if (!isValidLandmarkSet(pts)) {
+      faceAlignment.update(false);
+      faceAligned.value = false;
+      setHint("Position your face in the frame");
+      return;
+    }
+
+    if (!hadStableFace) {
+      bioDebug.log("face_detected");
+      hadStableFace = true;
+    }
+
+    markStep("face");
 
     if (count > 1) {
       setWarning("Multiple faces detected");
@@ -159,47 +255,37 @@ export function useBiometricLiveness() {
       setWarning("");
     }
 
-    const pts = result.faceLandmarks[0];
-    landmarks.value = pts;
-    faceDetected.value = true;
-
-    if (!hadFace) {
-      bioDebug.log("face_detected");
-      hadFace = true;
-    }
-
-    markStep("face");
-    trackBlink(pts, type, mode, now);
-    trackHeadTurn(headYaw(pts), type, mode);
-
     if (checkLighting) {
       cachedLighting = estimateLighting(video);
       lastLightingAt = performance.now();
     }
 
-    if (cachedLighting.level === "low") {
-      setWarning("Improve lighting");
-      faceAligned.value = false;
-    } else if (!isFaceLargeEnough(pts)) {
-      faceAligned.value = false;
-      setHint("Move closer to the camera");
-    } else if (!isFaceInsideGuide(pts)) {
-      setWarning("Center your face in the frame");
-      faceAligned.value = false;
+    const rawAligned = evaluateRawAlignment(pts, mode);
+    const alignedStable = faceAlignment.update(rawAligned);
+    const readyForLiveness = mode === "verify" ? rawAligned : alignedStable;
+    faceAligned.value = readyForLiveness;
+
+    if (!readyForLiveness) {
+      const guidance = alignmentHint(pts, mode);
+      setWarning(guidance.warning);
+      setHint(guidance.hint);
     } else {
       if (!warning.value.includes("Multiple")) setWarning("");
-      faceAligned.value = true;
+      trackBlink(pts, type, mode, now);
+      trackHeadTurn(headYaw(pts), type, mode);
     }
 
     const complete = isChallengeComplete(type, completedSteps.value, mode);
-    if (complete && faceAligned.value && !challengeComplete.value) {
+    if (complete && readyForLiveness && !challengeComplete.value) {
       markStep("ready");
       challengeComplete.value = true;
       bioDebug.log("challenge_completed", { type, mode });
       onChallengeComplete?.();
     }
 
-    setHint(nextActionHint(type, completedSteps.value, warning.value, mode));
+    if (readyForLiveness) {
+      setHint(nextActionHint(type, completedSteps.value, warning.value, mode));
+    }
   }
 
   function clearDetectTimer() {
@@ -246,6 +332,8 @@ export function useBiometricLiveness() {
         const checkLighting = now - lastLightingAt >= LIGHTING_INTERVAL_MS;
         analyzeFrame(video, type, mode, checkLighting);
         onFrameCallback?.();
+      } catch (err) {
+        bioDebug.error("analyze_frame_failed", { message: err?.message });
       } finally {
         inFlight = false;
         if (!loopStopped && !loopPaused) {
@@ -266,6 +354,7 @@ export function useBiometricLiveness() {
     onChallengeComplete = onComplete ?? null;
     loopPaused = false;
     loopStopped = false;
+    rebuildBlinkDetector();
     scheduleNextTick(0);
   }
 

@@ -38,6 +38,10 @@ export function useSettingsIntegrations() {
     store.providers.find((provider) => provider.provider_type === "arkesel_sms")
   );
 
+  const moolreSmsProvider = computed(() =>
+    store.providers.find((provider) => provider.provider_type === "moolre_sms")
+  );
+
   const emailProvider = computed(() =>
     store.providers.find((provider) => provider.provider_type === "smtp_email")
   );
@@ -47,12 +51,14 @@ export function useSettingsIntegrations() {
   const integrations = computed(() => [
     {
       key: "sms",
-      name: "Arkesel SMS",
+      name: "SMS (Arkesel + Moolre)",
       status: smsProvider.value?.connection_status || overviewIntegrations.value.sms?.status,
       lastSync: smsProvider.value?.last_success_at || overviewIntegrations.value.sms?.last_sync,
       lastError: smsProvider.value?.last_error || overviewIntegrations.value.sms?.last_error,
-      configRoute: `${r.integrations.providers}?focus=arkesel_sms`,
+      fallbackStatus: moolreSmsProvider.value?.connection_status || overviewIntegrations.value.sms?.fallback_status,
+      configRoute: r.integrations.sms,
       providerUuid: smsProvider.value?.uuid,
+      fallbackProviderUuid: moolreSmsProvider.value?.uuid,
     },
     {
       key: "ussd",

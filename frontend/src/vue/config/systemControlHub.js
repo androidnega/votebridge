@@ -203,7 +203,7 @@ export function getSettingsQuickActionPalette(action) {
 
 export const quickActionRoutes = {
   maintenance_enable: r.advanced.maintenance,
-  validate_sms: `${r.integrations.hub}?focus=sms`,
+  validate_sms: r.integrations.sms,
   validate_ussd: `${r.integrations.hub}?focus=ussd`,
   create_backup: r.advanced.backup,
   restore_backup: r.advanced.backup,

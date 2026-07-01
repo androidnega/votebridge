@@ -77,12 +77,13 @@ function onKeydown(event, index) {
       role="listbox"
       :aria-label="`Candidates for ${position.title}`"
       :aria-multiselectable="isMulti"
-      class="grid grid-cols-1 gap-3 sm:grid-cols-2"
+      class="vb-candidate-grid"
     >
       <CandidateCard
         v-for="(candidate, index) in candidates"
         :key="candidate.uuid"
         :candidate="candidate"
+        :position-title="position.title"
         :selected="isSelected(candidate.uuid)"
         :disabled="!isSelected(candidate.uuid) && atMax"
         :choice-type="position.choice_type"

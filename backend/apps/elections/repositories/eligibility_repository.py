@@ -66,7 +66,7 @@ class VoterEligibilityRepository:
         """Foundation for voting engine — returns active positions if voter is eligible."""
         if not self.is_user_eligible(election, user):
             return election.positions.none()
-        return election.positions.filter(is_active=True)
+        return election.positions.filter(is_active=True, is_votable=True)
 
     def get_eligible_voters_for_election(self, election, limit: int | None = None):
         """Return eligibility records for voters marked eligible in an election."""
@@ -74,3 +74,6 @@ class VoterEligibilityRepository:
         if limit:
             qs = qs[:limit]
         return qs
+
+    def list_eligible_users(self, election):
+        return [row.user for row in self.get_eligible_voters_for_election(election)]

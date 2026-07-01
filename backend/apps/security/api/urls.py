@@ -10,19 +10,37 @@ from apps.security.api.views import (
     ElectionSVTListView,
     ReissueSVTView,
     RequestSVTView,
+    ResendSVTView,
     RevokeSVTView,
+    StartVotingSessionView,
     SVTConfirmationView,
     ValidateSVTView,
     VerifyVoteBySVTView,
+    VotingAccessStatusView,
 )
 
 app_name = "security"
 
 urlpatterns = [
     path(
+        "elections/<uuid:election_uuid>/svt/resend/",
+        ResendSVTView.as_view(),
+        name="svt-resend",
+    ),
+    path(
+        "elections/<uuid:election_uuid>/svt/access/",
+        VotingAccessStatusView.as_view(),
+        name="svt-access",
+    ),
+    path(
         "elections/<uuid:election_uuid>/svt/validate/",
         ValidateSVTView.as_view(),
         name="svt-validate",
+    ),
+    path(
+        "elections/<uuid:election_uuid>/svt/start/",
+        StartVotingSessionView.as_view(),
+        name="svt-start",
     ),
     path(
         "elections/<uuid:election_uuid>/svt/request/",

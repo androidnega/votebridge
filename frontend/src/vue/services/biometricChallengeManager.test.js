@@ -3,7 +3,9 @@ import {
   challengeNeeds,
   getRequiredSteps,
   isChallengeComplete,
+  nextActionHint,
   normalizeVerifyChallengeType,
+  verifyChallengeInstruction,
   verifyChallengeLabel,
 } from "@/services/biometricChallengeManager";
 
@@ -33,5 +35,13 @@ describe("biometricChallengeManager", () => {
     const required = getRequiredSteps("enrollment_sequence", "enrollment");
     expect(required).toContain("turn_left");
     expect(required).toContain("turn_right");
+  });
+
+  it("uses direct blink prompts instead of waiting language", () => {
+    expect(verifyChallengeInstruction("blink_twice")).toBe("Blink twice to continue");
+    const faceOnly = new Set(["face"]);
+    expect(nextActionHint("blink_twice", faceOnly, "", "verify")).toBe("Blink now");
+    faceOnly.add("blink");
+    expect(nextActionHint("blink_twice", faceOnly, "", "verify")).toBe("Blink once more");
   });
 });

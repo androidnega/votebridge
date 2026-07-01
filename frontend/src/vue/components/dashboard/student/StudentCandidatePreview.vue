@@ -27,7 +27,7 @@ const emit = defineEmits(["select-candidate"]);
         <h3 class="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500">
           {{ group.positionTitle }}
         </h3>
-        <div class="space-y-3">
+        <div class="vb-candidate-grid">
           <StudentCandidateCard
             v-for="candidate in group.candidates"
             :key="candidate.uuid"

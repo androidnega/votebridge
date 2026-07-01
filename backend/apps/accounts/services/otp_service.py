@@ -17,6 +17,7 @@ logger = logging.getLogger("votebridge")
 
 OTP_AUTH_RESULT_CACHE_PREFIX = "otp_auth_result:"
 OTP_AUTH_RESULT_TTL_SECONDS = 600
+OTP_RESEND_CHAIN_PREFIX = "otp_resend_chain:"
 
 
 class OTPService:
@@ -40,6 +41,8 @@ class OTPService:
         recipient: str,
         ip_address: str | None = None,
         user_agent: str | None = None,
+        *,
+        is_resend: bool = False,
     ) -> OTPRequest:
         max_requests = int(getattr(settings, "OTP_MAX_REQUESTS_PER_WINDOW", 5))
         window_minutes = int(getattr(settings, "OTP_REQUEST_WINDOW_MINUTES", 15))
@@ -50,11 +53,15 @@ class OTPService:
                 code="otp_rate_limited",
             )
 
+        if not is_resend:
+            self._reset_resend_chain(user, purpose)
+
         self.otp_repository.invalidate_active_for_user(user, purpose)
 
         code = generate_otp_code(length=int(getattr(settings, "OTP_LENGTH", 6)))
-        expiry_minutes = int(getattr(settings, "OTP_EXPIRY_MINUTES", 10))
+        expiry_minutes = int(getattr(settings, "OTP_EXPIRY_MINUTES", 5))
         expires_at = timezone.now() + timedelta(minutes=expiry_minutes)
+        max_attempts = int(getattr(settings, "OTP_MAX_ATTEMPTS", 5))
 
         otp_request = self.otp_repository.create(
             user=user,
@@ -62,6 +69,7 @@ class OTPService:
             channel=channel,
             otp_hash=make_password(code),
             expires_at=expires_at,
+            max_attempts=max_attempts,
             ip_address=ip_address,
         )
 
@@ -86,6 +94,45 @@ class OTPService:
         )
 
         return otp_request
+
+    def _resend_chain_key(self, user: User, purpose: str) -> str:
+        return f"{OTP_RESEND_CHAIN_PREFIX}{user.id}:{purpose}"
+
+    def _reset_resend_chain(self, user: User, purpose: str) -> None:
+        cache.set(
+            self._resend_chain_key(user, purpose),
+            {"resend_count": 0, "last_sent_at": timezone.now().isoformat()},
+            900,
+        )
+
+    def enforce_resend_policy(self, user: User, purpose: str) -> None:
+        key = self._resend_chain_key(user, purpose)
+        meta = cache.get(key) or {"resend_count": 0, "last_sent_at": None}
+        max_resends = int(getattr(settings, "OTP_MAX_RESENDS", 3))
+        cooldown = int(getattr(settings, "OTP_RESEND_COOLDOWN_SECONDS", 60))
+
+        if meta.get("resend_count", 0) >= max_resends:
+            raise ValidationError(
+                message="Maximum OTP resend attempts reached.",
+                code="otp_resend_limit",
+            )
+
+        last_sent = meta.get("last_sent_at")
+        if last_sent:
+            last_dt = timezone.datetime.fromisoformat(last_sent)
+            if timezone.is_naive(last_dt):
+                last_dt = timezone.make_aware(last_dt, timezone.get_current_timezone())
+            elapsed = (timezone.now() - last_dt).total_seconds()
+            if elapsed < cooldown:
+                wait = int(cooldown - elapsed)
+                raise ValidationError(
+                    message=f"Please wait {wait} seconds before requesting another code.",
+                    code="otp_resend_cooldown",
+                )
+
+        meta["resend_count"] = meta.get("resend_count", 0) + 1
+        meta["last_sent_at"] = timezone.now().isoformat()
+        cache.set(key, meta, 900)
 
     def get_cached_auth_result(self, otp_request_uuid) -> dict | None:
         return cache.get(f"{OTP_AUTH_RESULT_CACHE_PREFIX}{otp_request_uuid}")

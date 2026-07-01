@@ -35,6 +35,26 @@ class StudentDashboardOverviewView(APIView):
         return Response({"success": True, "data": dashboard_service.get_student_overview(request.user)})
 
 
+class StudentElectionDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, election_uuid):
+        role = _user_role_name(request.user)
+        if role not in {Role.Name.STUDENT, Role.Name.CANDIDATE, Role.Name.ADMIN, Role.Name.SUPER_ADMIN}:
+            return Response(
+                {"success": False, "error": {"message": "Access denied.", "code": "forbidden"}},
+                status=403,
+            )
+
+        detail = dashboard_service.get_student_election_detail(request.user, election_uuid)
+        if not detail:
+            return Response(
+                {"success": False, "error": {"message": "Election not found.", "code": "not_found"}},
+                status=404,
+            )
+        return Response({"success": True, "data": detail})
+
+
 class SecurityFeedSnapshotView(APIView):
     permission_classes = [CanViewSecurityMonitoring]
 

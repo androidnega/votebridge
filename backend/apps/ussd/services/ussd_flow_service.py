@@ -94,6 +94,8 @@ class UssdFlowService:
             response = self._handle_main_menu(session, user_input, ip_address)
         elif session.current_step == steps.AUTH_INDEX:
             response = self._handle_auth_index(session, user_input)
+        elif session.current_step == steps.ELECTION_PIN:
+            response = self._handle_election_pin(session, user_input, ip_address)
         elif session.current_step == steps.AUTH_PIN:
             response = self._handle_auth_pin(session, user_input, ip_address)
         elif session.current_step == steps.VOTE_LIST:
@@ -218,14 +220,28 @@ class UssdFlowService:
                 "CON Invalid index format.\nUse BC/PROG/YY/NNN\n0. Back",
                 True,
             )
+        try:
+            user = self.auth_service.authenticate_student_for_ussd(
+                index_number=normalized,
+                msisdn=session.msisdn,
+                user_agent="ussd",
+            )
+        except AuthenticationError as exc:
+            session.status = USSDSession.Status.FAILED
+            session.failure_reason = "authentication_failed"
+            return UssdResponse(f"END {exc.message}", False)
+
+        session.user = user
         session.state_data["auth_index"] = normalized
-        session.current_step = steps.AUTH_PIN
-        return UssdResponse("CON Enter your PIN:\n0. Back")
+        session.state_data["user_uuid"] = str(user.uuid)
+        target = session.state_data.pop("pending_auth_target", steps.MAIN_MENU)
+        session.current_step = target
+        return self._dispatch_authenticated(session, target, "", None)
 
     def _handle_auth_pin(self, session, pin: str, ip_address) -> UssdResponse:
         index_number = session.state_data.get("auth_index", "")
         try:
-            user = self.auth_service.authenticate_student_for_ussd(
+            user = self.auth_service.authenticate_student_for_ussd_legacy(
                 index_number=index_number,
                 password=pin,
                 ip_address=ip_address,
@@ -241,6 +257,31 @@ class UssdFlowService:
         target = session.state_data.pop("pending_auth_target", steps.MAIN_MENU)
         session.current_step = target
         return self._dispatch_authenticated(session, target, "", ip_address)
+
+    def _handle_election_pin(self, session, pin: str, ip_address) -> UssdResponse:
+        if not pin or not pin.isdigit() or len(pin) != 6:
+            return UssdResponse("CON Enter your 6-digit Election PIN:\n0. Back", True)
+
+        user = self._get_user(session)
+        election_uuid = session.state_data.get("election_uuid")
+        if not user or not election_uuid:
+            return self._show_main_menu(session)
+
+        election = self.election_repository.get_by_uuid(election_uuid)
+        if not election:
+            return UssdResponse("END Election not found.", False)
+
+        try:
+            from apps.elections.services.election_pin_service import election_pin_service
+
+            election_pin_service.verify_pin(election, user, pin)
+        except AuthenticationError as exc:
+            return UssdResponse(f"CON {exc.message}\n0. Back", True)
+        except NotFoundError:
+            return UssdResponse("CON No election PIN on file.\n0. Back", True)
+
+        session.current_step = steps.VOTE_SELECT
+        return self._handle_vote_select(session, "1", ip_address)
 
     def _dispatch_authenticated(self, session, step: str, user_input: str, ip_address) -> UssdResponse:
         handlers = {
@@ -278,8 +319,8 @@ class UssdFlowService:
 
         selected = elections[int(choice) - 1]
         session.state_data["election_uuid"] = selected["uuid"]
-        session.current_step = steps.VOTE_SELECT
-        return self._handle_vote_select(session, "1", ip_address)
+        session.current_step = steps.ELECTION_PIN
+        return UssdResponse("CON Enter your Election PIN:\n0. Back")
 
     def _handle_vote_select(self, session, _choice: str, ip_address) -> UssdResponse:
         user = self._get_user(session)

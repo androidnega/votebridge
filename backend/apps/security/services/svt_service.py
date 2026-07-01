@@ -21,6 +21,7 @@ from apps.security.validators import (
 from apps.voting.models import Vote
 from apps.voting.repositories.vote_repository import VoteRepository
 from core.exceptions import ConflictError, NotFoundError, PermissionDeniedError, ValidationError
+from core.utils.phone import mask_phone_number
 
 logger = logging.getLogger("votebridge")
 
@@ -117,6 +118,88 @@ class SVTService:
         self.vote_repository = vote_repository or VoteRepository()
         self.audit_service = audit_service or SVTAuditService()
 
+    def _user_has_submitted_ballot(self, user, election) -> bool:
+        return self.svt_repository.get_queryset().filter(
+            user=user,
+            election=election,
+            status=SVTToken.Status.USED,
+        ).exists()
+
+    def _send_svt_sms(self, user, election, plain_code: str, expires_at) -> None:
+        phone = (user.phone_number or "").strip()
+        if not phone:
+            logger.warning("SVT SMS skipped — no phone on file for user %s", user.uuid)
+            return
+        try:
+            from apps.notifications.services.communication_service import communication_service
+
+            communication_service.dispatch_multi(
+                template_code="svt_issued",
+                channels=["sms"],
+                recipient=phone,
+                context={
+                    "first_name": user.first_name or "Student",
+                    "election_name": election.title,
+                    "svt": plain_code,
+                    "expiry_time": expires_at.strftime("%H:%M"),
+                },
+                user=user,
+            )
+        except Exception:
+            logger.exception("Failed to send SVT SMS for user %s", user.uuid)
+
+    def _build_public_issue_response(
+        self,
+        svt: SVTToken,
+        election,
+        *,
+        message: str,
+        resend_available_at=None,
+    ) -> dict:
+        return {
+            "svt_id": str(svt.svt_id),
+            "election_uuid": str(election.uuid),
+            "election_title": election.title,
+            "issued_at": svt.issued_at,
+            "expires_at": svt.expires_at,
+            "status": svt.status,
+            "masked_phone": mask_phone_number(svt.user.phone_number),
+            "resend_available_at": resend_available_at,
+            "validation_attempts_remaining": max(
+                0,
+                int(getattr(settings, "SVT_MAX_VALIDATION_ATTEMPTS", 5)) - svt.validation_attempts,
+            ),
+            "message": message,
+        }
+
+    def get_voting_access_status(self, election_uuid, user) -> dict:
+        election = self.election_repository.get_by_uuid(election_uuid)
+        if not election:
+            raise NotFoundError(message="Election not found.", code="election_not_found")
+
+        active = self.svt_repository.get_active_svt_for_user_election(user, election)
+        resend_at = None
+        if active and active.status == SVTToken.Status.ISSUED and active.last_resent_at:
+            cooldown = int(getattr(settings, "SVT_RESEND_COOLDOWN_SECONDS", 60))
+            resend_at = active.last_resent_at + timedelta(seconds=cooldown)
+
+        return {
+            "election_uuid": str(election.uuid),
+            "election_title": election.title,
+            "has_submitted_ballot": self._user_has_submitted_ballot(user, election),
+            "svt_status": active.status if active else None,
+            "expires_at": active.expires_at if active else None,
+            "validated_at": active.validated_at if active else None,
+            "can_request_svt": active is None and not self._user_has_submitted_ballot(user, election),
+            "masked_phone": mask_phone_number(user.phone_number),
+            "resend_available_at": resend_at,
+            "validation_attempts_remaining": max(
+                0,
+                int(getattr(settings, "SVT_MAX_VALIDATION_ATTEMPTS", 5))
+                - (active.validation_attempts if active else 0),
+            ),
+        }
+
     @transaction.atomic
     def request_svt(
         self,
@@ -140,10 +223,30 @@ class SVTService:
                 code="not_eligible",
             )
 
-        self.svt_repository.revoke_issued_for_user_election(user, election)
+        if self._user_has_submitted_ballot(user, election):
+            raise ConflictError(
+                message="You have already voted in this election.",
+                code="already_voted",
+            )
+
+        if self.svt_repository.has_active_svt_for_user_election(user, election):
+            active = self.svt_repository.get_active_svt_for_user_election(user, election)
+            resend_at = None
+            if active and active.last_resent_at:
+                cooldown = int(getattr(settings, "SVT_RESEND_COOLDOWN_SECONDS", 60))
+                resend_at = active.last_resent_at + timedelta(seconds=cooldown)
+            return {
+                **self._build_public_issue_response(
+                    active,
+                    election,
+                    message="A voting token has already been sent to your phone.",
+                    resend_available_at=resend_at,
+                ),
+                "token_code": None,
+            }
 
         plain_code = SVTToken.generate_token_code()
-        expiry_minutes = int(getattr(settings, "SVT_EXPIRY_MINUTES", 30))
+        expiry_minutes = int(getattr(settings, "SVT_EXPIRY_MINUTES", 10))
         now = timezone.now()
         expires_at = now + timedelta(minutes=expiry_minutes)
 
@@ -157,20 +260,115 @@ class SVTService:
         )
 
         self.audit_service.log_issued(user, svt, ip_address, user_agent)
+        self._send_svt_sms(user, election, plain_code, expires_at)
         logger.info("SVT issued: %s for user %s", svt.svt_id, user.uuid)
 
         result = {
-            "svt_id": str(svt.svt_id),
+            **self._build_public_issue_response(
+                svt,
+                election,
+                message="A Secure Voting Token has been sent to your registered phone number.",
+            ),
             "token_code": plain_code,
-            "election_uuid": str(election.uuid),
-            "election_title": election.title,
-            "issued_at": svt.issued_at,
-            "expires_at": svt.expires_at,
-            "status": svt.status,
-            "message": "Keep this token secure. Enter it once to vote across all positions on your ballot.",
         }
         self._broadcast_svt_issued(svt, user)
         return result
+
+    @transaction.atomic
+    def resend_svt(
+        self,
+        election_uuid,
+        user,
+        ip_address=None,
+        user_agent=None,
+    ) -> dict:
+        election = self.election_repository.get_by_uuid(election_uuid)
+        if not election:
+            raise NotFoundError(message="Election not found.", code="election_not_found")
+
+        try:
+            validate_election_open_for_svt(election)
+        except DjangoValidationError as exc:
+            raise ValidationError(message=str(exc), code="election_not_open") from exc
+
+        if self._user_has_submitted_ballot(user, election):
+            raise ConflictError(message="You have already voted in this election.", code="already_voted")
+
+        active = self.svt_repository.get_active_svt_for_user_election(user, election)
+        if not active or active.status != SVTToken.Status.ISSUED:
+            raise ConflictError(
+                message="No pending voting token to resend.",
+                code="svt_not_pending",
+            )
+
+        cooldown = int(getattr(settings, "SVT_RESEND_COOLDOWN_SECONDS", 60))
+        if active.last_resent_at:
+            next_allowed = active.last_resent_at + timedelta(seconds=cooldown)
+            if timezone.now() < next_allowed:
+                raise ConflictError(
+                    message="Please wait before requesting another token.",
+                    code="svt_resend_cooldown",
+                )
+
+        self.svt_repository.update(active, status=SVTToken.Status.REVOKED)
+        issued = self.request_svt(
+            election_uuid=election_uuid,
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        new_svt = self.svt_repository.get_by_svt_id(issued["svt_id"])
+        if new_svt:
+            self.svt_repository.update(new_svt, last_resent_at=timezone.now())
+            issued["resend_available_at"] = timezone.now() + timedelta(seconds=cooldown)
+        issued.pop("token_code", None)
+        return issued
+
+    @transaction.atomic
+    def start_voting_session(
+        self,
+        election_uuid,
+        user,
+        ip_address=None,
+        user_agent=None,
+    ) -> dict:
+        """Issue and validate an SVT when web voting begins — token never returned to client."""
+        election = self.election_repository.get_by_uuid(election_uuid)
+        if not election:
+            raise NotFoundError(message="Election not found.", code="election_not_found")
+
+        active = self.svt_repository.get_active_svt_for_user_election(user, election)
+        if active and active.status == SVTToken.Status.VALIDATED:
+            return {
+                "svt_id": str(active.svt_id),
+                "election_uuid": str(election.uuid),
+                "election_title": election.title,
+                "status": active.status,
+                "expires_at": active.expires_at,
+                "validated_at": active.validated_at,
+                "message": "Ballot session active.",
+                "token_code": None,
+            }
+
+        if active and active.status == SVTToken.Status.ISSUED:
+            self.svt_repository.update(active, status=SVTToken.Status.REVOKED)
+
+        issued = self.request_svt(
+            election_uuid=election_uuid,
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        plain_code = issued["token_code"]
+        session = self.validate_and_start_ballot(
+            token_code=plain_code,
+            user=user,
+            election_uuid=election_uuid,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        session["token_code"] = plain_code
+        return session
 
     def _broadcast_svt_issued(self, svt, user) -> None:
         try:
@@ -226,16 +424,29 @@ class SVTService:
         if not election:
             raise NotFoundError(message="Election not found.", code="election_not_found")
 
-        svt = self.svt_repository.get_by_token_code(token_code)
+        normalized = str(token_code or "").strip()
+        if not normalized.isdigit() or len(normalized) != 6:
+            self._record_failed_validation_attempt(user, election)
+            raise ValidationError(message="Enter the 6-digit code sent to your phone.", code="svt_invalid")
+
+        svt = self.svt_repository.get_by_token_code(normalized.zfill(6))
         if not svt:
+            self._record_failed_validation_attempt(user, election)
             raise NotFoundError(message="Invalid voting token.", code="svt_not_found")
 
         try:
             validate_svt_for_ballot_start(svt, user, election)
         except DjangoValidationError as exc:
+            self._record_failed_validation_attempt(user, election, svt=svt)
             raise ValidationError(message=str(exc), code="svt_invalid") from exc
 
-        svt = self.svt_repository.update(svt, status=SVTToken.Status.VALIDATED)
+        now = timezone.now()
+        svt = self.svt_repository.update(
+            svt,
+            status=SVTToken.Status.VALIDATED,
+            validated_at=now,
+            validation_attempts=0,
+        )
 
         self.audit_service.log_validated(user, svt, ip_address, user_agent)
         self.audit_service.log_ballot_started(user, svt, ip_address, user_agent)
@@ -243,14 +454,34 @@ class SVTService:
 
         self._broadcast_svt_validated(svt, user)
 
+        session_minutes = int(getattr(settings, "BALLOT_SESSION_MINUTES", 15))
         return {
             "svt_id": str(svt.svt_id),
             "election_uuid": str(election.uuid),
             "election_title": election.title,
             "status": svt.status,
             "expires_at": svt.expires_at,
+            "validated_at": svt.validated_at,
+            "session_expires_at": now + timedelta(minutes=session_minutes),
             "message": "Ballot session started. Complete your selections and submit your ballot.",
         }
+
+    def _record_failed_validation_attempt(self, user, election, svt: SVTToken | None = None) -> None:
+        max_attempts = int(getattr(settings, "SVT_MAX_VALIDATION_ATTEMPTS", 5))
+        target = svt
+        if not target:
+            target = self.svt_repository.get_active_svt_for_user_election(user, election)
+        if not target or target.status != SVTToken.Status.ISSUED:
+            return
+        attempts = target.validation_attempts + 1
+        if attempts >= max_attempts:
+            self.svt_repository.update(
+                target,
+                validation_attempts=attempts,
+                status=SVTToken.Status.REVOKED,
+            )
+            return
+        self.svt_repository.update(target, validation_attempts=attempts)
 
     def get_svt_for_submit(self, token_code: str, user, election_uuid) -> SVTToken:
         election = self.election_repository.get_by_uuid(election_uuid)

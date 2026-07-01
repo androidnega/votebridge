@@ -23,6 +23,7 @@ from apps.voting.validators import (
     validate_channel_allowed_for_election,
     validate_election_is_open,
 )
+from apps.security.repositories.svt_repository import SVTRepository
 from apps.security.services.svt_service import SVTService
 from core.exceptions import ConflictError, NotFoundError, PermissionDeniedError, ValidationError
 
@@ -103,6 +104,7 @@ class BallotService:
         candidate_repository: CandidateRepository | None = None,
         vote_repository: VoteRepository | None = None,
         audit_service: VoteAuditService | None = None,
+        svt_repository: SVTRepository | None = None,
     ):
         self.election_repository = election_repository or ElectionRepository()
         self.eligibility_repository = eligibility_repository or VoterEligibilityRepository()
@@ -110,6 +112,7 @@ class BallotService:
         self.candidate_repository = candidate_repository or CandidateRepository()
         self.vote_repository = vote_repository or VoteRepository()
         self.audit_service = audit_service or VoteAuditService()
+        self.svt_repository = svt_repository or SVTRepository()
 
     def get_ballot(self, election_uuid, user, ip_address=None, user_agent=None) -> dict:
         election = self.election_repository.get_by_uuid(election_uuid)
@@ -155,6 +158,7 @@ class BallotService:
                             "department": c.department,
                             "manifesto": c.manifesto,
                             "has_voted": c.id in voted_candidate_ids,
+                            "image_url": c.image.url if c.image else None,
                         }
                         for c in candidates
                     ],
@@ -163,11 +167,22 @@ class BallotService:
 
         self.audit_service.log_ballot_viewed(user, election, ip_address, user_agent)
 
+        active_svt = self.svt_repository.get_active_svt_for_user_election(user, election)
+        from apps.security.models import SVTToken
+        from core.utils.phone import mask_phone_number
+
         return {
             "election_uuid": str(election.uuid),
             "election_title": election.title,
             "status": election.status,
             "positions": ballot_positions,
+            "svt_status": active_svt.status if active_svt else None,
+            "can_request_svt": active_svt is None,
+            "masked_phone": mask_phone_number(user.phone_number),
+            "validated_at": active_svt.validated_at if active_svt else None,
+            "ballot_session_active": bool(
+                active_svt and active_svt.status == SVTToken.Status.VALIDATED
+            ),
         }
 
 
@@ -208,7 +223,7 @@ class VoteService:
         """Submit all ballot selections under one SVT; consume token after all votes recorded."""
         if not selections:
             raise ValidationError(
-                message="At least one position selection is required.",
+                message="Your ballot payload is empty.",
                 code="empty_ballot",
             )
 
@@ -242,6 +257,7 @@ class VoteService:
 
         created_votes = []
         positions_completed = []
+        positions_with_selection = 0
 
         for selection in selections:
             position_uuid = str(selection["position_uuid"])
@@ -250,6 +266,7 @@ class VoteService:
             if not candidate_uuids:
                 continue
 
+            positions_with_selection += 1
             position = eligible_positions.get(position_uuid)
             if not position:
                 position = self.position_repository.get_by_uuid(position_uuid)
@@ -322,7 +339,7 @@ class VoteService:
 
         if not created_votes:
             raise ValidationError(
-                message="No valid selections to record.",
+                message="Select at least one candidate before submitting your ballot.",
                 code="empty_ballot",
             )
 
@@ -334,11 +351,16 @@ class VoteService:
             user_agent=user_agent,
         )
 
+        confirmation_reference = self._build_confirmation_reference(svt)
+        positions_skipped = max(0, len(eligible_positions) - positions_with_selection)
+
         result = {
             "election_uuid": str(election.uuid),
             "election_title": election.title,
+            "confirmation_reference": confirmation_reference,
             "positions_completed": positions_completed,
             "positions_count": len(positions_completed),
+            "positions_skipped": positions_skipped,
             "votes_count": len(created_votes),
             "timestamp": created_votes[-1].timestamp,
             "message": "Your vote has been recorded successfully.",
@@ -386,6 +408,12 @@ class VoteService:
             )
         except Exception:
             logger.exception("Failed to broadcast ballot submission for election %s", election.uuid)
+
+    @staticmethod
+    def _build_confirmation_reference(svt) -> str:
+        year = timezone.now().year
+        suffix = int(str(svt.svt_id).replace("-", "")[:8], 16) % 1_000_000
+        return f"VTB-{year}-{suffix:06d}"
 
     def verify_vote(self, vote_id, user, ip_address=None, user_agent=None) -> dict:
         vote = self.vote_repository.get_by_vote_id(vote_id)

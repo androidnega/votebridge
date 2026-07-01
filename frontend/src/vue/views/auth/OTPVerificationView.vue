@@ -3,9 +3,9 @@ import { computed, onMounted, onUnmounted, reactive, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import OtpPinInput from "@/components/auth/OtpPinInput.vue";
 import { VAlert, VButton } from "@/components/ui";
-import { normalizeAuthRedirect } from "@/config/routes";
 import { useToast } from "@/composables/useToast";
 import { useAuthStore } from "@/stores/auth";
+import { navigateAfterLogin } from "@/utils/postLoginNavigation";
 import { otpCode, required, validateFields } from "@/utils/validators";
 
 const router = useRouter();
@@ -30,7 +30,7 @@ const maskedDestination = computed(() => challenge.value?.masked_destination || 
 
 onMounted(() => {
   if (authStore.isAuthenticated) {
-    router.replace(authStore.postLoginRedirect || { name: "dashboard" });
+    navigateAfterLogin(router, authStore.postLoginRedirect).catch(() => {});
     return;
   }
   if (!authStore.hasPendingOtp) {
@@ -84,12 +84,11 @@ async function handleVerify() {
       return;
     }
     toast.success("Signed in successfully");
-    const redirect = normalizeAuthRedirect(
+    const redirect =
       typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
         ? route.query.redirect
-        : result.redirectPath
-    );
-    await router.replace(redirect);
+        : result.redirectPath;
+    await navigateAfterLogin(router, redirect);
   } catch (error) {
     submitError.value = error.message;
     otp.value = "";

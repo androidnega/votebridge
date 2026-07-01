@@ -111,6 +111,21 @@ class UserService:
                     code="student_id_exists",
                 )
 
+        if "phone_number" in data and data["phone_number"] != user.phone_number:
+            from apps.elections.models import Election
+            from apps.elections.repositories.eligibility_repository import VoterEligibilityRepository
+
+            has_open = VoterEligibilityRepository().get_queryset().filter(
+                user=user,
+                is_eligible=True,
+                election__status=Election.Status.OPEN,
+            ).exists()
+            if has_open:
+                raise ValidationError(
+                    message="Phone number cannot be changed while an election is open.",
+                    code="phone_locked",
+                )
+
         password = data.pop("password", None)
         user = self.user_repository.update(user, password=password, **data)
         logger.info("User updated: %s", user.uuid)

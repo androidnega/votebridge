@@ -9,7 +9,9 @@ import {
   getAccessToken,
   getOtpChallenge,
   getRefreshToken,
+  getSessionUuid,
   getUserUuid,
+  isAccessTokenExpired,
   setOtpChallenge,
   setSessionMeta,
   setTokens,
@@ -26,11 +28,12 @@ export const useAuthStore = defineStore("auth", {
     otpLoading: false,
     sessionsLoading: false,
     initialized: false,
+    initializePromise: null,
   }),
 
   getters: {
     isAuthenticated: (state) =>
-      Boolean(state.user?.uuid) || Boolean(getAccessToken() || getRefreshToken()),
+      Boolean(state.user?.uuid) && Boolean(getAccessToken() || getRefreshToken()),
     role: (state) => state.user?.role?.name || null,
     roleDisplay: (state) => state.user?.role?.name_display || state.user?.role?.name || "",
     fullName: (state) => {
@@ -47,22 +50,48 @@ export const useAuthStore = defineStore("auth", {
 
   actions: {
     async initialize() {
-      if (this.initialized) return;
+      if (this.initializePromise) {
+        return this.initializePromise;
+      }
+
+      if (this.user?.uuid && getAccessToken() && !isAccessTokenExpired()) {
+        this.initialized = true;
+        this.initializePromise = Promise.resolve();
+        return this.initializePromise;
+      }
+
+      this.initializePromise = this._initializeSession();
+      return this.initializePromise;
+    },
+
+    establishSession() {
       this.initialized = true;
+      this.initializePromise = Promise.resolve();
+    },
 
-      if (!getAccessToken() && !getRefreshToken()) {
-        clearSession();
-        this.user = null;
-        return;
-      }
+    resolvePostLoginRedirect(redirectPath) {
+      return normalizeAuthRedirect(redirectPath || this.postLoginRedirect || DASHBOARD_ROOT);
+    },
 
-      const sessionReady = await ensureAccessToken();
-      if (!sessionReady) {
-        this.user = null;
-        return;
-      }
-
+    async _initializeSession() {
       try {
+        if (!getAccessToken() && !getRefreshToken()) {
+          clearSession();
+          this.user = null;
+          return;
+        }
+
+        if (this.user?.uuid && getAccessToken() && !isAccessTokenExpired()) {
+          return;
+        }
+
+        const sessionReady = await ensureAccessToken();
+        if (!sessionReady) {
+          clearSession();
+          this.user = null;
+          return;
+        }
+
         await this.fetchProfile();
         if (this.user?.uuid) {
           setSessionMeta({
@@ -73,6 +102,11 @@ export const useAuthStore = defineStore("auth", {
       } catch {
         clearSession();
         this.user = null;
+      } finally {
+        this.initialized = true;
+        if (!getAccessToken() && !getRefreshToken()) {
+          this.initializePromise = null;
+        }
       }
     },
 
@@ -102,15 +136,35 @@ export const useAuthStore = defineStore("auth", {
       }
     },
 
-    async initiateLogin({ identity, password }) {
+    async continueLogin({ identity, password }) {
       this.loading = true;
       const trimmed = identity?.trim() || "";
 
       try {
-        const challenge = await authApi.login({
-          identity: trimmed,
-          password,
-        });
+        const payload = { identity: trimmed };
+        if (password) {
+          payload.password = password;
+        }
+
+        const challenge = await authApi.login(payload);
+
+        if (challenge?.requires_password) {
+          return challenge;
+        }
+
+        if (challenge?.tokens?.access) {
+          setTokens(challenge.tokens.access, challenge.tokens.refresh);
+          setSessionMeta({
+            userUuid: challenge.user_uuid,
+            sessionUuid: challenge.session_uuid,
+          });
+          clearOtpChallenge();
+          this.otpChallenge = null;
+          this.postLoginRedirect = normalizeAuthRedirect(challenge.redirect_path);
+          await this.fetchProfile();
+          this.establishSession();
+          return { user: this.user, redirectPath: this.postLoginRedirect, completed: true };
+        }
 
         this.otpChallenge = challenge;
         setOtpChallenge(this.otpChallenge);
@@ -120,6 +174,10 @@ export const useAuthStore = defineStore("auth", {
       } finally {
         this.loading = false;
       }
+    },
+
+    async initiateLogin({ identity, password }) {
+      return this.continueLogin({ identity, password });
     },
 
     async verifyOtp(otpCode) {
@@ -152,6 +210,7 @@ export const useAuthStore = defineStore("auth", {
               this.otpChallenge = null;
               this.postLoginRedirect = normalizeAuthRedirect(result.redirect_path);
               await this.fetchProfile();
+              this.establishSession();
               return { user: this.user, redirectPath: this.postLoginRedirect };
             }
           }
@@ -180,6 +239,7 @@ export const useAuthStore = defineStore("auth", {
               this.otpChallenge = null;
               this.postLoginRedirect = normalizeAuthRedirect(result.redirect_path);
               await this.fetchProfile();
+              this.establishSession();
               return { user: this.user, redirectPath: this.postLoginRedirect };
             }
           }
@@ -201,6 +261,7 @@ export const useAuthStore = defineStore("auth", {
         this.otpChallenge = null;
         this.postLoginRedirect = normalizeAuthRedirect(result.redirect_path);
         await this.fetchProfile();
+        this.establishSession();
         return { user: this.user, redirectPath: this.postLoginRedirect };
       } catch (error) {
         throw new Error(extractApiError(error));
@@ -269,6 +330,8 @@ export const useAuthStore = defineStore("auth", {
         this.user = null;
         this.sessions = [];
         this.otpChallenge = null;
+        this.initialized = false;
+        this.initializePromise = null;
       }
     },
   },

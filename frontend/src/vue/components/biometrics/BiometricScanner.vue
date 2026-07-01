@@ -65,13 +65,18 @@ const progress = computed(() =>
   })
 );
 
-const faceStatus = computed(() =>
-  faceStatusLabel({
-    hasFace: faceDetected.value,
-    faceAligned: faceAligned.value,
+const faceStatus = computed(() => {
+  const faceStepDone = completedSteps.value.has("face");
+  const hasFace = faceDetected.value || faceStepDone;
+  // Once face step is complete, keep "Face detected" unless the face is truly lost.
+  const alignedForBadge =
+    faceAligned.value || (faceStepDone && hasFace && !warning.value.includes("Multiple"));
+  return faceStatusLabel({
+    hasFace,
+    faceAligned: alignedForBadge,
     warning: warning.value,
-  })
-);
+  });
+});
 
 const loadingMessage = computed(() => {
   if (cameraError.value) return "";

@@ -91,6 +91,119 @@ class ArkeselSmsProvider(BaseProvider):
         return {"success": True, "message": "Arkesel credentials are configured."}
 
 
+class MoolreSmsProvider(BaseProvider):
+    """Moolre SMS gateway — fallback when Arkesel delivery fails."""
+
+    provider_type = CommunicationProvider.ProviderType.MOOLRE_SMS
+
+    LIVE_URL = "https://api.moolre.com/open/sms/send"
+    SANDBOX_URL = "https://sandbox.moolre.com/open/sms/send"
+    STATUS_URL = "https://api.moolre.com/open/sms/query"
+
+    def __init__(self, provider_record: CommunicationProvider | None = None):
+        self.provider_record = provider_record
+
+    def _credentials(self) -> tuple[str, str, str]:
+        config = (self.provider_record.config if self.provider_record else {}) or {}
+        vas_key = resolve_config_secret(config.get("vas_key")) or getattr(settings, "MOOLRE_VAS_KEY", "")
+        sender_id = config.get("sender_id") or getattr(settings, "MOOLRE_SENDER_ID", "")
+        environment = (config.get("environment") or getattr(settings, "MOOLRE_ENVIRONMENT", "live")).lower()
+        url = config.get("url") or (
+            self.SANDBOX_URL if environment == "sandbox" else self.LIVE_URL
+        )
+        return vas_key, sender_id, url
+
+    def _normalize_recipient(self, recipient: str) -> str:
+        digits = re.sub(r"\D", "", recipient or "")
+        if digits.startswith("0") and len(digits) == 10:
+            return f"233{digits[1:]}"
+        return digits
+
+    def send(self, delivery_log: DeliveryLog) -> dict:
+        vas_key, sender_id, url = self._credentials()
+        if not vas_key or not sender_id:
+            raise ServiceUnavailableError(
+                message="Moolre SMS is not configured.",
+                code="sms_not_configured",
+            )
+
+        recipient = self._normalize_recipient(delivery_log.recipient)
+        payload = {
+            "type": 1,
+            "senderid": sender_id[:11],
+            "messages": [
+                {
+                    "recipient": recipient,
+                    "message": delivery_log.body_snapshot[:160],
+                    "ref": str(delivery_log.uuid),
+                }
+            ],
+        }
+
+        try:
+            response = httpx.post(
+                url,
+                headers={"X-API-VASKEY": vas_key, "Content-Type": "application/json"},
+                json=payload,
+                timeout=15.0,
+            )
+            response.raise_for_status()
+            data = response.json() if response.content else {}
+            if data.get("status") not in (1, "1", True):
+                raise ServiceUnavailableError(
+                    message=data.get("message") or "Moolre SMS delivery failed.",
+                    code="sms_delivery_failed",
+                )
+            return {"status_code": response.status_code, "response": data, "provider": "moolre_sms"}
+        except httpx.HTTPError as exc:
+            logger.error("Moolre SMS delivery failed: %s", exc)
+            raise ServiceUnavailableError(
+                message="Failed to send SMS via Moolre.",
+                code="sms_delivery_failed",
+            ) from exc
+
+    def test_connection(self) -> dict:
+        vas_key, sender_id, _url = self._credentials()
+        if not vas_key:
+            return {"success": False, "message": "Moolre VAS key not configured."}
+        if not sender_id:
+            return {"success": False, "message": "Moolre sender ID not configured."}
+
+        environment = (
+            (self.provider_record.config or {}).get("environment")
+            if self.provider_record
+            else getattr(settings, "MOOLRE_ENVIRONMENT", "live")
+        )
+        status_url = (
+            "https://sandbox.moolre.com/open/sms/query"
+            if str(environment).lower() == "sandbox"
+            else self.STATUS_URL
+        )
+
+        try:
+            response = httpx.post(
+                status_url,
+                headers={"X-API-VASKEY": vas_key, "Content-Type": "application/json"},
+                json={"type": 2},
+                timeout=15.0,
+            )
+            response.raise_for_status()
+            data = response.json() if response.content else {}
+            if data.get("status") in (1, "1", True):
+                balance = (data.get("data") or {}).get("balance")
+                msg = "Moolre credentials verified."
+                if balance is not None:
+                    msg = f"Moolre connected. SMS balance: {balance}."
+                return {"success": True, "message": msg}
+            return {
+                "success": False,
+                "message": data.get("message") or "Moolre authentication failed.",
+            }
+        except httpx.HTTPError as exc:
+            logger.error("Moolre SMS test failed: %s", exc)
+            return {"success": False, "message": "Could not reach Moolre SMS API."}
+
+
 class SmtpEmailProvider(BaseProvider):
     provider_type = CommunicationProvider.ProviderType.SMTP_EMAIL
 
@@ -147,6 +260,7 @@ class SmtpEmailProvider(BaseProvider):
 
 PROVIDER_REGISTRY: dict[str, type[BaseProvider]] = {
     CommunicationProvider.ProviderType.ARKESEL_SMS: ArkeselSmsProvider,
+    CommunicationProvider.ProviderType.MOOLRE_SMS: MoolreSmsProvider,
     CommunicationProvider.ProviderType.SMTP_EMAIL: SmtpEmailProvider,
 }
 

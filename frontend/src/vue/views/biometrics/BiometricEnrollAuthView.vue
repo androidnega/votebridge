@@ -4,10 +4,10 @@ import { useRoute, useRouter } from "vue-router";
 import BiometricScanner from "@/components/biometrics/BiometricScanner.vue";
 import { VAlert, VButton } from "@/components/ui";
 import { toastMessages } from "@/config/toastMessages";
-import { normalizeAuthRedirect } from "@/config/routes";
 import { useToast } from "@/composables/useToast";
 import { useBiometricsStore } from "@/stores/biometrics";
 import { useAuthStore } from "@/stores/auth";
+import { navigateAfterLogin } from "@/utils/postLoginNavigation";
 
 const router = useRouter();
 const route = useRoute();
@@ -60,12 +60,11 @@ async function completeEnrollment() {
     });
     await authStore.fetchProfile();
     toast.success(toastMessages.biometric.enrolled);
-    const redirect = normalizeAuthRedirect(
+    const redirect =
       typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
         ? route.query.redirect
-        : result.redirect_path
-    );
-    await router.replace(redirect);
+        : result.redirect_path;
+    await navigateAfterLogin(router, redirect);
   } catch (error) {
     submitError.value = error.message || biometricsStore.error;
     frames.value = [];

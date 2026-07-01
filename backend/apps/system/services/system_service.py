@@ -510,7 +510,7 @@ class ProviderManagementService:
             merged = dict(provider.config or {})
             for k, v in data["config"].items():
                 if v != "***":
-                    if k in {"api_key", "password", "secret"} and v:
+                    if k in {"api_key", "password", "secret", "vas_key"} and v:
                         merged[k] = encrypt_secret(v)
                     else:
                         merged[k] = v
@@ -794,8 +794,10 @@ class SystemOverviewService:
 
         components = {c["name"]: c for c in health.get("components", [])}
         sms_providers = [p for p in comms.get("providers", []) if p.get("provider_type") == "arkesel_sms"]
+        moolre_sms_providers = [p for p in comms.get("providers", []) if p.get("provider_type") == "moolre_sms"]
         email_providers = [p for p in comms.get("providers", []) if p.get("provider_type") == "smtp_email"]
         default_sms = sms_providers[0] if sms_providers else {}
+        default_moolre_sms = moolre_sms_providers[0] if moolre_sms_providers else {}
         default_email = email_providers[0] if email_providers else {}
 
         def _iso(value):
@@ -827,6 +829,9 @@ class SystemOverviewService:
                     "status": default_sms.get("connection_status", "unknown"),
                     "last_sync": _iso(default_sms.get("last_success_at")),
                     "last_error": default_sms.get("last_error"),
+                    "fallback_status": default_moolre_sms.get("connection_status"),
+                    "fallback_last_sync": _iso(default_moolre_sms.get("last_success_at")),
+                    "fallback_last_error": default_moolre_sms.get("last_error"),
                 },
                 "email": {
                     "status": default_email.get("connection_status", "unknown"),

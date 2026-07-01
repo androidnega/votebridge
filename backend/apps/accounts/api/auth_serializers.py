@@ -18,7 +18,12 @@ class SuperAdminLoginSerializer(serializers.Serializer):
 
 class UniversalLoginSerializer(serializers.Serializer):
     identity = serializers.CharField(max_length=255)
-    password = serializers.CharField(write_only=True, min_length=8)
+    password = serializers.CharField(write_only=True, min_length=8, required=False, allow_blank=True)
+
+
+class AuthPasswordRequiredSerializer(serializers.Serializer):
+    requires_password = serializers.BooleanField()
+    account_type = serializers.CharField()
 
 
 class OTPVerifySerializer(serializers.Serializer):
@@ -49,6 +54,7 @@ class AuthOTPChallengeSerializer(serializers.Serializer):
     otp_request_uuid = serializers.UUIDField(required=False)
     expires_at = serializers.DateTimeField(required=False)
     channel = serializers.CharField(required=False)
+    masked_destination = serializers.CharField(required=False)
     mfa_required = serializers.BooleanField(required=False)
     requires_biometric = serializers.BooleanField(required=False)
     pending_auth_token = serializers.CharField(required=False)

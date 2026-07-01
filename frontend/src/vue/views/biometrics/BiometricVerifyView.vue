@@ -9,11 +9,11 @@ import {
 } from "@/services/biometricChallengeManager";
 import { VAlert, VButton } from "@/components/ui";
 import { toastMessages } from "@/config/toastMessages";
-import { normalizeAuthRedirect } from "@/config/routes";
 import { useToast } from "@/composables/useToast";
 import { useBiometricsStore } from "@/stores/biometrics";
 import { useAuthStore } from "@/stores/auth";
 import { useTrustedDevicesStore } from "@/stores/trustedDevices";
+import { navigateAfterLogin } from "@/utils/postLoginNavigation";
 
 const router = useRouter();
 const route = useRoute();
@@ -35,7 +35,7 @@ const pendingToken = computed(() => biometricsStore.pendingAuth?.pending_auth_to
 const instruction = computed(() => {
   const type = challenge.value?.challenge_type;
   if (type) return verifyChallengeInstruction(type);
-  return "Blink once when prompted";
+  return "Blink once to continue";
 });
 const showRiskHint = computed(() => (trustedStore.lastRiskReasons?.length ?? 0) > 0);
 const framesCaptured = computed(() => frames.value.length);
@@ -109,12 +109,11 @@ async function submitVerification() {
     });
     await authStore.fetchProfile();
     toast.success(toastMessages.biometric.verified);
-    const redirect = normalizeAuthRedirect(
+    const redirect =
       typeof route.query.redirect === "string" && route.query.redirect.startsWith("/")
         ? route.query.redirect
-        : result.redirect_path
-    );
-    await router.replace(redirect);
+        : result.redirect_path;
+    await navigateAfterLogin(router, redirect);
   } catch (error) {
     submitError.value = error.message || biometricsStore.error;
     frames.value = [];

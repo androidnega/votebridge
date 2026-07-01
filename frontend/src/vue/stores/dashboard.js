@@ -113,12 +113,8 @@ export const useDashboardStore = defineStore("dashboard", {
       this.loading = true;
       this.error = null;
       try {
-        const [overview, scheduled] = await Promise.all([
-          dashboardApi.getStudentOverview(),
-          electionsApi.list({ status: "scheduled", page_size: 10 }),
-        ]);
+        const overview = await dashboardApi.getStudentOverview();
         this.studentOverview = overview;
-        this.scheduledElections = scheduled.items;
         return overview;
       } catch (error) {
         this.error = extractApiError(error);

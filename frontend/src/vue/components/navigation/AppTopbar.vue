@@ -33,9 +33,9 @@ const showLiveStatus = computed(() => notificationsStore.realtimeStatus === "con
         aria-label="Toggle sidebar"
         @click="$emit('toggle-sidebar')"
       >
-        <VIcon name="panelLeft" class="h-5 w-5" />
+        <VIcon name="panelLeft" class="h-[1.125rem] w-[1.125rem]" />
       </button>
-      <h1 class="truncate text-base font-semibold">{{ title }}</h1>
+      <h1 class="truncate text-base font-semibold text-ink-primary">{{ title }}</h1>
       <span v-if="authStore.isSuperAdmin" class="vb-topbar-badge">Super Admin</span>
     </div>
 
@@ -54,7 +54,7 @@ const showLiveStatus = computed(() => notificationsStore.realtimeStatus === "con
 
       <NotificationDropdown />
 
-      <UserMenu :compact="!authStore.isSuperAdmin" inverted />
+      <UserMenu :compact="!authStore.isSuperAdmin" />
     </div>
   </header>
 </template>

@@ -66,7 +66,36 @@ export function eyeCenterY(landmarks, side) {
   return pts.reduce((sum, p) => sum + p.y, 0) / pts.length;
 }
 
+export const VERIFY_MIN_FACE_WIDTH = 0.10;
+export const ENROLL_MIN_FACE_WIDTH = 0.22;
+
+/** Coerce MediaPipe landmark output into a plain array (or null). */
+export function normalizeLandmarkSet(landmarks) {
+  if (!landmarks) return null;
+
+  let list = landmarks;
+  if (!Array.isArray(list)) {
+    if (typeof list?.length !== "number" || list.length === 0) return null;
+    try {
+      list = Array.from(list);
+    } catch {
+      return null;
+    }
+  }
+
+  if (!list.length || typeof list[0]?.x !== "number") return null;
+  return list;
+}
+
+/** @returns {landmarks is Array<{x:number,y:number}>} */
+export function isValidLandmarkSet(landmarks) {
+  return normalizeLandmarkSet(landmarks) !== null;
+}
+
 export function faceBoundingBox(landmarks) {
+  if (!isValidLandmarkSet(landmarks)) {
+    return { minX: 0, minY: 0, maxX: 0, maxY: 0, width: 0, height: 0 };
+  }
   let minX = 1;
   let minY = 1;
   let maxX = 0;
@@ -121,8 +150,8 @@ export function estimateLighting(video) {
   return { level: "ok", score: avg };
 }
 
-export function isFaceLargeEnough(landmarks) {
-  return faceBoundingBox(landmarks).width > 0.22;
+export function isFaceLargeEnough(landmarks, { minWidth = ENROLL_MIN_FACE_WIDTH } = {}) {
+  return faceBoundingBox(landmarks).width > minWidth;
 }
 
 export const MESH_CONNECTIONS = {

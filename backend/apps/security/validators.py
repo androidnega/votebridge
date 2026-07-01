@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
+from datetime import timedelta
 
 from apps.voting.validators import validate_election_is_open
 from apps.security.models import SVTToken
@@ -44,6 +45,20 @@ def validate_svt_for_ballot_submit(svt: SVTToken, user, election) -> None:
         raise DjangoValidationError("This voting token has already been used.")
     if svt.status != SVTToken.Status.VALIDATED:
         raise DjangoValidationError("Ballot session is not active. Validate your token first.")
+    _check_ballot_session_active(svt)
+
+
+def _check_ballot_session_active(svt: SVTToken) -> None:
+    from django.conf import settings
+
+    if not svt.validated_at:
+        return
+    session_minutes = int(getattr(settings, "BALLOT_SESSION_MINUTES", 15))
+    deadline = svt.validated_at + timedelta(minutes=session_minutes)
+    if timezone.now() >= deadline:
+        svt.status = SVTToken.Status.EXPIRED
+        svt.save(update_fields=["status"])
+        raise DjangoValidationError("Your ballot session has expired. Request a new voting token.")
 
 
 def validate_svt_for_voting(svt: SVTToken, user, election) -> None:
