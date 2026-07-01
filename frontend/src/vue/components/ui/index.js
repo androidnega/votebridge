@@ -1,3 +1,4 @@
+export { default as FaIcon } from "./FaIcon.vue";
 export { default as VButton } from "./VButton.vue";
 export { default as VInput } from "./VInput.vue";
 export { default as VCard } from "./VCard.vue";

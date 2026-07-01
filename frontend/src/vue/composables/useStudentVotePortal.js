@@ -6,6 +6,11 @@ import { useDashboardStore } from "@/stores/dashboard";
 import {
   resolveElectionCountdownTarget,
 } from "@/composables/useElectionCountdown";
+import {
+  buildPositionPreview,
+  formatElectionTypeLabel,
+  resolveVotingChannels,
+} from "@/utils/studentActiveElectionDisplay";
 
 function countdownParts(target) {
   if (!target) {
@@ -63,6 +68,7 @@ export function useStudentVotePortal() {
   const dashboardStore = useDashboardStore();
 
   const electionDetailsMap = ref({});
+  const detailsLoadedAt = ref(null);
   const portalError = ref(null);
   const portalLoading = ref(false);
   const countdown = ref(countdownParts(null));
@@ -134,28 +140,42 @@ export function useStudentVotePortal() {
   function buildElectionCard(row) {
     const details = electionDetailsMap.value[row.election_uuid] || {};
     const positionTitles = details.position_titles || [];
-    const positions = positionTitles.length
-      ? formatPositionPreview(positionTitles)
-      : details.position_count
-        ? `${details.position_count} positions`
-        : "Multiple positions";
+    const positionCount = details.position_count || positionTitles.length;
+    const { preview, moreCount } = buildPositionPreview(positionTitles, positionCount);
     const voted = hasRecordedVote(row);
     const partial = hasPartialOrActiveVote(row);
     return {
       uuid: row.election_uuid,
       title: row.election_title || details.title || "Election",
-      initials: electionInitials(row.election_title || details.title || "EL"),
+      electionTypeLabel: formatElectionTypeLabel(
+        details.election_type_display,
+        details.election_type
+      ),
       status: row.election_status,
-      positionsLabel: positions,
-      closesLabel: `Closes ${formatCloseDate(details.end_date)}`,
+      confirmationStatus: row.confirmation_status,
+      positionPreview: preview,
+      moreCount,
+      positionCount,
+      startDate: details.start_date,
       endDate: details.end_date,
+      channels: resolveVotingChannels(details.election_type),
       canVote: row.election_status === "open" && !voted,
       hasVoted: voted,
       hasPartialVote: partial,
       confirmationReference: row.confirmation_reference || null,
+      lastUpdatedAt: row.submitted_at || detailsLoadedAt.value,
       voteRoute: `/dashboard/elections/${row.election_uuid}/vote`,
+      closesLabel: `Closes ${formatCloseDate(details.end_date)}`,
+      positionsLabel: preview.length
+        ? `${preview.join(", ")}${moreCount ? ` +${moreCount} more` : ""}`
+        : positionCount
+          ? `${positionCount} positions`
+          : "Multiple positions",
+      initials: electionInitials(row.election_title || details.title || "EL"),
     };
   }
+
+  const portalElectionCards = computed(() => activeElectionRows.value.map(buildElectionCard));
 
   const electionCards = computed(() => openElectionRows.value.map(buildElectionCard));
 
@@ -220,6 +240,7 @@ export function useStudentVotePortal() {
         }
       });
       electionDetailsMap.value = map;
+      detailsLoadedAt.value = new Date().toISOString();
     } catch (error) {
       portalError.value = error.message || "Unable to load election details.";
     } finally {
@@ -254,6 +275,7 @@ export function useStudentVotePortal() {
     votesCastCount,
     countdownText,
     electionCards,
+    portalElectionCards,
     activeElectionCards,
     historyElectionCards,
     recentActivity,

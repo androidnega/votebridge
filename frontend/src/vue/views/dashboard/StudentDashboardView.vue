@@ -19,8 +19,7 @@ const {
   activeElectionCount,
   votesCastCount,
   countdownText,
-  electionCards,
-  activeElectionCards,
+  portalElectionCards,
   recentActivity,
   portalLoading,
   portalError,
@@ -53,7 +52,7 @@ onMounted(() => {
         :closes-in="countdownText"
       />
 
-      <StudentActiveElectionList :elections="activeElectionCards" :loading="portalLoading" />
+      <StudentActiveElectionList :elections="portalElectionCards" :loading="portalLoading" />
 
       <StudentRecentActivity :items="recentActivity" />
     </template>
