@@ -169,19 +169,10 @@ DEFAULT_SETTINGS = {
     },
 }
 
-DEFAULT_FEATURE_FLAGS = [
-    ("fraud_detection", "Fraud Detection", "Enable fraud detection and alerting"),
-    ("strongroom", "Strongroom", "Enable strongroom ballot integrity module"),
-    ("realtime", "Realtime", "Enable WebSocket realtime updates"),
-    ("ussd", "USSD", "Enable USSD voting channel"),
-    ("sms", "SMS", "Enable SMS notifications and OTP"),
-    ("analytics", "Analytics", "Enable analytics dashboards"),
-    ("notifications", "Notifications", "Enable notification centre"),
-    ("monitoring", "Monitoring", "Enable operations monitoring"),
-    ("future_ai", "Future AI", "Reserved for AI-assisted fraud analysis"),
-    ("future_face_verification", "Future Face Verification", "Reserved for face verification"),
-    ("future_biometrics", "Future Biometrics", "Reserved for biometric verification"),
-]
+from apps.system.services.feature_flag_service import (
+    DEFAULT_FEATURE_FLAGS,
+    feature_flag_service,
+)
 
 
 class SystemAuditService:
@@ -224,8 +215,18 @@ class SystemSettingsService:
     def get_category(self, category: str) -> list[dict]:
         if category not in SETTING_CATEGORIES:
             raise ValidationError(message=f"Invalid category: {category}", code="invalid_category")
+        from apps.system.services.feature_flag_service import feature_flag_service
+
         items = self.repository.list_by_category(category)
-        return [self._serialize(s) for s in items]
+        serialized = [self._serialize(s) for s in items]
+        if category in {"ussd", "notifications", "identity_assurance"}:
+            serialized = [
+                item
+                for item in serialized
+                if not feature_flag_service.is_setting_managed_by_flag(item["key"])
+                and not isinstance(item.get("value"), bool)
+            ]
+        return serialized
 
     def get_public_branding(self) -> dict:
         cached = cache.get("system:public_branding")
@@ -265,6 +266,16 @@ class SystemSettingsService:
         results = []
         for key, value in updates.items():
             full_key = key if "." in key else f"{category}.{key}"
+            from apps.system.services.feature_flag_service import feature_flag_service
+
+            if feature_flag_service.is_setting_managed_by_flag(full_key):
+                raise ValidationError(
+                    message=(
+                        f"'{full_key}' is managed from Feature Flags "
+                        f"({feature_flag_service.flag_for_setting(full_key)})."
+                    ),
+                    code="flag_managed_setting",
+                )
             setting = self.repository.get_by_key(full_key)
             if not setting:
                 raise NotFoundError(message=f"Setting not found: {full_key}", code="setting_not_found")
@@ -412,49 +423,6 @@ class InstitutionService:
         }
 
 
-class FeatureFlagService:
-    def __init__(self, repository: FeatureFlagRepository | None = None, audit: SystemAuditService | None = None):
-        self.repository = repository or FeatureFlagRepository()
-        self.audit = audit or SystemAuditService()
-
-    def ensure_defaults(self):
-        for key, name, description in DEFAULT_FEATURE_FLAGS:
-            if self.repository.get_by_key(key):
-                continue
-            FeatureFlag.objects.create(key=key, name=name, description=description, enabled=True)
-
-    def list_flags(self) -> list[dict]:
-        return [self._serialize(f) for f in self.repository.list_all()]
-
-    def is_enabled(self, key: str) -> bool:
-        flag = self.repository.get_by_key(key)
-        return flag.enabled if flag else True
-
-    def update_flag(self, user, key: str, enabled: bool, *, step_up_token: str, request=None) -> dict:
-        step_up_auth_service.validate_token(user, step_up_token)
-        flag = self.repository.get_by_key(key)
-        if not flag:
-            raise NotFoundError(message=f"Feature flag not found: {key}", code="flag_not_found")
-        flag.enabled = enabled
-        flag.last_changed_by = user
-        self.repository.save(flag)
-        invalidate_settings_cache()
-        self.audit.record(user, "feature_flag_toggled", metadata={"key": key, "enabled": enabled}, request=request)
-        step_up_auth_service.consume_token(user, step_up_token)
-        return self._serialize(flag)
-
-    def _serialize(self, flag: FeatureFlag) -> dict:
-        return {
-            "uuid": str(flag.uuid),
-            "key": flag.key,
-            "name": flag.name,
-            "description": flag.description,
-            "enabled": flag.enabled,
-            "last_changed_by": flag.last_changed_by.email if flag.last_changed_by else None,
-            "last_changed_at": flag.last_changed_at.isoformat(),
-        }
-
-
 class MaintenanceService:
     def __init__(self, repository: MaintenanceRepository | None = None, audit: SystemAuditService | None = None):
         self.repository = repository or MaintenanceRepository()
@@ -470,10 +438,19 @@ class MaintenanceService:
         return payload
 
     def is_maintenance_active(self) -> bool:
+        from apps.system.services.feature_flag_service import feature_flag_service
+
+        if not feature_flag_service.is_enabled("maintenance_mode"):
+            return False
         return self.get_state().get("is_enabled", False)
 
     def update_state(self, user, data: dict, *, step_up_token: str, request=None) -> dict:
         step_up_auth_service.validate_token(user, step_up_token)
+        if "is_enabled" in data:
+            raise ValidationError(
+                message="Maintenance mode is enabled from Feature Flags.",
+                code="flag_managed_setting",
+            )
         state = self.repository.get_or_create_state()
         for field in (
             "is_enabled",
@@ -687,7 +664,7 @@ class BackupService:
         snapshot = {"exported_at": timezone.now().isoformat(), "settings": {}, "flags": {}}
         for category in SETTING_CATEGORIES:
             snapshot["settings"][category] = settings_svc.get_category(category)
-        snapshot["flags"] = FeatureFlagService().list_flags()
+        snapshot["flags"] = feature_flag_service.list_flags()
         snapshot["institution"] = InstitutionService().get_profile()
         return snapshot
 
@@ -899,7 +876,6 @@ class SystemOverviewService:
 
 system_settings_service = SystemSettingsService()
 institution_service = InstitutionService()
-feature_flag_service = FeatureFlagService()
 maintenance_service = MaintenanceService()
 provider_management_service = ProviderManagementService()
 storage_service = StorageService()

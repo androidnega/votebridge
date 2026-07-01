@@ -11,7 +11,7 @@ from apps.biometrics.constants import (
     CHALLENGE_TTL_SECONDS,
     VERIFICATION_CHALLENGE_TYPES,
 )
-from apps.system.repositories.system_repository import FeatureFlagRepository
+from apps.system.services.feature_flag_service import feature_flag_service
 from core.exceptions import ValidationError
 
 logger = logging.getLogger("votebridge")
@@ -19,9 +19,6 @@ logger = logging.getLogger("votebridge")
 
 class ChallengeGeneratorService:
     """Randomly selects and tracks active liveness challenges."""
-
-    def __init__(self, feature_flag_repository: FeatureFlagRepository | None = None):
-        self.feature_flags = feature_flag_repository or FeatureFlagRepository()
 
     def _enabled_challenges(self) -> list[str]:
         from apps.biometrics.services.policy_service import biometric_policy_service
@@ -33,8 +30,7 @@ class ChallengeGeneratorService:
         return list(VERIFICATION_CHALLENGE_TYPES)
 
     def generate(self, user: User) -> dict:
-        flag = self.feature_flags.get_by_key("future_biometrics")
-        if flag and not flag.enabled:
+        if not feature_flag_service.is_enabled("future_biometrics"):
             raise ValidationError(message="Biometrics module is disabled.", code="biometrics_disabled")
 
         pool = self._enabled_challenges()

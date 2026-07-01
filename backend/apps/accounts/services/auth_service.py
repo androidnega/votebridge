@@ -5,6 +5,7 @@ from apps.accounts.repositories.user_repository import UserRepository
 from apps.accounts.services.mfa_service import MFAService
 from apps.accounts.services.otp_service import OTPService
 from apps.accounts.services.session_service import SessionService
+from apps.system.services.feature_flag_service import feature_flag_service
 from core.exceptions import AuthenticationError, PermissionDeniedError, ValidationError
 
 logger = logging.getLogger("votebridge")
@@ -93,12 +94,26 @@ class AuthService:
                 user_agent=user_agent,
                 metadata={"flow": "universal_login"},
             )
+            if not feature_flag_service.is_otp_enabled():
+                return self._complete_password_login(
+                    user=user,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    mfa_completed=True,
+                )
             return self._initiate_otp_login(
                 user=user,
                 purpose=OTPRequest.Purpose.MFA,
                 ip_address=ip_address,
                 user_agent=user_agent,
                 mfa_required=True,
+            )
+
+        if not feature_flag_service.is_otp_enabled():
+            return self._complete_password_login(
+                user=user,
+                ip_address=ip_address,
+                user_agent=user_agent,
             )
 
         return self._initiate_otp_login(
@@ -507,6 +522,14 @@ class AuthService:
                 code="account_deactivated",
             )
 
+        if not feature_flag_service.is_otp_enabled():
+            return self._complete_password_login(
+                user=user,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                mfa_completed=mfa_required or purpose == OTPRequest.Purpose.MFA,
+            )
+
         channel, recipient = self.otp_service.resolve_channel_and_recipient(user)
         otp_request = self.otp_service.create_and_send(
             user=user,
@@ -528,6 +551,37 @@ class AuthService:
             response["mfa_required"] = True
 
         return response
+
+    def _complete_password_login(
+        self,
+        user: User,
+        ip_address: str | None,
+        user_agent: str | None,
+        *,
+        mfa_completed: bool = False,
+    ) -> dict:
+        session, tokens = self.session_service.create_session(
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        event_type = (
+            MFALog.EventType.MFA_COMPLETED if mfa_completed else MFALog.EventType.LOGIN_SUCCESS
+        )
+        self.mfa_service.log(
+            event_type=event_type,
+            user=user,
+            ip_address=ip_address,
+            user_agent=user_agent,
+            metadata={"session_uuid": str(session.uuid), "flow": "password_only"},
+        )
+        return {
+            "user_uuid": str(user.uuid),
+            "session_uuid": str(session.uuid),
+            "tokens": tokens,
+            "redirect_path": self.dashboard_path_for_role(user.role.name),
+            "trusted_login": False,
+        }
 
     def _log_failed_admin_login(
         self,

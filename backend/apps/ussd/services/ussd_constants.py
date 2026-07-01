@@ -19,8 +19,5 @@ HELP = "HELP"
 MENU_TARGETS = {
     "1": VOTE_LIST,
     "2": STATUS_LIST,
-    "3": VERIFY_SVT,
-    "4": INFO_LIST,
-    "5": HELP,
-    "6": None,  # exit
+    "3": INFO_LIST,
 }

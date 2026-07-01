@@ -42,7 +42,7 @@ class UssdFlowSessionTests(TestCase):
         response = service.handle_request(
             session_id="test-exit",
             msisdn="233241234567",
-            inputs=["6"],
+            inputs=["0"],
         )
         self.assertFalse(response.continue_session)
         self.assertIn("END", response.message)
@@ -55,7 +55,7 @@ class UssdFlowSessionTests(TestCase):
             inputs=[],
             is_new_session=True,
         )
-        service.handle_request(session_id="cont-session", msisdn="233241234567", inputs=["5"])
+        service.handle_request(session_id="cont-session", msisdn="233241234567", inputs=["9"])
         session = USSDSession.objects.get(session_id="cont-session")
         self.assertEqual(session.request_count, 2)
         self.assertEqual(session.current_step, "MAIN_MENU")

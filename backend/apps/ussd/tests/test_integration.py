@@ -153,7 +153,7 @@ class UssdCallbackAuditIntegrationTests(APITestCase):
                 {
                     "sessionId": "audit-form-sess",
                     "phoneNumber": "233271231234",
-                    "text": "6",
+                    "text": "0",
                 }
             ),
             content_type="application/x-www-form-urlencoded",

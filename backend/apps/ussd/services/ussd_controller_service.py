@@ -6,9 +6,14 @@ from urllib.parse import parse_qs
 from django.conf import settings
 
 from apps.ussd.services.ussd_flow_service import UssdFlowService, UssdResponse, ussd_flow_service
+from apps.system.services.feature_flag_service import feature_flag_service
 from core.exceptions import ValidationError
 
 logger = logging.getLogger("votebridge")
+
+USSD_DISABLED_MESSAGE = (
+    "USSD voting is currently unavailable.\nPlease contact the Election Office."
+)
 
 ARKESSEL_RESPONSE_KEYS = ("sessionID", "userID", "msisdn", "message", "continueSession")
 
@@ -29,6 +34,11 @@ class UssdControllerService:
         audit_context = self._build_audit_context(request, payload)
         inputs = self._parse_inputs(payload)
         is_new = payload.get("new_session", payload.get("type") == "initiation" or not inputs)
+
+        if not feature_flag_service.is_ussd_enabled():
+            response = UssdResponse(f"END {USSD_DISABLED_MESSAGE}", False)
+            json_body = self._build_arkesel_response(payload, response)
+            return "application/json", json.dumps(json_body), json_body, audit_context
 
         try:
             response = self.flow_service.handle_request(

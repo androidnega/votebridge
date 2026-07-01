@@ -14,7 +14,8 @@ from apps.elections.services.voting_channel_service import VotingChannelService
 from apps.elections.validators import validate_election_can_be_opened, validate_election_dates
 from apps.fraud.services.fraud_case_service import FraudCaseService
 from apps.operations.services.operations_service import OperationsHealthService
-from apps.system.repositories.system_repository import FeatureFlagRepository, SystemSettingRepository
+from apps.system.repositories.system_repository import SystemSettingRepository
+from apps.system.services.feature_flag_service import feature_flag_service
 from core.exceptions import ValidationError
 
 logger = logging.getLogger("votebridge")
@@ -66,14 +67,12 @@ class ElectionReadinessService:
         health_service: OperationsHealthService | None = None,
         fraud_service: FraudCaseService | None = None,
         settings_repository: SystemSettingRepository | None = None,
-        feature_flags: FeatureFlagRepository | None = None,
     ):
         self.eligibility = eligibility_repository or VoterEligibilityRepository()
         self.channels = channel_service or VotingChannelService()
         self.health = health_service or OperationsHealthService()
         self.fraud = fraud_service or FraudCaseService()
         self.settings = settings_repository or SystemSettingRepository()
-        self.feature_flags = feature_flags or FeatureFlagRepository()
 
     def assess(self, election: Election, *, actor=None) -> ElectionReadinessReport:
         checks: list[ReadinessCheckResult] = []
@@ -295,8 +294,7 @@ class ElectionReadinessService:
             )
 
     def _check_fraud_monitoring(self, election: Election) -> ReadinessCheckResult:
-        flag = self.feature_flags.get_by_key("fraud_detection")
-        enabled = bool(flag and flag.enabled)
+        enabled = feature_flag_service.is_enabled("fraud_detection")
         if not enabled:
             return self._result(
                 "fraud_monitoring",

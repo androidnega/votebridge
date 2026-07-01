@@ -103,7 +103,7 @@ class UssdCallbackResponseIntegrationTests(APITestCase):
             "sessionID": "ark-sess-end",
             "newSession": False,
             "msisdn": "233241234567",
-            "userData": "6",
+            "userData": "0",
             "network": "MTN",
         }
         response = self.client.post(

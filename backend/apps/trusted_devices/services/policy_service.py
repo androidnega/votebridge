@@ -1,4 +1,5 @@
 from apps.system.repositories.system_repository import SystemSettingRepository
+from apps.system.services.feature_flag_service import feature_flag_service
 
 
 class TrustedDevicePolicyService:
@@ -25,7 +26,7 @@ class TrustedDevicePolicyService:
         )
 
         return {
-            "enable_trusted_devices": self._get_value("enable_trusted_devices", True),
+            "enable_trusted_devices": feature_flag_service.is_trusted_devices_enabled(),
             "enable_risk_based_authentication": self._get_value("enable_risk_based_authentication", True),
             "trusted_device_expiration_days": int(
                 self._get_value("trusted_device_expiration_days", DEFAULT_TRUSTED_DEVICE_EXPIRATION_DAYS)
@@ -71,7 +72,7 @@ class TrustedDevicePolicyService:
         }
 
     def is_enabled(self) -> bool:
-        return bool(self.get_policy().get("enable_trusted_devices", True))
+        return feature_flag_service.is_trusted_devices_enabled()
 
     def expiration_days_for_device_type(self, device_type: str) -> int:
         policy = self.get_policy()

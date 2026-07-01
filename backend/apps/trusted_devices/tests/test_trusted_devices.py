@@ -22,7 +22,7 @@ from apps.trusted_devices.services.trusted_device_service import trusted_device_
 from apps.trusted_devices.utils import build_device_context, generate_device_token, hash_device_token
 
 
-@override_settings(BIOMETRICS_INFERENCE_MODE="mock")
+@override_settings(BIOMETRICS_INFERENCE_MODE="mock", BIOMETRIC_AUTH_ENABLED=True)
 class TrustedDeviceRiskTests(TestCase):
     def setUp(self):
         self.admin_role, _ = Role.objects.get_or_create(name=Role.Name.ADMIN, defaults={"description": "Admin"})
@@ -50,7 +50,11 @@ class TrustedDeviceRiskTests(TestCase):
 
         FeatureFlag.objects.update_or_create(
             key="future_biometrics",
-            defaults={"label": "Biometrics", "description": "", "enabled": True},
+            defaults={"name": "Biometrics", "description": "", "enabled": True},
+        )
+        FeatureFlag.objects.update_or_create(
+            key="trusted_devices",
+            defaults={"name": "Trusted Devices", "description": "", "enabled": True},
         )
         for key, val in (
             ("identity_assurance.enable_trusted_devices", True),

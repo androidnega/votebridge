@@ -84,7 +84,9 @@ class UssdFlowService:
         session.last_activity_at = timezone.now()
         user_input = inputs[-1].strip() if inputs else ""
 
-        if user_input == "0":
+        if session.current_step == steps.MAIN_MENU and user_input == "0":
+            response = self._end_session(session, "Thank you for using VoteBridge.")
+        elif user_input == "0":
             response = self._handle_back(session)
         elif session.current_step == steps.WELCOME:
             response = self._show_main_menu(session)
@@ -151,27 +153,49 @@ class UssdFlowService:
         prefix = ""
         if recovered in (USSDSession.Status.EXPIRED, USSDSession.Status.ABANDONED):
             prefix = "Session expired. "
+
+        menu_state = self._main_menu_state()
+        if menu_state == "voting_unavailable":
+            return UssdResponse(
+                f"CON {prefix}VoteBridge\n\nVoting is temporarily unavailable.\n\n0. Exit",
+                True,
+            )
+        if menu_state == "no_election":
+            return UssdResponse(
+                f"CON {prefix}VoteBridge\n\nNo election is currently open.\n\n"
+                "1. Election Info\n0. Exit",
+                True,
+            )
+
         return UssdResponse(
             f"CON {prefix}Welcome to VoteBridge\n"
             "1. Vote\n"
-            "2. My Voting Status\n"
-            "3. Verify Vote\n"
-            "4. Election Information\n"
-            "5. Help\n"
-            "6. Exit"
+            "2. My Vote\n"
+            "3. Election Info\n"
+            "0. Exit",
+            True,
         )
 
     def _handle_main_menu(self, session, choice: str, ip_address) -> UssdResponse:
-        if choice == "6":
+        menu_state = self._main_menu_state()
+
+        if choice == "0":
             return self._end_session(session, "Thank you for using VoteBridge.")
+
+        if menu_state == "voting_unavailable":
+            return UssdResponse("CON Invalid option.\n\n0. Exit", True)
+
+        if menu_state == "no_election":
+            if choice == "1":
+                return self._require_auth(session, steps.INFO_LIST, ip_address)
+            return UssdResponse(
+                "CON Invalid option.\n\n1. Election Info\n0. Exit",
+                True,
+            )
 
         target = steps.MENU_TARGETS.get(choice)
         if not target:
             return UssdResponse("CON Invalid option.\n" + self._main_menu_text(), True)
-
-        if target == steps.HELP:
-            session.current_step = steps.HELP
-            return self._show_help(session)
 
         return self._require_auth(session, target, ip_address)
 
@@ -406,7 +430,7 @@ class UssdFlowService:
         sms_note = (
             "SMS confirmation will be sent."
             if getattr(user, "phone_number", "")
-            else "Verify your vote using menu option 3."
+            else "Contact the Election Office for vote confirmation."
         )
         msg = (
             f"END Vote recorded for {result['election_title']}.\n"
@@ -547,10 +571,21 @@ class UssdFlowService:
         return None
 
     def _main_menu_text(self) -> str:
-        return (
-            "1. Vote\n2. My Voting Status\n3. Verify Vote\n"
-            "4. Election Information\n5. Help\n6. Exit"
-        )
+        menu_state = self._main_menu_state()
+        if menu_state == "voting_unavailable":
+            return "0. Exit"
+        if menu_state == "no_election":
+            return "1. Election Info\n0. Exit"
+        return "1. Vote\n2. My Vote\n3. Election Info\n0. Exit"
+
+    def _main_menu_state(self) -> str:
+        """full | no_election | voting_unavailable"""
+        open_elections = Election.objects.filter(status=Election.Status.OPEN)
+        if not open_elections.exists():
+            return "no_election"
+        if not open_elections.filter(allow_ussd_voting=True).exists():
+            return "voting_unavailable"
+        return "full"
 
     def _persist_session(self, session, response: UssdResponse) -> None:
         if not response.continue_session and session.status == USSDSession.Status.ACTIVE:

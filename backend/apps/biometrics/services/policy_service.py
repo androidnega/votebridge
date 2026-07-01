@@ -8,7 +8,8 @@ from apps.biometrics.constants import (
     DEFAULT_MAX_ATTEMPTS,
     DEFAULT_SESSION_TIMEOUT_MINUTES,
 )
-from apps.system.repositories.system_repository import FeatureFlagRepository, SystemSettingRepository
+from apps.system.repositories.system_repository import SystemSettingRepository
+from apps.system.services.feature_flag_service import feature_flag_service
 
 BIOMETRIC_AUTH_DISABLED_MESSAGE = (
     "Biometric authentication is currently disabled for this deployment "
@@ -24,10 +25,8 @@ class BiometricPolicyService:
     def __init__(
         self,
         settings_repository: SystemSettingRepository | None = None,
-        feature_flag_repository: FeatureFlagRepository | None = None,
     ):
         self.settings = settings_repository or SystemSettingRepository()
-        self.feature_flags = feature_flag_repository or FeatureFlagRepository()
 
     def _get_value(self, key: str, default):
         setting = self.settings.get_by_key(f"{self.CATEGORY}.{key}")
@@ -42,8 +41,7 @@ class BiometricPolicyService:
     def is_module_enabled(self) -> bool:
         if not self.is_auth_enabled():
             return False
-        flag = self.feature_flags.get_by_key("future_biometrics")
-        return bool(flag.enabled) if flag else False
+        return feature_flag_service.is_enabled("future_biometrics")
 
     def get_policy(self) -> dict:
         auth_enabled = self.is_auth_enabled()

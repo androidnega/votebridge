@@ -71,16 +71,10 @@ class UssdVotingFlowTests(TestCase):
         response = self.service.handle_request(session_id="vote-flow", msisdn="233241234567", inputs=["1"])
         self.assertIn("No open USSD elections", response.message)
 
-    @patch("apps.security.services.svt_service.svt_service.verify_vote_by_svt")
-    def test_svt_verify_menu(self, mock_verify):
-        mock_verify.return_value = {
-            "is_valid": True,
-            "election_title": self.election.title,
-            "positions_completed": ["SRC President"],
-        }
+    def test_election_info_menu(self):
         self._auth_and_reach_vote_list()
         self.service.handle_request(session_id="vote-flow", msisdn="233241234567", inputs=["0"])
         self.service.handle_request(session_id="vote-flow", msisdn="233241234567", inputs=["3"])
-        response = self.service.handle_request(session_id="vote-flow", msisdn="233241234567", inputs=["SVT-TEST"])
+        response = self.service.handle_request(session_id="vote-flow", msisdn="233241234567", inputs=["1"])
         self.assertIn("END", response.message)
-        mock_verify.assert_called_once()
+        self.assertIn(self.election.title, response.message)

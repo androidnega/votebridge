@@ -18,7 +18,6 @@ import {
   LoadingSkeleton,
   ModuleNav,
   PageHeader,
-  StatusBadge,
   VAlert,
   VButton,
   VCard,
@@ -115,7 +114,6 @@ async function performSave() {
     );
     await store.saveProvider(provider.uuid, {
       config,
-      is_active: true,
     });
     toast.success(`${provider.name} configuration saved.`);
     const providers = await store.fetchProviders(resolvedProviderType());
@@ -137,28 +135,13 @@ function testProvider(uuid) {
     })
     .catch(() => {});
 }
-
-function toggleProvider(provider) {
-  pendingSave.value = provider;
-  stepUp.requireStepUp(async () => {
-    try {
-      await store.saveProvider(provider.uuid, { is_active: !provider.is_active });
-      toast.success("Provider updated.");
-      loadProviders();
-    } catch {
-      // store.error surfaced below
-    } finally {
-      pendingSave.value = null;
-    }
-  });
-}
 </script>
 
 <template>
   <div class="vb-page space-y-section">
     <PageHeader
       :title="title"
-      subtitle="Configure Arkesel SMS credentials, test connectivity, and manage provider status."
+      subtitle="Configure Arkesel SMS credentials, SMTP settings, and test connectivity. Enable channels from Feature Flags."
       :breadcrumbs="[
         { label: 'Settings', to: r.overview },
         { label: 'Integrations', to: r.integrations.hub },
@@ -198,7 +181,6 @@ function toggleProvider(provider) {
               <OpsHealthBadge
                 :status="provider.connection_status === 'connected' ? 'healthy' : 'warning'"
               />
-              <StatusBadge :status="provider.is_active ? 'open' : 'closed'" />
             </div>
           </div>
         </template>
@@ -224,9 +206,6 @@ function toggleProvider(provider) {
           </VButton>
           <VButton size="sm" variant="secondary" :loading="store.actionLoading" @click="testProvider(provider.uuid)">
             Test connection
-          </VButton>
-          <VButton size="sm" variant="ghost" @click="toggleProvider(provider)">
-            {{ provider.is_active ? "Disable" : "Enable" }}
           </VButton>
         </div>
       </VCard>

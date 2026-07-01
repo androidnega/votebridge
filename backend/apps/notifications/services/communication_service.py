@@ -12,6 +12,7 @@ from apps.notifications.repositories.notification_repository import (
     InAppNotificationRepository,
     NotificationTemplateRepository,
 )
+from apps.system.services.feature_flag_service import feature_flag_service
 from core.exceptions import NotFoundError, ValidationError
 
 logger = logging.getLogger("votebridge")
@@ -164,6 +165,13 @@ class CommunicationService:
         actor=None,
         metadata: dict | None = None,
     ) -> DeliveryLog:
+        if not feature_flag_service.is_channel_enabled(channel):
+            logger.info("Skipping %s delivery — channel disabled by feature flag", channel)
+            raise ValidationError(
+                message=f"{channel.upper()} notifications are currently disabled.",
+                code="channel_disabled",
+            )
+
         meta = dict(metadata or {})
         if body_html:
             meta["body_html"] = body_html
@@ -312,6 +320,9 @@ class CommunicationService:
         processed = succeeded = failed = 0
 
         for log in pending:
+            if not feature_flag_service.is_channel_enabled(log.channel):
+                logger.info("Skipping queued %s delivery — channel disabled", log.channel)
+                continue
             processed += 1
             try:
                 self._deliver(log)

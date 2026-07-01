@@ -12,7 +12,6 @@ const store = useSystemControlStore();
 const toast = useToast();
 const stepUp = useStepUp();
 const form = reactive({
-  is_enabled: false,
   read_only_mode: false,
   emergency_stop_voting: false,
   emergency_stop_results: false,
@@ -40,7 +39,7 @@ function save() {
   <div class="vb-page">
     <PageHeader
       title="System Maintenance"
-      subtitle="Maintenance mode, emergency stops, and platform availability."
+      subtitle="Configure maintenance messaging, emergency stops, and availability controls. Enable maintenance mode from Feature Flags."
       :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'Maintenance' }]"
     />
     <ModuleNav :items="systemControlNav" />
@@ -48,7 +47,7 @@ function save() {
     <LoadingSkeleton v-if="store.loading && !store.maintenance" variant="list" :rows="6" />
     <VCard v-else title="Maintenance controls">
       <form class="space-y-4" @submit.prevent="save">
-        <label v-for="field in ['is_enabled','read_only_mode','emergency_stop_voting','emergency_stop_results','disable_login']" :key="field" class="flex items-center gap-3 text-sm">
+        <label v-for="field in ['read_only_mode','emergency_stop_voting','emergency_stop_results','disable_login']" :key="field" class="flex items-center gap-3 text-sm">
           <input v-model="form[field]" type="checkbox" class="h-4 w-4 rounded border-border" />
           <span>{{ field.replace(/_/g, ' ') }}</span>
         </label>
