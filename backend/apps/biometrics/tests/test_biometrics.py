@@ -226,6 +226,10 @@ class BiometricEnrollmentFlowTests(TestCase):
         pending = biometric_verification_service.create_pending_auth(self.super_admin, "otp-verify-flow")
         self.assertTrue(pending["requires_biometric"])
         self.assertTrue(pending["has_active_biometric_profile"])
+        self.assertIn(
+            pending["challenge"]["challenge_type"],
+            {"blink_once", "blink_twice"},
+        )
 
     def test_reset_profile_removes_enrollment(self):
         images = [_mock_image(f"reset-{i}") for i in range(10)]

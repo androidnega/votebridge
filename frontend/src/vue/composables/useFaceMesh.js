@@ -17,6 +17,7 @@ import {
   getRequiredSteps,
   isChallengeComplete,
   nextActionHint,
+  normalizeVerifyChallengeType,
 } from "@/services/biometricChallengeManager";
 import { bioDebug } from "@/utils/biometricDebug";
 
@@ -61,8 +62,9 @@ export function useBiometricLiveness() {
   }
 
   function resolveChallengeType() {
-    if (typeof challengeTypeFn === "function") return challengeTypeFn();
-    return challengeTypeFn?.value ?? "";
+    const raw = typeof challengeTypeFn === "function" ? challengeTypeFn() : challengeTypeFn?.value ?? "";
+    if (resolveMode() === "verify") return normalizeVerifyChallengeType(raw);
+    return raw;
   }
 
   function resolveMode() {

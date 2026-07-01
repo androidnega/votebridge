@@ -2,6 +2,37 @@
 
 export const VERIFY_CHALLENGE_TYPES = ["blink_once", "blink_twice"];
 
+const LEGACY_TURN_CHALLENGES = new Set([
+  "turn_left",
+  "turn_right",
+  "turn_left_then_right",
+  "blink_then_left",
+  "blink_then_right",
+]);
+
+export function isValidVerifyChallenge(challenge) {
+  return Boolean(
+    challenge?.challenge_id && VERIFY_CHALLENGE_TYPES.includes(challenge.challenge_type)
+  );
+}
+
+/** Map legacy turn challenges to blink-only for verification UX. */
+export function normalizeVerifyChallengeType(type) {
+  if (type === "blink_twice") return "blink_twice";
+  if (LEGACY_TURN_CHALLENGES.has(type) || type === "blink_once") return "blink_once";
+  return "blink_once";
+}
+
+export function verifyChallengeLabel(type) {
+  return normalizeVerifyChallengeType(type) === "blink_twice" ? "Blink twice" : "Blink once";
+}
+
+export function verifyChallengeInstruction(type) {
+  return normalizeVerifyChallengeType(type) === "blink_twice"
+    ? "Blink twice when prompted"
+    : "Blink once when prompted";
+}
+
 export function challengeNeeds(type, action, mode = "verify") {
   if (mode === "enrollment" && type === "enrollment_sequence") {
     if (action === "blink") return true;
@@ -11,7 +42,8 @@ export function challengeNeeds(type, action, mode = "verify") {
   }
 
   if (mode === "verify" && action === "blink") {
-    return type === "blink_once" || type === "blink_twice";
+    const normalized = normalizeVerifyChallengeType(type);
+    return normalized === "blink_once" || normalized === "blink_twice";
   }
 
   if (mode === "verify") return false;
@@ -30,7 +62,7 @@ export function getRequiredSteps(type, mode = "verify") {
   }
 
   if (challengeNeeds(type, "blink", mode)) steps.push("blink");
-  if (type === "blink_twice") steps.push("blink2");
+  if (normalizeVerifyChallengeType(type) === "blink_twice") steps.push("blink2");
 
   return steps;
 }
@@ -41,7 +73,7 @@ export function nextActionHint(type, completedSteps, warning, mode = "verify") {
   if (challengeNeeds(type, "blink", mode) && !completedSteps.has("blink")) {
     return "Blink naturally when prompted";
   }
-  if (type === "blink_twice" && completedSteps.has("blink") && !completedSteps.has("blink2")) {
+  if (normalizeVerifyChallengeType(type) === "blink_twice" && completedSteps.has("blink") && !completedSteps.has("blink2")) {
     return "Blink once more";
   }
   if (mode === "enrollment") {

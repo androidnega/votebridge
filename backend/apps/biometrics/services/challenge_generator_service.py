@@ -9,7 +9,7 @@ from apps.biometrics.constants import (
     CHALLENGE_CACHE_PREFIX,
     CHALLENGE_LABELS,
     CHALLENGE_TTL_SECONDS,
-    CHALLENGE_TYPES,
+    VERIFICATION_CHALLENGE_TYPES,
 )
 from apps.system.repositories.system_repository import FeatureFlagRepository
 from core.exceptions import ValidationError
@@ -27,20 +27,10 @@ class ChallengeGeneratorService:
         from apps.biometrics.services.policy_service import biometric_policy_service
 
         policy = biometric_policy_service.get_policy()
-        enabled = []
-        mapping = {
-            "blink_once": policy.get("enable_blink_challenge", True),
-            "blink_twice": policy.get("enable_blink_challenge", True),
-            "turn_left": policy.get("enable_left_turn", True),
-            "turn_right": policy.get("enable_right_turn", True),
-            "turn_left_then_right": policy.get("enable_left_turn", True) and policy.get("enable_right_turn", True),
-            "blink_then_left": policy.get("enable_blink_challenge", True) and policy.get("enable_left_turn", True),
-            "blink_then_right": policy.get("enable_blink_challenge", True) and policy.get("enable_right_turn", True),
-        }
-        for challenge in CHALLENGE_TYPES:
-            if mapping.get(challenge, True):
-                enabled.append(challenge)
-        return enabled or list(CHALLENGE_TYPES)
+        if not policy.get("enable_blink_challenge", True):
+            return ["blink_once"]
+
+        return list(VERIFICATION_CHALLENGE_TYPES)
 
     def generate(self, user: User) -> dict:
         flag = self.feature_flags.get_by_key("future_biometrics")

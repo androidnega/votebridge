@@ -3,6 +3,8 @@ import {
   challengeNeeds,
   getRequiredSteps,
   isChallengeComplete,
+  normalizeVerifyChallengeType,
+  verifyChallengeLabel,
 } from "@/services/biometricChallengeManager";
 
 describe("biometricChallengeManager", () => {
@@ -10,7 +12,14 @@ describe("biometricChallengeManager", () => {
     expect(challengeNeeds("blink_once", "blink", "verify")).toBe(true);
     expect(challengeNeeds("blink_twice", "blink", "verify")).toBe(true);
     expect(challengeNeeds("blink_once", "turn_left", "verify")).toBe(false);
-    expect(challengeNeeds("turn_left", "turn_left", "verify")).toBe(false);
+    expect(challengeNeeds("blink_then_left", "blink", "verify")).toBe(true);
+    expect(challengeNeeds("blink_then_left", "turn_left", "verify")).toBe(false);
+  });
+
+  it("normalizes legacy turn challenges to blink once", () => {
+    expect(normalizeVerifyChallengeType("blink_then_left")).toBe("blink_once");
+    expect(normalizeVerifyChallengeType("turn_left_then_right")).toBe("blink_once");
+    expect(verifyChallengeLabel("blink_then_left")).toBe("Blink once");
   });
 
   it("blink_twice requires two blink steps", () => {

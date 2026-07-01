@@ -37,6 +37,12 @@ CHALLENGE_TYPES = (
     "blink_then_right",
 )
 
+# Login verification issues blink-only challenges (no head turns).
+VERIFICATION_CHALLENGE_TYPES = (
+    "blink_once",
+    "blink_twice",
+)
+
 CHALLENGE_LABELS = {
     "blink_once": "Blink once",
     "blink_twice": "Blink twice",

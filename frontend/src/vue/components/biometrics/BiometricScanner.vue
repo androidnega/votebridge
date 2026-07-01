@@ -3,6 +3,7 @@ import { computed, onMounted, onUnmounted, ref, watch } from "vue";
 import { useCamera } from "@/composables/useCamera";
 import { useBiometricLiveness } from "@/composables/useFaceMesh";
 import { buildProgressSteps } from "@/config/biometricProgressDisplay";
+import { normalizeVerifyChallengeType } from "@/services/biometricChallengeManager";
 import { drawScannerOverlay, faceStatusLabel } from "@/utils/biometricScannerOverlay";
 import { bioDebug } from "@/utils/biometricDebug";
 import { VButton } from "@/components/ui";
@@ -50,7 +51,8 @@ const {
 
 const challengeType = computed(() => {
   if (props.mode === "enrollment") return "enrollment_sequence";
-  return props.challenge?.challenge_type || "";
+  const raw = props.challenge?.challenge_type || "";
+  return props.mode === "verify" ? normalizeVerifyChallengeType(raw) : raw;
 });
 
 const progress = computed(() =>
@@ -214,7 +216,7 @@ defineExpose({ captureFrame, start, stop, canCapture, challengeComplete });
 </script>
 
 <template>
-  <div class="vb-bio-scanner">
+  <div class="vb-bio-scanner" :class="{ 'vb-bio-scanner--verify': mode === 'verify' }">
     <div class="vb-bio-scanner__frame">
       <div class="vb-bio-scanner__viewport">
         <video
@@ -299,11 +301,41 @@ defineExpose({ captureFrame, start, stop, canCapture, challengeComplete });
 }
 
 .vb-bio-scanner {
-  @apply flex w-full flex-col items-center gap-3;
+  @apply flex w-full flex-col items-center gap-2;
+}
+
+.vb-bio-scanner--verify .vb-bio-scanner__frame {
+  @apply max-w-[12rem];
+}
+
+.vb-bio-scanner--verify .vb-bio-scanner__viewport {
+  @apply aspect-square;
+}
+
+.vb-bio-scanner--verify .vb-bio-scanner__status-line,
+.vb-bio-scanner--verify .vb-bio-scanner__progress,
+.vb-bio-scanner--verify .vb-bio-scanner__actions {
+  @apply max-w-[12rem];
+}
+
+.vb-bio-scanner--verify .vb-bio-scanner__progress-heading {
+  @apply text-[11px];
+}
+
+.vb-bio-scanner--verify .vb-bio-scanner__progress-list {
+  @apply text-[10px];
+}
+
+.vb-bio-scanner--verify .vb-bio-scanner__status-line {
+  @apply text-[11px];
+}
+
+.vb-bio-scanner--verify .vb-bio-scanner__status-badge {
+  @apply left-2 top-2 px-2 py-0.5 text-[10px];
 }
 
 .vb-bio-scanner__frame {
-  @apply relative w-full max-w-[36rem] rounded-card border border-border bg-slate-900 shadow-card;
+  @apply relative w-full max-w-[20rem] rounded-card border border-border bg-slate-900 shadow-card;
 }
 
 .vb-bio-scanner__viewport {
@@ -345,11 +377,11 @@ defineExpose({ captureFrame, start, stop, canCapture, challengeComplete });
 }
 
 .vb-bio-scanner__status-line {
-  @apply w-full max-w-[36rem] text-center text-sm font-medium text-slate-600;
+  @apply w-full max-w-[20rem] text-center text-sm font-medium text-slate-600;
 }
 
 .vb-bio-scanner__progress {
-  @apply w-full max-w-[36rem] space-y-1.5;
+  @apply w-full max-w-[20rem] space-y-1;
 }
 
 .vb-bio-scanner__progress-heading {
@@ -373,7 +405,7 @@ defineExpose({ captureFrame, start, stop, canCapture, challengeComplete });
 }
 
 .vb-bio-scanner__actions {
-  @apply flex w-full max-w-[36rem] items-center gap-2;
+  @apply flex w-full max-w-[20rem] items-center gap-2;
 }
 
 @keyframes vb-spin {

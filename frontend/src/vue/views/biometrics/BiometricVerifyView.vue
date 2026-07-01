@@ -3,6 +3,10 @@ import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import BiometricScanner from "@/components/biometrics/BiometricScanner.vue";
 import { useBiometricCapture } from "@/composables/useBiometricCapture";
+import {
+  isValidVerifyChallenge,
+  verifyChallengeInstruction,
+} from "@/services/biometricChallengeManager";
 import { VAlert, VButton } from "@/components/ui";
 import { toastMessages } from "@/config/toastMessages";
 import { normalizeAuthRedirect } from "@/config/routes";
@@ -28,7 +32,11 @@ const autoCaptureStarted = ref(false);
 
 const challenge = computed(() => biometricsStore.pendingAuth?.challenge || biometricsStore.challenge);
 const pendingToken = computed(() => biometricsStore.pendingAuth?.pending_auth_token);
-const instruction = computed(() => challenge.value?.instruction || "Blink when prompted to verify your identity.");
+const instruction = computed(() => {
+  const type = challenge.value?.challenge_type;
+  if (type) return verifyChallengeInstruction(type);
+  return "Blink once when prompted";
+});
 const showRiskHint = computed(() => (trustedStore.lastRiskReasons?.length ?? 0) > 0);
 const framesCaptured = computed(() => frames.value.length);
 
@@ -39,7 +47,8 @@ const { capturing, captureSequence, resetCapture } = useBiometricCapture({
 
 async function ensureChallenge() {
   if (!pendingToken.value) return;
-  if (challenge.value?.challenge_id) return;
+  if (isValidVerifyChallenge(challenge.value)) return;
+
   const next = await biometricsStore.requestChallenge(pendingToken.value);
   if (next && biometricsStore.pendingAuth) {
     biometricsStore.setPendingAuth({
@@ -187,23 +196,23 @@ async function tryAgain() {
 
 <style scoped>
 .vb-biometric-verify {
-  @apply mx-auto flex w-full max-w-[38rem] flex-col gap-4;
+  @apply mx-auto flex w-full max-w-sm flex-col gap-3;
 }
 
 .vb-biometric-verify__header {
-  @apply space-y-1 text-center;
+  @apply space-y-0.5 text-center;
 }
 
 .vb-biometric-verify__title {
-  @apply text-xl font-semibold text-brand;
+  @apply text-base font-semibold text-brand;
 }
 
 .vb-biometric-verify__subtitle {
-  @apply text-sm text-slate-600;
+  @apply text-xs text-slate-600;
 }
 
 .vb-biometric-verify__instruction {
-  @apply text-center text-sm font-medium text-slate-700;
+  @apply text-center text-xs font-medium text-slate-700;
 }
 
 .vb-biometric-verify__hint {

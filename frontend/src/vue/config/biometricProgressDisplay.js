@@ -1,4 +1,7 @@
-import { challengeActionLabel } from "@/config/biometricChallengeSteps";
+import {
+  normalizeVerifyChallengeType,
+  verifyChallengeLabel,
+} from "@/services/biometricChallengeManager";
 
 /**
  * Simplified step-based progress for verification and enrollment flows.
@@ -32,7 +35,7 @@ export function buildProgressSteps({
         ]
       : [
           { id: "face", label: "Face detected" },
-          { id: "challenge", label: challengeActionLabel(challengeType) || "Complete challenge" },
+          { id: "challenge", label: verifyChallengeLabel(challengeType) },
           { id: "capture", label: "Capturing verification frames" },
         ];
 
