@@ -1,6 +1,7 @@
 <script setup>
 import { useRouter } from "vue-router";
 import { VButton } from "@/components/ui";
+import { useVoteEntry } from "@/composables/useVoteEntry";
 
 defineProps({
   elections: { type: Array, default: () => [] },
@@ -15,6 +16,7 @@ defineProps({
 });
 
 const router = useRouter();
+const { enterVoteFlow, entering } = useVoteEntry();
 </script>
 
 <template>
@@ -68,7 +70,8 @@ const router = useRouter();
         <VButton
           v-if="election.canVote"
           class="min-h-[48px] w-full shrink-0 sm:w-auto sm:min-w-[140px]"
-          @click="router.push(election.voteRoute)"
+          :loading="entering"
+          @click="enterVoteFlow(election.uuid)"
         >
           {{ election.hasPartialVote ? "Continue ballot" : "Vote now" }}
         </VButton>

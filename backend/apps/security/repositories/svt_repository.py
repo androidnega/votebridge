@@ -12,9 +12,11 @@ class SVTRepository:
         return self.get_queryset().filter(svt_id=svt_id).first()
 
     def get_by_token_code(self, token_code: str) -> SVTToken | None:
-        normalized = str(token_code or "").strip()
-        if normalized.isdigit():
-            normalized = normalized.zfill(6)
+        from core.utils.svt_token_format import normalize_svt_token
+
+        normalized = normalize_svt_token(token_code)
+        if not normalized:
+            return None
         token_hash = SVTToken.hash_token_code(normalized)
         return self.get_queryset().filter(token_code=token_hash).first()
 

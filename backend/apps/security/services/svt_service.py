@@ -425,11 +425,17 @@ class SVTService:
             raise NotFoundError(message="Election not found.", code="election_not_found")
 
         normalized = str(token_code or "").strip()
-        if not normalized.isdigit() or len(normalized) != 6:
-            self._record_failed_validation_attempt(user, election)
-            raise ValidationError(message="Enter the 6-digit code sent to your phone.", code="svt_invalid")
+        from core.utils.svt_token_format import is_valid_svt_format, normalize_svt_token
 
-        svt = self.svt_repository.get_by_token_code(normalized.zfill(6))
+        if not is_valid_svt_format(normalized):
+            self._record_failed_validation_attempt(user, election)
+            raise ValidationError(
+                message="Invalid Secure Voting Token. Please check the code sent to your phone.",
+                code="svt_invalid",
+            )
+
+        canonical = normalize_svt_token(normalized)
+        svt = self.svt_repository.get_by_token_code(canonical)
         if not svt:
             self._record_failed_validation_attempt(user, election)
             raise NotFoundError(message="Invalid voting token.", code="svt_not_found")

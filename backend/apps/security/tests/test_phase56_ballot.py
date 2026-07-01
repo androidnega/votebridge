@@ -65,9 +65,9 @@ class Phase56SVTTests(TestCase):
         )
 
     @patch("apps.security.services.svt_service.SVTService._send_svt_sms")
-    def test_request_svt_is_six_digits_and_masks_phone(self, mock_sms):
+    def test_request_svt_uses_formatted_code_and_masks_phone(self, mock_sms):
         result = svt_service.request_svt(self.election.uuid, self.student)
-        self.assertRegex(result["token_code"], r"^\d{6}$")
+        self.assertRegex(result["token_code"], r"^VB-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}-[23456789ABCDEFGHJKMNPQRSTUVWXYZ]{4}$")
         self.assertEqual(len(result["masked_phone"]), len(mask_phone_number(self.student.phone_number)))
         mock_sms.assert_called_once()
 

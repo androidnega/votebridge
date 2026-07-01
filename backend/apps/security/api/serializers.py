@@ -19,7 +19,7 @@ class SVTIssueSerializer(SVTIssuePublicSerializer):
 
 
 class SVTValidateSerializer(serializers.Serializer):
-    token_code = serializers.CharField(max_length=6, min_length=6)
+    token_code = serializers.CharField(max_length=20, min_length=11)
 
 
 class SVTBallotSessionSerializer(serializers.Serializer):
@@ -47,7 +47,7 @@ class SVTAccessStatusSerializer(serializers.Serializer):
 
 
 class SVTVerifySerializer(serializers.Serializer):
-    token_code = serializers.CharField(max_length=6, min_length=6)
+    token_code = serializers.CharField(max_length=20, min_length=11)
 
 
 class SVTVerificationResultSerializer(serializers.Serializer):

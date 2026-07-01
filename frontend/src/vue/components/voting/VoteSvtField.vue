@@ -1,6 +1,6 @@
 <script setup>
 import { onMounted, ref } from "vue";
-import { normalizeSvtToken } from "@/utils/svtToken";
+import { formatSvtTokenInput, normalizeSvtToken } from "@/utils/svtToken";
 
 defineProps({
   modelValue: { type: String, default: "" },
@@ -29,7 +29,7 @@ function unlockField() {
 }
 
 function updateValue(raw) {
-  emit("update:modelValue", normalizeSvtToken(raw));
+  emit("update:modelValue", formatSvtTokenInput(raw));
 }
 
 function handleInput(event) {
@@ -43,7 +43,7 @@ function handlePaste(event) {
   event.preventDefault();
   updateValue(pasted);
   if (inputRef.value) {
-    inputRef.value.value = normalizeSvtToken(pasted);
+    inputRef.value.value = formatSvtTokenInput(pasted);
   }
 }
 </script>

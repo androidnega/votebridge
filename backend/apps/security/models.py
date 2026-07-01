@@ -1,6 +1,5 @@
 import hashlib
 import re
-import secrets
 import uuid
 
 from django.conf import settings
@@ -252,12 +251,16 @@ class SVTToken(models.Model):
 
     @staticmethod
     def generate_token_code() -> str:
-        """Phase 56 — six-digit numeric Secure Voting Token."""
-        return f"{secrets.randbelow(1_000_000):06d}"
+        from core.utils.svt_token_format import generate_formatted_svt
+
+        return generate_formatted_svt()
 
     @staticmethod
     def hash_token_code(token_code: str) -> str:
-        return hashlib.sha256(token_code.encode("utf-8")).hexdigest()
+        from core.utils.svt_token_format import normalize_svt_token
+
+        normalized = normalize_svt_token(token_code) or str(token_code or "").strip().upper()
+        return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
     @property
     def is_expired(self) -> bool:

@@ -5,7 +5,6 @@ import { LoadingSkeleton } from "@/components/dashboard";
 import {
   BallotProgressBar,
   BallotReviewStep,
-  SvtVerificationPanel,
   VoteCandidatePicker,
   VoteValidationSequence,
 } from "@/components/voting";
@@ -20,9 +19,7 @@ const router = useRouter();
 const votingStore = useVotingStore();
 
 const phase = ref("loading");
-const svtInput = ref("");
-const resendSeconds = ref(0);
-let resendTimer = null;
+let redirecting = false;
 
 const electionUuid = computed(() => route.params.uuid);
 
@@ -52,15 +49,6 @@ function goToMyElections() {
   router.push({ name: "student-my-elections" });
 }
 
-function updateResendCountdown() {
-  if (!votingStore.resendAvailableAt) {
-    resendSeconds.value = 0;
-    return;
-  }
-  const diff = Math.ceil((new Date(votingStore.resendAvailableAt).getTime() - Date.now()) / 1000);
-  resendSeconds.value = Math.max(0, diff);
-}
-
 function hasActiveBallotSession() {
   return (
     votingStore.ballotSessionActive ||
@@ -69,47 +57,21 @@ function hasActiveBallotSession() {
   );
 }
 
-async function ensureSvtIssued() {
+async function ensureBallotAuthorized() {
+  votingStore.restoreSvtSession(electionUuid.value);
   await votingStore.fetchVotingAccess(electionUuid.value);
+
   if (votingStore.svtAccess?.has_submitted_ballot) {
     router.replace(`/dashboard/elections/${electionUuid.value}/confirmation`);
     return false;
   }
-  if (hasActiveBallotSession() && votingStore.tokenCode) {
-    phase.value = "ballot";
-    return true;
+
+  if (!hasActiveBallotSession() || !votingStore.tokenCode) {
+    router.replace(`/dashboard/vote/verify/${electionUuid.value}`);
+    return false;
   }
-  if (votingStore.svtStatus === "issued" || votingStore.svtIssued) {
-    phase.value = "svt-verify";
-    return true;
-  }
-  if (votingStore.canRequestSvt) {
-    await votingStore.requestSvt(electionUuid.value);
-  }
-  phase.value = "svt-verify";
-  updateResendCountdown();
+
   return true;
-}
-
-async function handleVerifySvt() {
-  try {
-    await votingStore.validateSvt(electionUuid.value, svtInput.value);
-    votingStore.currentStep = 1;
-    votingStore.persistBallotState(electionUuid.value);
-    phase.value = "ballot";
-  } catch {
-    /* error in store */
-  }
-}
-
-async function handleResendSvt() {
-  if (resendSeconds.value > 0) return;
-  try {
-    await votingStore.resendSvt(electionUuid.value);
-    updateResendCountdown();
-  } catch {
-    /* error in store */
-  }
 }
 
 function handleNext() {
@@ -152,19 +114,21 @@ async function handleSubmitBallot() {
 }
 
 onMounted(async () => {
-  resendTimer = window.setInterval(updateResendCountdown, 1000);
+  if (redirecting) return;
   try {
-    votingStore.restoreSvtSession(electionUuid.value);
+    const authorized = await ensureBallotAuthorized();
+    if (!authorized) {
+      redirecting = true;
+      return;
+    }
     await votingStore.fetchBallot(electionUuid.value);
-    const ok = await ensureSvtIssued();
-    if (!ok) return;
+    phase.value = "ballot";
   } catch {
     phase.value = "error";
   }
 });
 
 onUnmounted(() => {
-  if (resendTimer) window.clearInterval(resendTimer);
   votingStore.disconnectElectionRealtime();
 });
 
@@ -197,18 +161,6 @@ watch(
     </VAlert>
 
     <LoadingSkeleton v-if="phase === 'loading' || votingStore.loading" variant="list" :rows="4" />
-
-    <SvtVerificationPanel
-      v-else-if="phase === 'svt-verify'"
-      v-model="svtInput"
-      :masked-phone="votingStore.maskedPhone"
-      :loading="votingStore.validating"
-      :resend-loading="votingStore.resendingSvt"
-      :resend-seconds="resendSeconds"
-      :error="votingStore.error"
-      @submit="handleVerifySvt"
-      @resend="handleResendSvt"
-    />
 
     <VoteValidationSequence
       v-else-if="phase === 'submitting'"

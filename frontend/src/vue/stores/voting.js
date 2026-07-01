@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { electionsApi, securityApi, votingApi } from "@/api";
 import { extractApiError } from "@/api/helpers";
 import { applySelection, skipPositionSelection } from "@/utils/ballotSelection";
+import { normalizeSvtToken } from "@/utils/svtToken";
 import realtimeService from "@/services/websocket";
 
 const CONFIRMATION_STORAGE_PREFIX = "vb_ballot_confirmation_";
@@ -203,7 +204,10 @@ export const useVotingStore = defineStore("voting", {
       this.validating = true;
       this.error = null;
       try {
-        this.tokenCode = tokenCode.trim();
+        this.tokenCode = normalizeSvtToken(tokenCode);
+        if (!this.tokenCode) {
+          throw new Error("Invalid Secure Voting Token.");
+        }
         this.svtSession = await securityApi.validateSvt(electionUuid, this.tokenCode);
         this.svtStatus = this.svtSession.status || "validated";
         this.canRequestSvt = false;

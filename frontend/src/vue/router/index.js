@@ -116,6 +116,16 @@ const router = createRouter({
           meta: { title: "Vote history", roles: ["student", "candidate"] },
         },
         {
+          path: "vote/verify/:uuid",
+          name: "vote-verify",
+          component: () => import("@/views/elections/VoteVerifyView.vue"),
+          meta: {
+            title: "Secure Voting Verification",
+            roles: ["student", "candidate"],
+            svtVerify: true,
+          },
+        },
+        {
           path: "my-elections",
           name: "student-my-elections",
           component: () => import("@/views/dashboard/StudentMyElectionsView.vue"),

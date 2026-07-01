@@ -12,5 +12,6 @@ export { default as VoteValidationSequence } from "./VoteValidationSequence.vue"
 export { default as VoteCandidatePicker } from "./VoteCandidatePicker.vue";
 export { default as VotePositionPicker } from "./VotePositionPicker.vue";
 export { default as SvtVerificationPanel } from "./SvtVerificationPanel.vue";
+export { default as SvtCodeField } from "./SvtCodeField.vue";
 export { default as BallotProgressBar } from "./BallotProgressBar.vue";
 export { default as BallotReviewStep } from "./BallotReviewStep.vue";
