@@ -29,8 +29,6 @@ const electionUuid = computed(() => route.params.uuid);
 useElectionRealtime(electionUuid);
 
 const electionTitle = computed(() => votingStore.ballot?.election_title || "Election");
-const positionCount = computed(() => votingStore.sortedPositions.length);
-
 const activePosition = computed(() => votingStore.currentPosition);
 
 const selectedUuids = computed({
@@ -63,13 +61,21 @@ function updateResendCountdown() {
   resendSeconds.value = Math.max(0, diff);
 }
 
+function hasActiveBallotSession() {
+  return (
+    votingStore.ballotSessionActive ||
+    votingStore.svtStatus === "validated" ||
+    votingStore.svtSession?.status === "validated"
+  );
+}
+
 async function ensureSvtIssued() {
   await votingStore.fetchVotingAccess(electionUuid.value);
   if (votingStore.svtAccess?.has_submitted_ballot) {
     router.replace(`/dashboard/elections/${electionUuid.value}/confirmation`);
     return false;
   }
-  if (votingStore.ballotSessionActive && votingStore.tokenCode) {
+  if (hasActiveBallotSession() && votingStore.tokenCode) {
     phase.value = "ballot";
     return true;
   }
@@ -89,6 +95,7 @@ async function handleVerifySvt() {
   try {
     await votingStore.validateSvt(electionUuid.value, svtInput.value);
     votingStore.currentStep = 1;
+    votingStore.persistBallotState(electionUuid.value);
     phase.value = "ballot";
   } catch {
     /* error in store */
@@ -110,6 +117,12 @@ function handleNext() {
   votingStore.nextStep(electionUuid.value);
 }
 
+function handleSkip() {
+  if (!activePosition.value) return;
+  votingStore.skipPosition(activePosition.value, electionUuid.value);
+  handleNext();
+}
+
 function handleBack() {
   if (votingStore.isReviewStep) {
     votingStore.prevStep(electionUuid.value);
@@ -123,13 +136,15 @@ function handleEditPosition(positionUuid) {
   votingStore.goToPositionStep(positionUuid, electionUuid.value);
 }
 
+function handleContinueLater() {
+  votingStore.continueLater(electionUuid.value);
+  router.push({ name: "student-my-elections" });
+}
+
 async function handleSubmitBallot() {
   phase.value = "submitting";
   try {
-    await Promise.all([
-      sleep(1400),
-      votingStore.submitBallot(electionUuid.value),
-    ]);
+    await Promise.all([sleep(1400), votingStore.submitBallot(electionUuid.value)]);
     router.push(`/dashboard/elections/${electionUuid.value}/confirmation`);
   } catch {
     phase.value = "ballot";
@@ -139,8 +154,8 @@ async function handleSubmitBallot() {
 onMounted(async () => {
   resendTimer = window.setInterval(updateResendCountdown, 1000);
   try {
-    await votingStore.fetchBallot(electionUuid.value);
     votingStore.restoreSvtSession(electionUuid.value);
+    await votingStore.fetchBallot(electionUuid.value);
     const ok = await ensureSvtIssued();
     if (!ok) return;
   } catch {
@@ -162,9 +177,19 @@ watch(
 
 <template>
   <div class="w-full">
-    <header v-if="phase === 'ballot'" class="mb-4">
-      <p class="text-xs font-semibold uppercase tracking-wide text-brand-700">{{ electionTitle }}</p>
-      <h1 class="mt-1 text-2xl font-bold text-ink-primary">Official ballot</h1>
+    <header v-if="phase === 'ballot'" class="mb-4 flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <p class="text-xs font-semibold uppercase tracking-wide text-brand-700">{{ electionTitle }}</p>
+        <h1 class="mt-1 text-2xl font-bold text-ink-primary">Official ballot</h1>
+        <p class="mt-1 text-xs text-ink-secondary">Choices are saved locally until you submit.</p>
+      </div>
+      <button
+        type="button"
+        class="text-sm font-medium text-brand-700 hover:text-brand-800"
+        @click="handleContinueLater"
+      >
+        Continue later
+      </button>
     </header>
 
     <VAlert v-if="votingStore.error && phase !== 'loading'" variant="error" class="mb-6">
@@ -204,9 +229,11 @@ watch(
         :position="activePosition"
         v-model:selected-uuids="selectedUuids"
         :submitting="false"
-        skip-label="Skip position"
+        :show-back="!votingStore.isFirstBallotStep"
+        :is-last-step="votingStore.isLastPositionStep"
         @back="handleBack"
         @confirm="handleNext"
+        @skip="handleSkip"
       />
 
       <BallotReviewStep

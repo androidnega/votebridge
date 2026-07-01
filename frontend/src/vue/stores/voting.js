@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { electionsApi, securityApi, votingApi } from "@/api";
 import { extractApiError } from "@/api/helpers";
+import { applySelection, skipPositionSelection } from "@/utils/ballotSelection";
 import realtimeService from "@/services/websocket";
 
 const CONFIRMATION_STORAGE_PREFIX = "vb_ballot_confirmation_";
@@ -93,6 +94,12 @@ export const useVotingStore = defineStore("voting", {
     hasActiveSvt(state) {
       return state.svtStatus === "issued" || state.svtStatus === "validated";
     },
+    isFirstBallotStep(state) {
+      return state.currentStep <= 1 && !this.isReviewStep;
+    },
+    isLastPositionStep(state) {
+      return !this.isReviewStep && state.currentStep === this.sortedPositions.length;
+    },
     ballotSessionActive(state) {
       return state.ballot?.ballot_session_active || state.svtSession?.status === "validated";
     },
@@ -104,9 +111,7 @@ export const useVotingStore = defineStore("voting", {
       this.error = null;
       try {
         this.ballot = await votingApi.getBallot(electionUuid);
-        if (!Object.keys(this.selections).length) {
-          this.selections = emptySelections(this.ballot.positions);
-        }
+        this.selections = emptySelections(this.ballot.positions);
         this.previewPositions = sortPositions(this.ballot.positions);
         this.svtStatus = this.ballot.svt_status || null;
         this.canRequestSvt = this.ballot.can_request_svt !== false;
@@ -219,28 +224,32 @@ export const useVotingStore = defineStore("voting", {
       };
     },
 
-    toggleCandidate(position, candidateUuid) {
-      const current = [...(this.selections[position.uuid] || [])];
-      const isMulti = position.choice_type === "multi";
-      const max = position.max_votes_allowed || 1;
-
-      if (isMulti) {
-        const index = current.indexOf(candidateUuid);
-        if (index >= 0) {
-          current.splice(index, 1);
-        } else if (current.length < max) {
-          current.push(candidateUuid);
-        }
-      } else {
-        if (current.includes(candidateUuid)) {
-          current.length = 0;
-        } else {
-          current.length = 0;
-          current.push(candidateUuid);
-        }
+    selectCandidate(position, candidateUuid, electionUuid) {
+      const next = applySelection(
+        position,
+        this.selections[position.uuid] || [],
+        candidateUuid
+      );
+      this.setSelection(position.uuid, next);
+      if (electionUuid) {
+        this.persistBallotState(electionUuid);
       }
+    },
 
-      this.setSelection(position.uuid, current);
+    skipPosition(position, electionUuid) {
+      this.setSelection(position.uuid, skipPositionSelection());
+      if (electionUuid) {
+        this.persistBallotState(electionUuid);
+      }
+    },
+
+    toggleCandidate(position, candidateUuid, electionUuid = null) {
+      this.selectCandidate(position, candidateUuid, electionUuid);
+    },
+
+    continueLater(electionUuid) {
+      this.persistBallotState(electionUuid);
+      this.persistSvtSession(electionUuid);
     },
 
     nextStep(electionUuid) {

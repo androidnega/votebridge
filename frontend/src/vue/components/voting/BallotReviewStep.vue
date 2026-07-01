@@ -19,7 +19,7 @@ const hasSelections = computed(() =>
     <header class="mb-6">
       <h2 class="text-2xl font-bold text-ink-primary">Review Your Ballot</h2>
       <p class="mt-2 text-sm text-ink-secondary">
-        Confirm your choices before final submission. You may go back to change any position.
+        Nothing is recorded until you submit. Tap Edit to change any position.
       </p>
     </header>
 
