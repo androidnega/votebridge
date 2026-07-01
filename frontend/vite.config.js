@@ -2,10 +2,10 @@ import { defineConfig } from "vite";
 import vue from "@vitejs/plugin-vue";
 import { resolve } from "path";
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [vue()],
   root: resolve(__dirname),
-  base: "/static/",
+  base: command === "build" ? "/static/" : "/",
   resolve: {
     alias: {
       "@": resolve(__dirname, "src/vue"),
@@ -46,4 +46,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));

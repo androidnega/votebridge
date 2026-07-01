@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted } from "vue";
 import StepUpModal from "@/components/system-control/StepUpModal.vue";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { systemControlNav } from "@/config/moduleNav";
 import { useStepUp } from "@/composables/useStepUp";
 import { useToast } from "@/composables/useToast";
@@ -47,7 +48,7 @@ function formatRows(rows) {
     <PageHeader
       title="Backup & Recovery"
       subtitle="Create, verify, and manage configuration backups."
-      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: 'Backup' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'Backup & recovery' }]"
     >
       <template #actions>
         <VButton variant="primary" @click="createBackup">Create backup</VButton>

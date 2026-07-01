@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { AdminKpiCard } from "@/components/admin";
 import { ConnectionStatusIndicator, LoadingSkeleton, StatCard } from "@/components/dashboard";
 import { ResultStatusBadge } from "@/components/results";
 import {
@@ -262,12 +263,39 @@ function openArchive(row) {
     </template>
 
     <template v-else>
+      <section class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <AdminKpiCard
+          title="Published results"
+          :value="summaryCounts.published"
+          hint="Officially released to students"
+          health-status="healthy"
+          clickable
+          @click="setFilter('published')"
+        />
+        <AdminKpiCard
+          title="Awaiting certification"
+          :value="summaryCounts.certification"
+          hint="Pending governance review"
+          health-status="attention"
+          clickable
+          @click="setFilter('certification')"
+        />
+        <AdminKpiCard
+          title="Archived"
+          :value="summaryCounts.archived"
+          hint="Long-term institutional record"
+          health-status="unknown"
+          clickable
+          @click="setFilter('archived')"
+        />
+      </section>
+
       <LoadingSkeleton
         v-if="resultsStore.loading && !resultsStore.results.length"
         variant="list"
         :rows="5"
       />
-      <VCard v-else padding="none">
+      <VCard v-else padding="none" class="overflow-hidden shadow-card">
         <EmptyState
           v-if="!resultsStore.results.length"
           v-bind="emptyStates.results"
@@ -275,9 +303,9 @@ function openArchive(row) {
         />
         <ul v-else class="divide-y divide-border">
           <li
-            v-for="result in resultsStore.results"
+            v-for="result in filteredResults.length ? filteredResults : resultsStore.results"
             :key="result.uuid"
-            class="flex flex-col gap-3 p-card sm:flex-row sm:items-center sm:justify-between"
+            class="flex flex-col gap-3 bg-white p-4 transition hover:bg-surface-muted/50 sm:flex-row sm:items-center sm:justify-between sm:px-5"
           >
             <div>
               <p class="font-medium text-slate-800">{{ result.election_title }}</p>

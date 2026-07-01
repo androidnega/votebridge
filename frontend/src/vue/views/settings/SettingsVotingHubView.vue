@@ -1,15 +1,16 @@
 <script setup>
 import { useRouter } from "vue-router";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { ModuleNav, PageHeader, VCard, VButton } from "@/components/ui";
 import { settingsNav } from "@/config/moduleNav";
 
 const router = useRouter();
 
 const links = [
-  { title: "Integration health", description: "SMS, USSD, email, Redis, and WebSocket status.", to: "/dashboard/settings/integrations" },
-  { title: "Communication providers", description: "Arkesel SMS and SMTP email configuration.", to: "/dashboard/settings/providers" },
-  { title: "USSD gateway", description: "Callback URL, session limits, and gateway validation.", to: "/dashboard/settings/ussd" },
-  { title: "Notifications", description: "Templates and delivery rules.", to: "/dashboard/settings/notifications" },
+  { title: "Integration health", description: "SMS, USSD, email, Redis, and WebSocket status.", to: r.integrations.hub },
+  { title: "Communication providers", description: "Arkesel SMS and SMTP email configuration.", to: r.integrations.providers },
+  { title: "USSD gateway", description: "Callback URL, session limits, and gateway validation.", to: r.integrations.ussd },
+  { title: "Notifications", description: "Templates and delivery rules.", to: r.integrations.notifications },
 ];
 </script>
 
@@ -18,7 +19,7 @@ const links = [
     <PageHeader
       title="Integrations"
       subtitle="Communication providers and infrastructure connectivity."
-      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Integrations' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Integrations' }]"
     />
     <ModuleNav :items="settingsNav" />
     <div class="grid grid-cols-1 gap-4 md:grid-cols-2">

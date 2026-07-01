@@ -23,6 +23,7 @@ from apps.accounts.services.token_service import TokenService
 from apps.accounts.throttles import LoginRateThrottle, OTPRateThrottle, TokenRefreshRateThrottle
 from apps.trusted_devices.constants import TRUSTED_DEVICE_COOKIE
 from apps.trusted_devices.utils import clear_trusted_device_cookie
+from core.client_meta import get_browser_fingerprint
 
 
 def _client_meta(request) -> tuple:
@@ -123,7 +124,7 @@ class OTPVerifyView(APIView):
             user_agent=user_agent,
             device_signals=serializer.validated_data.get("device_signals"),
             trusted_device_token=request.COOKIES.get(TRUSTED_DEVICE_COOKIE),
-            browser_fingerprint=request.META.get("HTTP_X_DEVICE_FINGERPRINT", ""),
+            browser_fingerprint=get_browser_fingerprint(request) or "",
         )
         response = Response(
             {"success": True, "data": AuthSuccessSerializer(result).data},
@@ -202,6 +203,41 @@ class LogoutView(APIView):
         except ImportError:
             pass
         return response
+
+
+class CurrentUserView(APIView):
+    """Authenticated user's own profile — no user UUID required in the URL."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from apps.accounts.api.serializers import UserSerializer
+
+        user = request.user
+        if not hasattr(user, "role"):
+            from apps.accounts.models import User as UserModel
+
+            user = UserModel.objects.select_related("role").get(pk=user.pk)
+        return Response({"success": True, "data": UserSerializer(user).data})
+
+    def patch(self, request):
+        from apps.accounts.api.serializers import UserSerializer, UserUpdateSerializer
+        from apps.accounts.services import user_service
+
+        allowed_fields = {
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "password",
+            "index_number",
+            "student_id",
+        }
+        payload = {key: value for key, value in request.data.items() if key in allowed_fields}
+        serializer = UserUpdateSerializer(data=payload, partial=True)
+        serializer.is_valid(raise_exception=True)
+        user = user_service.update_user(request.user.uuid, serializer.validated_data)
+        return Response({"success": True, "data": UserSerializer(user).data})
 
 
 class SessionListView(APIView):

@@ -31,7 +31,7 @@ Phase 36 replaces the multi-tab Reports module with a single institutional repor
 | Command | Result |
 |---------|--------|
 | `python manage.py check` | ✅ Pass |
-| `python manage.py test` | Run in deployment environment (full suite) |
+| `python manage.py test` | ✅ Pass (78 tests) |
 | `npm run build` | ✅ Pass |
 
 ---

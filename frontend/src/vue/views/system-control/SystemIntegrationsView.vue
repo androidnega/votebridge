@@ -4,6 +4,7 @@ import { useRoute, useRouter } from "vue-router";
 import OpsHealthBadge from "@/components/operations/OpsHealthBadge.vue";
 import { useSettingsIntegrations } from "@/composables/useSettingsIntegrations";
 import { useToast } from "@/composables/useToast";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { settingsNav } from "@/config/moduleNav";
 import { LoadingSkeleton, ModuleNav, PageHeader, VAlert, VButton, VCard } from "@/components/ui";
 
@@ -47,7 +48,7 @@ async function validate(integration) {
     <PageHeader
       title="Integrations"
       subtitle="Communication providers and infrastructure connectivity for the platform."
-      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Integrations' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Integrations' }]"
     />
     <ModuleNav :items="settingsNav" />
     <VAlert v-if="error" variant="error">{{ error }}</VAlert>

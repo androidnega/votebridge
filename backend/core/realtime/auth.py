@@ -9,6 +9,7 @@ from django.contrib.auth.models import AnonymousUser
 
 @database_sync_to_async
 def _get_user_from_token(token: str):
+    from django.conf import settings
     from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
     from rest_framework_simplejwt.tokens import AccessToken
 
@@ -16,8 +17,9 @@ def _get_user_from_token(token: str):
 
     try:
         validated = AccessToken(token)
-        user_id = validated["user_id"]
-        return User.objects.select_related("role").get(pk=user_id)
+        claim = settings.SIMPLE_JWT.get("USER_ID_CLAIM", "user_id")
+        user_uuid = validated[claim]
+        return User.objects.select_related("role").get(uuid=user_uuid)
     except (InvalidToken, TokenError, User.DoesNotExist, KeyError):
         return AnonymousUser()
 

@@ -1,5 +1,6 @@
 <script setup>
 import { defineAsyncComponent, onMounted, onUnmounted } from "vue";
+import { AdminKpiCard } from "@/components/admin";
 import { StatCard, ConnectionStatusIndicator } from "@/components/dashboard";
 import { useReportsWorkspace } from "@/composables/useReportsWorkspace";
 import { useToast } from "@/composables/useToast";
@@ -87,26 +88,58 @@ onUnmounted(() => store.disconnectRealtime());
 
     <template v-else>
       <section class="grid grid-cols-1 gap-4 xs:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          label="Completed elections"
-          :value="kpis.completedElections"
-          accent="brand"
-        />
-        <StatCard
-          label="Average turnout"
-          :value="`${kpis.averageTurnout}%`"
-          accent="green"
-        />
-        <StatCard
-          label="Registered voters"
-          :value="kpis.registeredVoters"
-          accent="slate"
-        />
-        <StatCard
-          label="Total votes cast"
-          :value="kpis.totalVotesCast"
-          accent="brand"
-        />
+        <template v-if="authStore.isAdmin && !authStore.isSuperAdmin">
+          <AdminKpiCard
+            id="completed-elections"
+            title="Completed elections"
+            :value="kpis.completedElections"
+            hint="Closed or archived cycles"
+            health-status="healthy"
+          />
+          <AdminKpiCard
+            id="average-turnout"
+            title="Average turnout"
+            :value="`${kpis.averageTurnout}%`"
+            hint="Across completed elections"
+            health-status="healthy"
+          />
+          <AdminKpiCard
+            id="turnout"
+            title="Registered voters"
+            :value="kpis.registeredVoters"
+            hint="Eligible on the platform"
+            health-status="unknown"
+          />
+          <AdminKpiCard
+            id="turnout"
+            title="Total votes cast"
+            :value="kpis.totalVotesCast"
+            hint="All recorded ballots"
+            health-status="healthy"
+          />
+        </template>
+        <template v-else>
+          <StatCard
+            label="Completed elections"
+            :value="kpis.completedElections"
+            accent="brand"
+          />
+          <StatCard
+            label="Average turnout"
+            :value="`${kpis.averageTurnout}%`"
+            accent="green"
+          />
+          <StatCard
+            label="Registered voters"
+            :value="kpis.registeredVoters"
+            accent="slate"
+          />
+          <StatCard
+            label="Total votes cast"
+            :value="kpis.totalVotesCast"
+            accent="brand"
+          />
+        </template>
       </section>
 
       <section

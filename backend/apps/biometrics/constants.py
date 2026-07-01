@@ -6,6 +6,8 @@ PRIVILEGED_ROLES = frozenset({Role.Name.ADMIN, Role.Name.SUPER_ADMIN})
 
 PRIVILEGED_USERNAMES = frozenset({"registrar", "electionofficer", "admin"})
 
+SELF_SERVICE_ENROLLMENT_IMAGE_COUNT = 5
+
 ENROLLMENT_IMAGE_COUNT = 10
 ENROLLMENT_MIN_QUALITY = 0.55
 EMBEDDING_ALGORITHM = "arcface"

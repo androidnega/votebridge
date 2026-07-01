@@ -1,6 +1,7 @@
 import { onMounted, onUnmounted, ref } from "vue";
 
-export function useCamera() {
+export function useCamera(options = {}) {
+  const { autoStart = true } = options;
   const videoRef = ref(null);
   const stream = ref(null);
   const error = ref("");
@@ -10,7 +11,12 @@ export function useCamera() {
     error.value = "";
     try {
       const media = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } },
+        video: {
+          facingMode: "user",
+          width: { ideal: 320, max: 480 },
+          height: { ideal: 240, max: 360 },
+          frameRate: { ideal: 12, max: 15 },
+        },
         audio: false,
       });
       stream.value = media;
@@ -47,7 +53,9 @@ export function useCamera() {
   }
 
   onMounted(() => {
-    start();
+    if (autoStart) {
+      start();
+    }
   });
 
   onUnmounted(() => {

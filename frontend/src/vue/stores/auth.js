@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { authApi } from "@/api";
+import { ensureAccessToken } from "@/api/client";
 import { normalizeAuthRedirect, DASHBOARD_ROOT } from "@/config/routes";
 import {
   clearOtpChallenge,
@@ -29,7 +30,7 @@ export const useAuthStore = defineStore("auth", {
 
   getters: {
     isAuthenticated: (state) =>
-      Boolean(state.user?.uuid) || Boolean(getAccessToken() && getUserUuid()),
+      Boolean(state.user?.uuid) || Boolean(getAccessToken() || getRefreshToken()),
     role: (state) => state.user?.role?.name || null,
     roleDisplay: (state) => state.user?.role?.name_display || state.user?.role?.name || "",
     fullName: (state) => {
@@ -49,14 +50,26 @@ export const useAuthStore = defineStore("auth", {
       if (this.initialized) return;
       this.initialized = true;
 
-      if (!getAccessToken() || !getUserUuid()) {
+      if (!getAccessToken() && !getRefreshToken()) {
         clearSession();
+        this.user = null;
+        return;
+      }
+
+      const sessionReady = await ensureAccessToken();
+      if (!sessionReady) {
         this.user = null;
         return;
       }
 
       try {
         await this.fetchProfile();
+        if (this.user?.uuid) {
+          setSessionMeta({
+            userUuid: this.user.uuid,
+            sessionUuid: getSessionUuid(),
+          });
+        }
       } catch {
         clearSession();
         this.user = null;
@@ -124,13 +137,26 @@ export const useAuthStore = defineStore("auth", {
         if (result.requires_biometric) {
           const { useBiometricsStore } = await import("@/stores/biometrics");
           const { useTrustedDevicesStore } = await import("@/stores/trustedDevices");
+          const { clearTokens } = await import("@/api/helpers");
           const biometricsStore = useBiometricsStore();
           const trustedStore = useTrustedDevicesStore();
+          clearTokens();
           biometricsStore.setPendingAuth(result);
           trustedStore.setRiskReasons(result.risk_reasons || []);
           clearOtpChallenge();
           this.otpChallenge = null;
           return { requiresBiometric: true, pendingAuth: result, riskReasons: result.risk_reasons };
+        }
+
+        if (result.requires_enrollment) {
+          const { useBiometricsStore } = await import("@/stores/biometrics");
+          const { clearTokens } = await import("@/api/helpers");
+          const biometricsStore = useBiometricsStore();
+          clearTokens();
+          biometricsStore.setPendingAuth(result);
+          clearOtpChallenge();
+          this.otpChallenge = null;
+          return { requiresEnrollment: true, pendingAuth: result };
         }
 
         setTokens(result.tokens.access, result.tokens.refresh);

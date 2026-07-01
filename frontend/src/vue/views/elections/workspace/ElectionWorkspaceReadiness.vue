@@ -2,6 +2,7 @@
 import { computed, onMounted, watch } from "vue";
 import { useRoute } from "vue-router";
 import { ElectionReadinessPanel } from "@/components/elections";
+import { ElectionWorkspacePageShell } from "@/components/admin";
 import ElectionLifecycleBar from "@/components/elections/ElectionLifecycleBar.vue";
 import { VAlert, VButton } from "@/components/ui";
 import { useElectionStore } from "@/stores/election";
@@ -26,7 +27,7 @@ watch(electionUuid, loadReadiness);
 </script>
 
 <template>
-  <div class="space-y-section">
+  <ElectionWorkspacePageShell title="Readiness" subtitle="Resolve all critical checks before scheduling and opening the election.">
     <VAlert v-if="electionStore.error" variant="error">{{ electionStore.error }}</VAlert>
 
     <div class="flex flex-wrap items-center justify-between gap-3">
@@ -45,5 +46,5 @@ watch(electionUuid, loadReadiness);
       :report="electionStore.readinessReport"
       :loading="electionStore.readinessLoading"
     />
-  </div>
+  </ElectionWorkspacePageShell>
 </template>

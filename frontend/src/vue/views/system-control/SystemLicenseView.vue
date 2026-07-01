@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted } from "vue";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { systemControlNav } from "@/config/moduleNav";
 import { LoadingSkeleton, ModuleNav, PageHeader, VAlert, VCard } from "@/components/ui";
 import { useSystemControlStore } from "@/stores/systemControl";
@@ -14,7 +15,7 @@ onMounted(() => store.fetchLicense().catch(() => {}));
     <PageHeader
       title="License"
       subtitle="Application license and support information."
-      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: 'License' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'License' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

@@ -19,6 +19,7 @@
     "vite": "^6.2.0"
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "^0.10.21",
     "alpinejs": "^3.14.9",
     "axios": "^1.18.1",
     "echarts": "^6.1.0",

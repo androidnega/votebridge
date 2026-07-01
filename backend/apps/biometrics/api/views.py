@@ -6,7 +6,10 @@ from rest_framework.views import APIView
 from apps.accounts.repositories.user_repository import UserRepository
 from apps.biometrics.api.serializers import (
     BiometricChallengeRequestSerializer,
+    BiometricEnrollLoginSerializer,
     BiometricEnrollmentSerializer,
+    BiometricResetConfirmSerializer,
+    BiometricResetRequestSerializer,
     BiometricStepUpSerializer,
     BiometricVerifyLoginSerializer,
 )
@@ -62,6 +65,85 @@ class BiometricEnrollmentView(APIView):
             device_fingerprint=_device_fingerprint(request),
         )
         return Response({"success": True, "data": result}, status=status.HTTP_201_CREATED)
+
+
+class BiometricEnrollLoginView(APIView):
+    permission_classes = [AllowAny, BiometricsModuleEnabled]
+
+    def post(self, request):
+        serializer = BiometricEnrollLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ip, ua = _client_meta(request)
+        result = biometric_enrollment_service.enroll_from_pending_auth(
+            pending_auth_token=serializer.validated_data["pending_auth_token"],
+            images=serializer.validated_data["images"],
+            ip_address=ip,
+            user_agent=ua,
+            device_fingerprint=_device_fingerprint(request),
+            device_signals=serializer.validated_data.get("device_signals"),
+        )
+        return Response({"success": True, "data": result}, status=status.HTTP_201_CREATED)
+
+
+class BiometricResetOtpView(APIView):
+    permission_classes = [IsAuthenticated, BiometricsModuleEnabled, IsPrivilegedBiometricUser]
+
+    def post(self, request):
+        serializer = BiometricResetRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if not request.user.check_password(serializer.validated_data["password"]):
+            return Response(
+                {"success": False, "error": {"code": "invalid_password", "message": "Invalid password."}},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+        if not biometric_enrollment_service.has_active_biometric_profile(request.user):
+            return Response(
+                {"success": False, "error": {"code": "not_enrolled", "message": "No biometric profile enrolled."}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        from apps.accounts.models import OTPRequest
+        from apps.accounts.services.otp_service import OTPService
+
+        otp_service = OTPService()
+        channel, recipient = otp_service.resolve_channel_and_recipient(request.user)
+        ip, ua = _client_meta(request)
+        otp_request = otp_service.create_and_send(
+            user=request.user,
+            purpose=OTPRequest.Purpose.MFA,
+            channel=channel,
+            recipient=recipient,
+            ip_address=ip,
+            user_agent=ua,
+        )
+        return Response(
+            {
+                "success": True,
+                "data": {
+                    "otp_request_uuid": str(otp_request.uuid),
+                    "expires_at": otp_request.expires_at,
+                    "channel": otp_request.channel,
+                },
+            }
+        )
+
+
+class BiometricResetView(APIView):
+    permission_classes = [IsAuthenticated, BiometricsModuleEnabled, IsPrivilegedBiometricUser]
+
+    def post(self, request):
+        serializer = BiometricResetConfirmSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ip, ua = _client_meta(request)
+        result = biometric_enrollment_service.reset_profile(
+            user=request.user,
+            password=serializer.validated_data["password"],
+            otp_request_uuid=serializer.validated_data["otp_request_uuid"],
+            otp_code=serializer.validated_data["otp_code"],
+            ip_address=ip,
+            user_agent=ua,
+            device_fingerprint=_device_fingerprint(request),
+        )
+        return Response({"success": True, "data": result})
 
 
 class BiometricVerifyLoginView(APIView):

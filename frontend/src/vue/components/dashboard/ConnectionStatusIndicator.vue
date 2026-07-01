@@ -19,22 +19,26 @@ const displayLabel = computed(() => {
       connected: "Live",
       connecting: "Connecting",
       disconnected: "Offline",
+      unavailable: "Offline",
+      disabled: "Offline",
       error: "Error",
-    }[props.status] || "Live"
+    }[props.status] || "Offline"
   );
 });
 
 const badgeClass = computed(() => ({
   "bg-green-50 text-green-700 ring-green-200": props.status === "connected",
   "bg-amber-50 text-amber-700 ring-amber-200": props.status === "connecting",
-  "bg-slate-100 text-slate-600 ring-slate-200": props.status === "disconnected",
+  "bg-slate-100 text-slate-600 ring-slate-200":
+    props.status === "disconnected" || props.status === "unavailable" || props.status === "disabled",
   "bg-red-50 text-red-700 ring-red-200": props.status === "error",
 }));
 
 const dotClass = computed(() => ({
   "bg-green-500 animate-pulse": props.status === "connected",
   "bg-amber-500 animate-pulse": props.status === "connecting",
-  "bg-slate-400": props.status === "disconnected",
+  "bg-slate-400":
+    props.status === "disconnected" || props.status === "unavailable" || props.status === "disabled",
   "bg-red-500": props.status === "error",
 }));
 </script>

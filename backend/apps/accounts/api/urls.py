@@ -2,6 +2,7 @@ from django.urls import path
 
 from apps.accounts.api.auth_views import (
     AdminLoginView,
+    CurrentUserView,
     LogoutView,
     MFALogListView,
     OTPResendView,
@@ -51,6 +52,7 @@ urlpatterns = [
     path("auth/otp/resend/", OTPResendView.as_view(), name="auth-otp-resend"),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="auth-token-refresh"),
     path("auth/logout/", LogoutView.as_view(), name="auth-logout"),
+    path("auth/me/", CurrentUserView.as_view(), name="auth-me"),
     path("auth/sessions/", SessionListView.as_view(), name="auth-session-list"),
     path("auth/sessions/<uuid:uuid>/revoke/", SessionRevokeView.as_view(), name="auth-session-revoke"),
     path("auth/audit-logs/", MFALogListView.as_view(), name="auth-audit-logs"),

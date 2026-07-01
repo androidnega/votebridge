@@ -1,5 +1,18 @@
 import { getAccessToken } from "@/api/helpers";
 
+function isRealtimeEnabled() {
+  return import.meta.env.VITE_ENABLE_REALTIME !== "false";
+}
+
+function getWebSocketOrigin() {
+  const configured = import.meta.env.VITE_WS_BASE_URL;
+  if (configured) {
+    return String(configured).replace(/\/$/, "");
+  }
+  const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+  return `${protocol}//${window.location.host}`;
+}
+
 const REALTIME_PATHS = {
   dashboard: "/ws/realtime/dashboard/",
   security: "/ws/realtime/security/",
@@ -19,12 +32,16 @@ class RealtimeService {
     if (!token) {
       throw new Error("Authentication required for realtime connection.");
     }
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const separator = path.includes("?") ? "&" : "?";
-    return `${protocol}//${window.location.host}${path}${separator}token=${encodeURIComponent(token)}`;
+    return `${getWebSocketOrigin()}${path}${separator}token=${encodeURIComponent(token)}`;
   }
 
   connect(key, path, handlers = {}) {
+    if (!isRealtimeEnabled()) {
+      handlers.onStatusChange?.("disabled");
+      return null;
+    }
+
     this.disconnect(key);
     handlers.onStatusChange?.("connecting");
 
@@ -32,11 +49,15 @@ class RealtimeService {
     try {
       socket = new WebSocket(this.buildUrl(path));
     } catch (error) {
+      handlers.onStatusChange?.("disconnected");
       handlers.onError?.(error);
       return null;
     }
 
+    let opened = false;
+
     socket.addEventListener("open", () => {
+      opened = true;
       handlers.onOpen?.();
       handlers.onStatusChange?.("connected");
     });
@@ -51,13 +72,14 @@ class RealtimeService {
     });
 
     socket.addEventListener("close", () => {
-      handlers.onStatusChange?.("disconnected");
+      handlers.onStatusChange?.(opened ? "disconnected" : "unavailable");
       handlers.onClose?.();
     });
 
     socket.addEventListener("error", () => {
-      handlers.onStatusChange?.("error");
-      handlers.onError?.(new Error("WebSocket connection error"));
+      if (!opened) {
+        handlers.onStatusChange?.("unavailable");
+      }
     });
 
     this.sockets.set(key, socket);

@@ -11,6 +11,9 @@ export function useDashboardRealtime(scope = "admin") {
     storeToRefs(dashboardStore);
 
   onMounted(() => {
+    if (import.meta.env.VITE_ENABLE_REALTIME === "false") {
+      return;
+    }
     dashboardStore.connectRealtime(scope);
   });
 

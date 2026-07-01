@@ -15,18 +15,25 @@ export function setupRouterGuards(router) {
     const isPublic = to.matched.some((record) => record.meta.public);
     const requiresOtp = to.meta.requiresOtp;
     const requiresBiometric = to.meta.requiresBiometric;
+    const requiresEnrollment = to.meta.requiresEnrollment;
     const allowedRoles = to.meta.roles;
 
     if (isPublic) {
       return true;
     }
 
-    if (requiresBiometric) {
+    if (requiresBiometric || requiresEnrollment) {
       const { useBiometricsStore } = await import("@/stores/biometrics");
       const biometricsStore = useBiometricsStore();
       biometricsStore.loadPendingAuth();
       if (!biometricsStore.pendingAuth?.pending_auth_token) {
         return { name: "auth-login", query: { redirect: to.query.redirect } };
+      }
+      if (requiresEnrollment && !biometricsStore.pendingAuth?.requires_enrollment) {
+        return { name: "auth-biometric-verify", query: to.query };
+      }
+      if (requiresBiometric && biometricsStore.pendingAuth?.requires_enrollment) {
+        return { name: "auth-biometric-enroll", query: to.query };
       }
     }
 
@@ -71,7 +78,7 @@ export function setupRouterGuards(router) {
       }
     }
 
-    if (guestOnly && authStore.isAuthenticated && !requiresOtp && !requiresBiometric) {
+    if (guestOnly && authStore.isAuthenticated && !requiresOtp && !requiresBiometric && !requiresEnrollment) {
       const redirect = normalizeAuthRedirect(
         typeof to.query.redirect === "string" ? to.query.redirect : DASHBOARD_ROOT
       );

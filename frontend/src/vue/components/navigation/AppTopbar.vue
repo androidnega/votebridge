@@ -1,8 +1,8 @@
 <script setup>
-import { computed, onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { computed } from "vue";
 import ConnectionStatusIndicator from "@/components/dashboard/ConnectionStatusIndicator.vue";
 import GlobalSearch from "@/components/navigation/GlobalSearch.vue";
+import NotificationDropdown from "@/components/notifications/NotificationDropdown.vue";
 import SuperAdminTopbarActions from "@/components/navigation/SuperAdminTopbarActions.vue";
 import UserMenu from "@/components/navigation/UserMenu.vue";
 import VIcon from "@/components/ui/VIcon.vue";
@@ -18,17 +18,10 @@ defineProps({
 
 defineEmits(["toggle-sidebar"]);
 
-const router = useRouter();
 const authStore = useAuthStore();
 const notificationsStore = useNotificationsStore();
 
-const unreadCount = computed(() => notificationsStore.unreadCount || 0);
-
 const showLiveStatus = computed(() => notificationsStore.realtimeStatus === "connected");
-
-onMounted(() => {
-  notificationsStore.fetchNotificationCenter({ page_size: 1 }).catch(() => {});
-});
 </script>
 
 <template>
@@ -59,20 +52,7 @@ onMounted(() => {
         <ConnectionStatusIndicator status="connected" />
       </div>
 
-      <button
-        type="button"
-        class="vb-topbar-icon-btn relative"
-        aria-label="Notifications"
-        @click="router.push({ name: 'notifications' })"
-      >
-        <VIcon name="notifications" class="h-5 w-5" />
-        <span
-          v-if="unreadCount > 0"
-          class="absolute right-1.5 top-1.5 flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-danger-600 px-1 text-[10px] font-bold text-white"
-        >
-          {{ unreadCount > 9 ? "9+" : unreadCount }}
-        </span>
-      </button>
+      <NotificationDropdown />
 
       <UserMenu :compact="!authStore.isSuperAdmin" inverted />
     </div>

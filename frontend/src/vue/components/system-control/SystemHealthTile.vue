@@ -8,6 +8,7 @@ const props = defineProps({
   label: { type: String, required: true },
   status: { type: String, default: "unknown" },
   icon: { type: String, default: "settings" },
+  compact: Boolean,
 });
 
 const normalized = computed(() => normalizeHealthStatus(props.status));
@@ -24,16 +25,19 @@ const ringClass = computed(() => {
 </script>
 
 <template>
-  <div class="flex items-center gap-3 rounded-card border border-border bg-white p-4 shadow-card">
+  <div
+    class="flex items-center gap-3 rounded-card border border-border bg-white shadow-card"
+    :class="compact ? 'p-3' : 'p-4'"
+  >
     <div
-      class="flex h-10 w-10 shrink-0 items-center justify-center rounded-input ring-1"
-      :class="ringClass"
+      class="flex shrink-0 items-center justify-center rounded-input ring-1"
+      :class="[ringClass, compact ? 'h-8 w-8' : 'h-10 w-10']"
       aria-hidden="true"
     >
       <VIcon :name="icon" size="sm" />
     </div>
     <div class="min-w-0 flex-1">
-      <p class="text-sm font-medium text-slate-800">{{ label }}</p>
+      <p class="truncate text-sm font-medium text-slate-800">{{ label }}</p>
       <OpsHealthBadge :status="normalized" class="mt-1" />
     </div>
   </div>

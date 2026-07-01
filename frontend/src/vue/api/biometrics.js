@@ -10,8 +10,24 @@ export const biometricsApi = {
     return apiClient.post("/biometrics/enrollment/", payload).then(unwrapResponse);
   },
 
+  enrollLogin(payload) {
+    return apiClient
+      .post("/biometrics/enrollment/login/", payload, { skipAuth: true })
+      .then(unwrapResponse);
+  },
+
+  requestResetOtp(password) {
+    return apiClient.post("/biometrics/reset/otp/", { password }).then(unwrapResponse);
+  },
+
+  resetProfile(payload) {
+    return apiClient.post("/biometrics/reset/", payload).then(unwrapResponse);
+  },
+
   verifyLogin(payload) {
-    return apiClient.post("/biometrics/verification/login/", payload).then(unwrapResponse);
+    return apiClient
+      .post("/biometrics/verification/login/", payload, { skipAuth: true })
+      .then(unwrapResponse);
   },
 
   verifyStepUp(payload) {
@@ -19,7 +35,9 @@ export const biometricsApi = {
   },
 
   requestChallenge(payload = {}) {
-    return apiClient.post("/biometrics/challenge/", payload).then(unwrapResponse);
+    return apiClient
+      .post("/biometrics/challenge/", payload, { skipAuth: true })
+      .then(unwrapResponse);
   },
 
   getStatus() {

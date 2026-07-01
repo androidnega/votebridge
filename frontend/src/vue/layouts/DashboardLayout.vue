@@ -17,7 +17,8 @@ const route = useRoute();
           activeRoute.path.startsWith('/dashboard/settings') ||
           activeRoute.path.startsWith('/dashboard/reports') ||
           activeRoute.path.startsWith('/dashboard/analytics') ||
-          activeRoute.path.startsWith('/dashboard/strongroom')
+          activeRoute.path.startsWith('/dashboard/strongroom') ||
+          /^\/dashboard\/elections\/[^/]+/.test(activeRoute.path)
         "
         name="vb-tab"
         mode="out-in"

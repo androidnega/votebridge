@@ -111,6 +111,27 @@ class ArkeselProviderTests(TestCase):
             result = provider.send(log)
             self.assertEqual(result["status_code"], mock_response.status_code)
 
+    def test_arkesel_uses_encrypted_config_api_key(self):
+        from apps.notifications.models import CommunicationProvider
+        from apps.notifications.providers.base import ArkeselSmsProvider
+        from apps.system.utils import encrypt_secret
+
+        record = CommunicationProvider.objects.create(
+            name="Arkesel Encrypted",
+            provider_type=CommunicationProvider.ProviderType.ARKESEL_SMS,
+            is_active=True,
+            is_default=True,
+            config={
+                "api_key": encrypt_secret("stored-key"),
+                "sender_id": "VoteBridge",
+            },
+        )
+
+        provider = ArkeselSmsProvider(record)
+        api_key, sender_id, _url = provider._credentials()
+        self.assertEqual(api_key, "stored-key")
+        self.assertEqual(sender_id, "VoteBridge")
+
 
 class SmsProductionReadinessTests(TestCase):
     @patch("apps.notifications.providers.base.httpx.post")

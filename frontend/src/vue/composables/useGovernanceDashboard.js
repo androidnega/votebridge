@@ -13,6 +13,7 @@ import {
   healthToVariant,
   infrastructureLabels,
 } from "@/config/governanceDashboard";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { normalizeHealthStatus } from "@/config/systemControlHub";
 
 function asResultList(results) {
@@ -221,7 +222,7 @@ export function useGovernanceDashboard() {
       actions.push({
         id: "ussd",
         title: "USSD provider requires attention",
-        route: "/dashboard/settings/integrations?focus=ussd",
+        route: `${r.integrations.hub}?focus=ussd`,
       });
     }
 
@@ -232,7 +233,7 @@ export function useGovernanceDashboard() {
       actions.push({
         id: "sms",
         title: "SMS gateway requires validation",
-        route: "/dashboard/settings/integrations?focus=sms",
+        route: `${r.integrations.hub}?focus=sms`,
       });
     }
 
@@ -240,7 +241,7 @@ export function useGovernanceDashboard() {
       actions.push({
         id: "backup",
         title: "Backup overdue — no recent snapshot",
-        route: "/dashboard/settings/backup",
+        route: r.advanced.backup,
       });
     }
 
@@ -248,13 +249,13 @@ export function useGovernanceDashboard() {
       actions.push({
         id: "maintenance",
         title: "Maintenance mode is active",
-        route: "/dashboard/settings/maintenance",
+        route: r.advanced.maintenance,
       });
     } else if (systemOverview.value.maintenance_status?.expected_return_at) {
       actions.push({
         id: "maintenance-scheduled",
         title: "Maintenance window scheduled",
-        route: "/dashboard/settings/maintenance",
+        route: r.advanced.maintenance,
       });
     }
 
@@ -287,52 +288,60 @@ export function useGovernanceDashboard() {
     { label: "Git commit", value: environment.value.git_commit || import.meta.env.VITE_GIT_COMMIT || "—" },
   ]);
 
-  const kpiCards = computed(() => [
-    {
-      id: "platform-health",
-      title: "Platform health",
-      value: healthLabel(platformHealth.value),
-      hint: `${healthyServiceCount.value} of ${infrastructureItems.value.length} services healthy`,
-      healthStatus: platformHealth.value,
-      clickable: true,
-      route: { name: "operations" },
-    },
-    {
-      id: "platform-state",
-      title: "Current platform state",
-      value: platformState.value.primary || "Unknown",
-      detail: platformState.value.secondary || "",
-      clickable: false,
-    },
-    {
-      id: "pending-certification",
-      title: "Pending certifications",
-      value: pendingCertificationCount.value,
-      hint: "Closed elections awaiting official certification",
-      clickable: true,
-      route: { name: "results", query: { filter: "certification" } },
-    },
-    {
-      id: "security-alerts",
-      title: "Security alerts",
-      value: securityAlertsOpen.value,
-      hint: "Unresolved security incidents",
-      clickable: true,
-      route: { name: "reports" },
-    },
-    {
-      id: "infrastructure",
-      title: "Infrastructure",
-      value: healthLabel(
-        healthyServiceCount.value === infrastructureItems.value.length ? "healthy" : platformHealth.value
-      ),
-      hint: "Database · Redis · WebSockets · USSD · SMS",
-      healthStatus:
-        healthyServiceCount.value === infrastructureItems.value.length ? "healthy" : platformHealth.value,
-      clickable: true,
-      route: "/dashboard/settings/integrations",
-    },
-  ]);
+  const kpiCards = computed(() => {
+    const total = infrastructureItems.value.length;
+    const healthy = healthyServiceCount.value;
+    const unhealthy = Math.max(0, total - healthy);
+
+    return [
+      {
+        id: "platform-health",
+        title: "Platform health",
+        value: `${healthy}/${total}`,
+        detail: healthLabel(platformHealth.value),
+        hint: `${healthy} of ${total} services reporting healthy`,
+        healthStatus: platformHealth.value,
+        clickable: true,
+        route: { name: "operations" },
+      },
+      {
+        id: "platform-state",
+        title: "Current platform state",
+        value: platformState.value.primary || "Unknown",
+        detail: platformState.value.secondary || "",
+        healthStatus: platformState.value.has_active_election ? "warning" : "healthy",
+        clickable: false,
+      },
+      {
+        id: "pending-certification",
+        title: "Pending certifications",
+        value: pendingCertificationCount.value,
+        hint: "Closed elections awaiting official certification",
+        healthStatus: pendingCertificationCount.value > 0 ? "warning" : "healthy",
+        clickable: true,
+        route: { name: "results", query: { filter: "certification" } },
+      },
+      {
+        id: "security-alerts",
+        title: "Security alerts",
+        value: securityAlertsOpen.value,
+        hint: "Unresolved security incidents",
+        healthStatus: securityAlertsOpen.value > 0 ? "critical" : "healthy",
+        clickable: true,
+        route: { name: "reports" },
+      },
+      {
+        id: "infrastructure",
+        title: "Infrastructure",
+        value: unhealthy > 0 ? `${unhealthy} issue${unhealthy === 1 ? "" : "s"}` : "All clear",
+        detail: unhealthy > 0 ? `${healthy}/${total} services healthy` : `${healthy}/${total} services healthy`,
+        hint: "Database · Redis · WebSockets · USSD · SMS",
+        healthStatus: unhealthy > 0 ? "warning" : "healthy",
+        clickable: true,
+        route: r.integrations.hub,
+      },
+    ];
+  });
 
   async function loadDashboard() {
     initialLoading.value = true;

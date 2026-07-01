@@ -41,14 +41,38 @@ class BiometricVerificationService:
         cache_key = f"{PENDING_AUTH_CACHE_PREFIX}{token}"
         cache.set(
             cache_key,
-            {"user_uuid": str(user.uuid), "otp_request_uuid": str(otp_request_uuid)},
+            {
+                "user_uuid": str(user.uuid),
+                "otp_request_uuid": str(otp_request_uuid),
+                "flow": "verification",
+            },
             PENDING_AUTH_TTL_SECONDS,
         )
         challenge = challenge_generator_service.generate(user)
         return {
             "pending_auth_token": token,
             "requires_biometric": True,
+            "has_active_biometric_profile": True,
             "challenge": challenge,
+            "expires_in_seconds": PENDING_AUTH_TTL_SECONDS,
+        }
+
+    def create_pending_enrollment(self, user: User, otp_request_uuid: str) -> dict:
+        token = secrets.token_urlsafe(32)
+        cache_key = f"{PENDING_AUTH_CACHE_PREFIX}{token}"
+        cache.set(
+            cache_key,
+            {
+                "user_uuid": str(user.uuid),
+                "otp_request_uuid": str(otp_request_uuid),
+                "flow": "enrollment",
+            },
+            PENDING_AUTH_TTL_SECONDS,
+        )
+        return {
+            "pending_auth_token": token,
+            "requires_enrollment": True,
+            "has_active_biometric_profile": False,
             "expires_in_seconds": PENDING_AUTH_TTL_SECONDS,
         }
 
@@ -413,6 +437,7 @@ class BiometricVerificationService:
             "module_enabled": policy.get("enabled", False),
             "required_for_user": privileged and policy.get("enable_face_verification", False),
             "enrolled": bool(profile and profile.is_active),
+            "has_active_biometric_profile": bool(profile and profile.is_active),
             "is_locked": bool(profile and profile.is_locked),
             "last_verified_at": profile.last_verified_at if profile else None,
             "quality_score": profile.quality_score if profile else None,

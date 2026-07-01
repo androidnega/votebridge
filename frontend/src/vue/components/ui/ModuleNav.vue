@@ -31,6 +31,13 @@ function setLinkRef(el, index) {
   }
 }
 
+function matchesActivePath(routePath, activePath) {
+  if (activePath === "/dashboard/settings") {
+    return routePath === activePath;
+  }
+  return routePath === activePath || routePath.startsWith(`${activePath}/`);
+}
+
 function isActive(item) {
   const [path, queryString] = item.to.split("?");
   if (queryString) {
@@ -40,6 +47,15 @@ function isActive(item) {
       if (route.query[key] !== value) return false;
     }
     return true;
+  }
+  if (item.activePathPrefix) {
+    if (item.exact) {
+      return route.path === item.activePathPrefix;
+    }
+    return matchesActivePath(route.path, item.activePathPrefix);
+  }
+  if (item.activePaths?.length) {
+    return item.activePaths.some((activePath) => matchesActivePath(route.path, activePath));
   }
   if (item.exact) return route.path === path;
   return route.path === path || route.path.startsWith(`${path}/`);

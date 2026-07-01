@@ -271,12 +271,24 @@ class AuthService:
         trusted_device_token: str | None = None,
         browser_fingerprint: str | None = None,
     ) -> dict:
-        otp_request = self.otp_service.verify(
-            otp_request_uuid=otp_request_uuid,
-            code=otp_code,
-            ip_address=ip_address,
-            user_agent=user_agent,
-        )
+        cached = self.otp_service.get_cached_auth_result(otp_request_uuid)
+        if cached:
+            return cached
+
+        try:
+            otp_request = self.otp_service.validate_code(
+                otp_request_uuid=otp_request_uuid,
+                code=otp_code,
+                ip_address=ip_address,
+                user_agent=user_agent,
+            )
+        except ValidationError as exc:
+            if exc.code == "otp_already_used":
+                cached = self.otp_service.get_cached_auth_result(otp_request_uuid)
+                if cached:
+                    return cached
+            raise
+
         user = otp_request.user
 
         if not user.is_active:
@@ -284,6 +296,9 @@ class AuthService:
                 message="User account is deactivated.",
                 code="account_deactivated",
             )
+
+        signals = device_signals or {}
+        resolved_fingerprint = browser_fingerprint or signals.get("browser_fingerprint", "")
 
         trusted_login = False
         try:
@@ -295,13 +310,41 @@ class AuthService:
             from apps.trusted_devices.utils import build_device_context
 
             if biometric_policy_service.requires_verification_at_login(user):
+                from apps.biometrics.services.enrollment_service import biometric_enrollment_service
+
                 profile_repo = biometric_verification_service.repository
+
+                if not biometric_enrollment_service.has_active_biometric_profile(user):
+                    pending = biometric_verification_service.create_pending_enrollment(
+                        user=user,
+                        otp_request_uuid=str(otp_request.uuid),
+                    )
+                    self.mfa_service.log(
+                        event_type=MFALog.EventType.MFA_REQUIRED,
+                        user=user,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                        metadata={"flow": "biometric_enrollment"},
+                    )
+                    result = {
+                        "requires_enrollment": True,
+                        "has_active_biometric_profile": False,
+                        **pending,
+                    }
+                    self.otp_service.mark_consumed(
+                        otp_request,
+                        ip_address=ip_address,
+                        user_agent=user_agent,
+                    )
+                    self.otp_service.cache_auth_result(otp_request_uuid, result)
+                    return result
+
                 profile = profile_repo.get_by_user(user)
                 if profile and profile.is_active:
                     context = build_device_context(
                         user_agent=user_agent or "",
-                        browser_fingerprint=browser_fingerprint or "",
-                        signals=device_signals,
+                        browser_fingerprint=resolved_fingerprint,
+                        signals=signals,
                     )
                     decision = risk_assessment_service.assess_login(
                         user,
@@ -348,12 +391,20 @@ class AuthService:
                                 "reasons": decision.reasons,
                             },
                         )
-                        return {
+                        result = {
                             "requires_biometric": True,
+                            "has_active_biometric_profile": True,
                             "risk_score": decision.risk_score,
                             "risk_reasons": decision.reasons,
                             **pending,
                         }
+                        self.otp_service.mark_consumed(
+                            otp_request,
+                            ip_address=ip_address,
+                            user_agent=user_agent,
+                        )
+                        self.otp_service.cache_auth_result(otp_request_uuid, result)
+                        return result
         except ImportError:
             pass
 
@@ -375,13 +426,20 @@ class AuthService:
             },
         )
 
-        return {
+        result = {
             "user_uuid": str(user.uuid),
             "session_uuid": str(session.uuid),
             "tokens": tokens,
             "redirect_path": self.dashboard_path_for_role(user.role.name),
             "trusted_login": trusted_login,
         }
+        self.otp_service.mark_consumed(
+            otp_request,
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        self.otp_service.cache_auth_result(otp_request_uuid, result)
+        return result
 
     def resend_otp(
         self,

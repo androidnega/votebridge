@@ -17,6 +17,7 @@ const otp = ref("");
 const errors = reactive({ otp_code: "" });
 const submitError = ref("");
 const resendCooldown = ref(0);
+const verifying = ref(false);
 let cooldownTimer = null;
 
 const challenge = computed(() => authStore.otpChallenge);
@@ -53,6 +54,8 @@ function startCooldown(seconds = 60) {
 }
 
 async function handleVerify() {
+  if (verifying.value || authStore.otpLoading) return;
+
   submitError.value = "";
   const { valid, errors: fieldErrors } = validateFields(
     { otp_code: otp.value },
@@ -63,8 +66,16 @@ async function handleVerify() {
   errors.otp_code = fieldErrors.otp_code || "";
   if (!valid) return;
 
+  verifying.value = true;
   try {
     const result = await authStore.verifyOtp(otp.value);
+    if (result?.requiresEnrollment) {
+      await router.replace({
+        name: "auth-biometric-enroll",
+        query: route.query.redirect ? { redirect: route.query.redirect } : {},
+      });
+      return;
+    }
     if (result?.requiresBiometric) {
       await router.replace({
         name: "auth-biometric-verify",
@@ -82,6 +93,8 @@ async function handleVerify() {
   } catch (error) {
     submitError.value = error.message;
     otp.value = "";
+  } finally {
+    verifying.value = false;
   }
 }
 
@@ -120,11 +133,11 @@ function backToLogin() {
     <OtpPinInput
       v-model="otp"
       :error="errors.otp_code"
-      :disabled="authStore.otpLoading"
+      :disabled="authStore.otpLoading || verifying"
       @complete="handleVerify"
     />
 
-    <VButton type="submit" block :loading="authStore.otpLoading" :disabled="otp.length < 6">
+    <VButton type="submit" block :loading="authStore.otpLoading || verifying" :disabled="otp.length < 6 || verifying">
       Verify &amp; sign in
     </VButton>
 

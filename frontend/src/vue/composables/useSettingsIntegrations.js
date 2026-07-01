@@ -1,6 +1,7 @@
 import { computed, ref } from "vue";
 import { ussdApi } from "@/api/ussd";
 import { normalizeHealthStatus } from "@/config/systemControlHub";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { useSystemControlStore } from "@/stores/systemControl";
 
 function formatTimestamp(value) {
@@ -34,11 +35,11 @@ export function useSettingsIntegrations() {
   }
 
   const smsProvider = computed(() =>
-    store.providers.find((provider) => provider.provider_type === "sms")
+    store.providers.find((provider) => provider.provider_type === "arkesel_sms")
   );
 
   const emailProvider = computed(() =>
-    store.providers.find((provider) => provider.provider_type === "email")
+    store.providers.find((provider) => provider.provider_type === "smtp_email")
   );
 
   const overviewIntegrations = computed(() => store.overview?.integrations || {});
@@ -50,7 +51,7 @@ export function useSettingsIntegrations() {
       status: smsProvider.value?.connection_status || overviewIntegrations.value.sms?.status,
       lastSync: smsProvider.value?.last_success_at || overviewIntegrations.value.sms?.last_sync,
       lastError: smsProvider.value?.last_error || overviewIntegrations.value.sms?.last_error,
-      configRoute: "/dashboard/settings/providers",
+      configRoute: `${r.integrations.providers}?focus=arkesel_sms`,
       providerUuid: smsProvider.value?.uuid,
     },
     {
@@ -59,7 +60,7 @@ export function useSettingsIntegrations() {
       status: ussdIntegration.value?.health_status || overviewIntegrations.value.ussd?.status,
       lastSync: ussdIntegration.value?.health?.checked_at || overviewIntegrations.value.ussd?.last_sync,
       lastError: ussdIntegration.value?.health?.message || overviewIntegrations.value.ussd?.last_error,
-      configRoute: "/dashboard/settings/ussd",
+      configRoute: r.integrations.ussd,
       providerUuid: null,
     },
     {
@@ -68,7 +69,7 @@ export function useSettingsIntegrations() {
       status: emailProvider.value?.connection_status || overviewIntegrations.value.email?.status,
       lastSync: emailProvider.value?.last_success_at || overviewIntegrations.value.email?.last_sync,
       lastError: emailProvider.value?.last_error || overviewIntegrations.value.email?.last_error,
-      configRoute: "/dashboard/settings/providers",
+      configRoute: r.integrations.providers,
       providerUuid: emailProvider.value?.uuid,
     },
     {
@@ -77,7 +78,7 @@ export function useSettingsIntegrations() {
       status: overviewIntegrations.value.redis?.status || store.overview?.redis_status,
       lastSync: overviewIntegrations.value.redis?.last_sync,
       lastError: overviewIntegrations.value.redis?.last_error,
-      configRoute: "/dashboard/settings/environment",
+      configRoute: r.advanced.environment,
       providerUuid: null,
     },
     {
@@ -86,7 +87,7 @@ export function useSettingsIntegrations() {
       status: overviewIntegrations.value.websockets?.status || store.overview?.websocket_status,
       lastSync: overviewIntegrations.value.websockets?.last_sync,
       lastError: overviewIntegrations.value.websockets?.last_error,
-      configRoute: "/dashboard/settings/runtime",
+      configRoute: r.advanced.runtime,
       providerUuid: null,
     },
   ]);

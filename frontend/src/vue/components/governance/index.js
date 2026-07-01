@@ -1,4 +1,9 @@
 export { default as GovernanceSummaryCard } from "./GovernanceSummaryCard.vue";
 export { default as GovernanceKpiCard } from "./GovernanceKpiCard.vue";
 export { default as GovernanceSectionCard } from "./GovernanceSectionCard.vue";
+export { default as GovernanceStatTile } from "./GovernanceStatTile.vue";
 export { default as InfrastructureStatusList } from "./InfrastructureStatusList.vue";
+export { default as GovernanceActivityFeed } from "./GovernanceActivityFeed.vue";
+export { default as GovernanceActionList } from "./GovernanceActionList.vue";
+export { default as PlatformInfoGrid } from "./PlatformInfoGrid.vue";
+export { default as GovernanceQuickActionGrid } from "./GovernanceQuickActionGrid.vue";

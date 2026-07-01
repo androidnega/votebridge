@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
+import { ElectionWorkspacePageShell } from "@/components/admin";
 import { CandidateCard } from "@/components/voting";
 import { ConfirmDialog, EmptyState, LoadingSkeleton, VAlert, VButton, VCard, VInput, VModal, VTable } from "@/components/ui";
 import { emptyStates } from "@/config/emptyStates";
@@ -191,7 +192,7 @@ onMounted(loadData);
 </script>
 
 <template>
-  <div class="space-y-section">
+  <ElectionWorkspacePageShell title="Candidates" subtitle="Register nominees and approve them for the ballot.">
     <VAlert v-if="error" variant="error">{{ error }}</VAlert>
 
     <VCard title="Register candidate" class="max-w-2xl">
@@ -261,5 +262,5 @@ onMounted(loadData);
       :loading="saving"
       @confirm="runPendingAction"
     />
-  </div>
+  </ElectionWorkspacePageShell>
 </template>

@@ -8,11 +8,22 @@ from django.core.mail import EmailMultiAlternatives
 from django.utils import timezone
 
 from apps.notifications.models import CommunicationProvider, DeliveryLog
+from apps.system.utils import decrypt_secret
 from core.exceptions import ServiceUnavailableError
 
 logger = logging.getLogger("votebridge")
 
 PLACEHOLDER_PATTERN = re.compile(r"\{(\w+)\}")
+
+
+def resolve_config_secret(value: str | None) -> str:
+    """Return a config secret, decrypting stored values when signed."""
+    if not value:
+        return ""
+    try:
+        return decrypt_secret(value)
+    except ValueError:
+        return value
 
 
 class BaseProvider(ABC):
@@ -35,7 +46,7 @@ class ArkeselSmsProvider(BaseProvider):
 
     def _credentials(self) -> tuple[str, str, str]:
         config = (self.provider_record.config if self.provider_record else {}) or {}
-        api_key = config.get("api_key") or getattr(settings, "ARKESEL_API_KEY", "")
+        api_key = resolve_config_secret(config.get("api_key")) or getattr(settings, "ARKESEL_API_KEY", "")
         sender_id = config.get("sender_id") or getattr(settings, "ARKESEL_SENDER_ID", "")
         url = config.get("url") or getattr(
             settings,

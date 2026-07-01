@@ -1,4 +1,5 @@
 <script setup>
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { systemControlNav } from "@/config/moduleNav";
 import { ModuleNav, PageHeader, VCard } from "@/components/ui";
 import { branding } from "@/config/branding";
@@ -9,7 +10,7 @@ import { branding } from "@/config/branding";
     <PageHeader
       title="About VoteBridge"
       subtitle="Platform information and enterprise election management overview."
-      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: 'About' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'About' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VCard title="VoteBridge Enterprise">

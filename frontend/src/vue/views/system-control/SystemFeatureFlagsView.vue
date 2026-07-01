@@ -2,6 +2,7 @@
 import { onMounted, ref } from "vue";
 import OnOffRadioToggle from "@/components/system-control/OnOffRadioToggle.vue";
 import StepUpModal from "@/components/system-control/StepUpModal.vue";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { systemControlNav } from "@/config/moduleNav";
 import { useStepUp } from "@/composables/useStepUp";
 import { useToast } from "@/composables/useToast";
@@ -53,7 +54,7 @@ function isFlagLoading(flag) {
     <PageHeader
       title="Feature Flags"
       subtitle="Enable or disable platform modules without code changes."
-      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: 'Feature Flags' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'Feature flags' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

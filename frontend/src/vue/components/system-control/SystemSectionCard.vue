@@ -1,52 +1,75 @@
 <script setup>
+import { computed } from "vue";
+import { getSettingsSectionPalette } from "@/config/systemControlHub";
 import { VIcon } from "@/components/ui";
 
-defineProps({
+const props = defineProps({
+  sectionId: { type: String, default: "" },
   title: { type: String, required: true },
   description: { type: String, default: "" },
   icon: { type: String, default: "settings" },
   items: { type: Array, default: () => [] },
 });
+
+const palette = computed(() => getSettingsSectionPalette(props.sectionId));
+
+const cardStyle = computed(() => ({
+  backgroundColor: palette.value.bg,
+  borderColor: palette.value.border,
+  "--section-hover": palette.value.hoverBg,
+  "--section-accent": palette.value.accent,
+}));
 </script>
 
 <template>
-  <article class="flex h-full flex-col rounded-card border border-border bg-white shadow-card">
-    <header class="border-b border-border px-card pb-4 pt-card">
+  <article
+    class="flex h-full flex-col overflow-hidden rounded-card border shadow-card"
+    :style="cardStyle"
+  >
+    <header class="border-b px-card pb-4 pt-card" :style="{ borderColor: palette.border }">
       <div class="flex items-start gap-3">
         <div
-          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-input bg-brand-50 text-brand-700"
+          class="flex h-10 w-10 shrink-0 items-center justify-center rounded-input"
+          :style="{ backgroundColor: palette.iconBg, color: palette.icon }"
           aria-hidden="true"
         >
           <VIcon :name="icon" size="sm" />
         </div>
         <div class="min-w-0">
           <h3 class="text-base font-semibold text-slate-900">{{ title }}</h3>
-          <p v-if="description" class="mt-1 text-sm text-slate-500">{{ description }}</p>
+          <p v-if="description" class="mt-1 text-sm text-slate-600">{{ description }}</p>
         </div>
       </div>
     </header>
 
-    <ul class="flex flex-1 flex-col divide-y divide-border">
+    <ul class="flex flex-1 flex-col divide-y" :style="{ borderColor: palette.border }">
       <li v-for="item in items" :key="item.to">
         <router-link
           :to="item.to"
-          class="group flex min-h-touch items-start justify-between gap-3 px-card py-4 transition-colors hover:bg-surface-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-600"
+          class="settings-section-link group flex min-h-touch items-start justify-between gap-3 px-card py-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-600"
         >
           <span class="min-w-0">
-            <span class="block text-sm font-medium text-slate-800 group-hover:text-brand-700">
+            <span class="block text-sm font-medium text-slate-800 group-hover:text-slate-900">
               {{ item.label }}
             </span>
-            <span v-if="item.description" class="mt-0.5 block text-xs text-slate-500">
+            <span v-if="item.description" class="mt-0.5 block text-xs text-slate-600">
               {{ item.description }}
             </span>
           </span>
           <VIcon
             name="chevronRight"
             size="sm"
-            class="mt-0.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-brand-600"
+            class="mt-0.5 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5"
+            :style="{ color: 'var(--section-accent)' }"
           />
         </router-link>
       </li>
     </ul>
   </article>
 </template>
+
+<style scoped>
+.settings-section-link:hover {
+  background-color: var(--section-hover);
+}
+</style>

@@ -3,6 +3,8 @@ from datetime import timedelta
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
+from django.core.cache import cache
+from django.db import transaction
 from django.utils import timezone
 
 from apps.accounts.models import MFALog, OTPRequest, Role, User
@@ -12,6 +14,9 @@ from apps.notifications.services.otp_delivery_service import OTPDeliveryService,
 from core.exceptions import AuthenticationError, NotFoundError, ValidationError
 
 logger = logging.getLogger("votebridge")
+
+OTP_AUTH_RESULT_CACHE_PREFIX = "otp_auth_result:"
+OTP_AUTH_RESULT_TTL_SECONDS = 600
 
 
 class OTPService:
@@ -82,6 +87,86 @@ class OTPService:
 
         return otp_request
 
+    def get_cached_auth_result(self, otp_request_uuid) -> dict | None:
+        return cache.get(f"{OTP_AUTH_RESULT_CACHE_PREFIX}{otp_request_uuid}")
+
+    def cache_auth_result(self, otp_request_uuid, result: dict) -> None:
+        cache.set(
+            f"{OTP_AUTH_RESULT_CACHE_PREFIX}{otp_request_uuid}",
+            result,
+            OTP_AUTH_RESULT_TTL_SECONDS,
+        )
+
+    def _get_for_update(self, otp_request_uuid) -> OTPRequest:
+        try:
+            return (
+                OTPRequest.objects.select_for_update()
+                .select_related("user", "user__role")
+                .get(uuid=otp_request_uuid)
+            )
+        except OTPRequest.DoesNotExist as exc:
+            raise NotFoundError(message="OTP request not found.", code="otp_not_found") from exc
+
+    def validate_code(
+        self,
+        otp_request_uuid,
+        code: str,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> OTPRequest:
+        """Validate an OTP code without marking the request as consumed."""
+        with transaction.atomic():
+            otp_request = self._get_for_update(otp_request_uuid)
+
+            if otp_request.is_verified:
+                raise ValidationError(message="OTP has already been used.", code="otp_already_used")
+
+            if timezone.now() > otp_request.expires_at:
+                raise ValidationError(message="OTP has expired.", code="otp_expired")
+
+            if otp_request.attempts >= otp_request.max_attempts:
+                raise ValidationError(
+                    message="Maximum OTP verification attempts exceeded.",
+                    code="otp_max_attempts",
+                )
+
+            if not check_password(code, otp_request.otp_hash):
+                otp_request.attempts += 1
+                otp_request.save(update_fields=["attempts"])
+                self.mfa_service.log(
+                    event_type=MFALog.EventType.OTP_FAILED,
+                    user=otp_request.user,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    metadata={"otp_request_uuid": str(otp_request.uuid)},
+                )
+                raise AuthenticationError(message="Invalid OTP code.", code="invalid_otp")
+
+        return otp_request
+
+    def mark_consumed(
+        self,
+        otp_request: OTPRequest,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+    ) -> None:
+        with transaction.atomic():
+            locked = self._get_for_update(otp_request.uuid)
+            if locked.is_verified:
+                return
+
+            locked.is_verified = True
+            locked.verified_at = timezone.now()
+            locked.save(update_fields=["is_verified", "verified_at"])
+
+            self.mfa_service.log(
+                event_type=MFALog.EventType.OTP_VERIFIED,
+                user=locked.user,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                metadata={"otp_request_uuid": str(locked.uuid)},
+            )
+
     def verify(
         self,
         otp_request_uuid,
@@ -89,46 +174,13 @@ class OTPService:
         ip_address: str | None = None,
         user_agent: str | None = None,
     ) -> OTPRequest:
-        otp_request = self.otp_repository.get_by_uuid(otp_request_uuid)
-        if not otp_request:
-            raise NotFoundError(message="OTP request not found.", code="otp_not_found")
-
-        if otp_request.is_verified:
-            raise ValidationError(message="OTP has already been used.", code="otp_already_used")
-
-        if timezone.now() > otp_request.expires_at:
-            raise ValidationError(message="OTP has expired.", code="otp_expired")
-
-        if otp_request.attempts >= otp_request.max_attempts:
-            raise ValidationError(
-                message="Maximum OTP verification attempts exceeded.",
-                code="otp_max_attempts",
-            )
-
-        if not check_password(code, otp_request.otp_hash):
-            otp_request.attempts += 1
-            otp_request.save(update_fields=["attempts"])
-            self.mfa_service.log(
-                event_type=MFALog.EventType.OTP_FAILED,
-                user=otp_request.user,
-                ip_address=ip_address,
-                user_agent=user_agent,
-                metadata={"otp_request_uuid": str(otp_request.uuid)},
-            )
-            raise AuthenticationError(message="Invalid OTP code.", code="invalid_otp")
-
-        otp_request.is_verified = True
-        otp_request.verified_at = timezone.now()
-        otp_request.save(update_fields=["is_verified", "verified_at"])
-
-        self.mfa_service.log(
-            event_type=MFALog.EventType.OTP_VERIFIED,
-            user=otp_request.user,
+        otp_request = self.validate_code(
+            otp_request_uuid=otp_request_uuid,
+            code=code,
             ip_address=ip_address,
             user_agent=user_agent,
-            metadata={"otp_request_uuid": str(otp_request.uuid)},
         )
-
+        self.mark_consumed(otp_request, ip_address=ip_address, user_agent=user_agent)
         return otp_request
 
     def resolve_channel_and_recipient(self, user: User, preferred_channel: str | None = None):

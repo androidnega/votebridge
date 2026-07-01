@@ -40,6 +40,7 @@ export const toastMessages = {
   biometric: {
     enrolled: "Biometric enrollment completed.",
     verified: "Biometric verification completed.",
+    reset: "Biometric profile removed. You will enroll again on next sign-in.",
   },
   profile: {
     updated: "Profile updated successfully.",

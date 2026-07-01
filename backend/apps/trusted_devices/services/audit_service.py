@@ -86,20 +86,26 @@ class TrustedDeviceAuditService:
                 },
             )
 
-        monitoring_service.record_event(
-            event_type=AuditLog.EventType.ADMIN_ACTION,
-            user=user,
-            ip_address=ip_address,
-            user_agent=user_agent,
-            browser_fingerprint=ctx.browser_fingerprint,
-            metadata={
-                "subsystem": "trusted_devices",
-                "trusted_device_event": event_type,
-                "decision": decision,
-                "risk_score": risk_score,
-                **(metadata or {}),
-            },
-        )
+        try:
+            monitoring_service.record_event(
+                event_type=AuditLog.EventType.ADMIN_ACTION,
+                user=user,
+                ip_address=ip_address,
+                user_agent=user_agent,
+                browser_fingerprint=ctx.browser_fingerprint,
+                metadata={
+                    "subsystem": "trusted_devices",
+                    "trusted_device_event": event_type,
+                    "decision": decision,
+                    "risk_score": risk_score,
+                    **(metadata or {}),
+                },
+            )
+        except Exception:
+            logger.exception(
+                "Failed to record trusted device monitoring event [%s]",
+                event_type,
+            )
         return event
 
 

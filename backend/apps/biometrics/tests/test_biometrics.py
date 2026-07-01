@@ -182,3 +182,79 @@ class BiometricVerificationTests(TestCase):
                 event_type=BiometricVerificationLog.EventType.VERIFICATION_FAILED,
             ).exists()
         )
+
+
+@override_settings(BIOMETRICS_INFERENCE_MODE="mock")
+class BiometricEnrollmentFlowTests(TestCase):
+    def setUp(self):
+        self.super_role, _ = Role.objects.get_or_create(name=Role.Name.SUPER_ADMIN, defaults={"description": "SA"})
+        self.super_admin = User.objects.create_user(
+            email="bio-flow-sa@test.local",
+            username="bio-flow-sa",
+            password="TestPass123!",
+            role=self.super_role,
+        )
+        FeatureFlag.objects.update_or_create(
+            key="future_biometrics",
+            defaults={"label": "Biometrics", "description": "Biometrics", "enabled": True},
+        )
+
+    def test_has_active_biometric_profile_false_for_new_user(self):
+        self.assertFalse(biometric_enrollment_service.has_active_biometric_profile(self.super_admin))
+
+    def test_enroll_from_pending_auth_creates_profile(self):
+        pending = biometric_verification_service.create_pending_enrollment(
+            self.super_admin,
+            "otp-enroll-flow",
+        )
+        images = [_mock_image(f"self-enroll-{i}") for i in range(5)]
+        result = biometric_enrollment_service.enroll_from_pending_auth(
+            pending_auth_token=pending["pending_auth_token"],
+            images=images,
+        )
+        self.assertTrue(biometric_enrollment_service.has_active_biometric_profile(self.super_admin))
+        self.assertIn("tokens", result)
+        self.assertEqual(result["enrollment_images_count"], 5)
+
+    def test_enrolled_user_gets_verification_pending_auth(self):
+        images = [_mock_image(f"sa-enroll-{i}") for i in range(10)]
+        biometric_enrollment_service.enroll(
+            actor=self.super_admin,
+            target_user=self.super_admin,
+            images=images,
+        )
+        pending = biometric_verification_service.create_pending_auth(self.super_admin, "otp-verify-flow")
+        self.assertTrue(pending["requires_biometric"])
+        self.assertTrue(pending["has_active_biometric_profile"])
+
+    def test_reset_profile_removes_enrollment(self):
+        images = [_mock_image(f"reset-{i}") for i in range(10)]
+        biometric_enrollment_service.enroll(
+            actor=self.super_admin,
+            target_user=self.super_admin,
+            images=images,
+        )
+        from datetime import timedelta
+
+        from django.contrib.auth.hashers import make_password
+        from django.utils import timezone
+
+        from apps.accounts.models import OTPRequest
+        from apps.accounts.repositories.auth_repository import OTPRequestRepository
+
+        code = "654321"
+        otp_request = OTPRequestRepository().create(
+            user=self.super_admin,
+            purpose=OTPRequest.Purpose.MFA,
+            channel=OTPRequest.Channel.EMAIL,
+            otp_hash=make_password(code),
+            expires_at=timezone.now() + timedelta(minutes=10),
+        )
+
+        biometric_enrollment_service.reset_profile(
+            user=self.super_admin,
+            password="TestPass123!",
+            otp_request_uuid=otp_request.uuid,
+            otp_code=code,
+        )
+        self.assertFalse(biometric_enrollment_service.has_active_biometric_profile(self.super_admin))

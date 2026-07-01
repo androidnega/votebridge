@@ -11,6 +11,7 @@ from apps.fraud.models import SecurityAlert
 from apps.fraud.repositories.alert_repository import SecurityAlertRepository
 from apps.fraud.services.alert_detection_service import AlertDetectionService
 from apps.security.models import AuditLog, DeviceLog, LocationLog, parse_device_type, parse_operating_system
+from apps.trusted_devices.utils import normalize_browser_fingerprint
 from apps.security.repositories.monitoring_repository import (
     AuditLogRepository,
     DeviceLogRepository,
@@ -72,6 +73,8 @@ class MonitoringService:
 
         if not browser_fingerprint and user_agent:
             browser_fingerprint = hashlib.sha256(user_agent.encode("utf-8")).hexdigest()
+        else:
+            browser_fingerprint = normalize_browser_fingerprint(browser_fingerprint)
 
         device_log = None
         if browser_fingerprint:

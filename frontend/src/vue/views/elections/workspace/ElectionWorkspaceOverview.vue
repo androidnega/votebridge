@@ -1,9 +1,11 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { AdminWorkspaceTile } from "@/components/admin";
 import ElectionLifecycleBar from "@/components/elections/ElectionLifecycleBar.vue";
+import { adminWorkspaceTiles } from "@/config/adminWorkspace";
 import { CountdownTimer, ElectionStatusBadge } from "@/components/voting";
-import { LoadingSkeleton, VAlert, VButton, VCard, VInput, VModal } from "@/components/ui";
+import { LoadingSkeleton, PageHeader, VAlert, VButton, VInput, VModal } from "@/components/ui";
 import { toastMessages } from "@/config/toastMessages";
 import { useToast } from "@/composables/useToast";
 import { useElectionStore } from "@/stores/election";
@@ -40,6 +42,39 @@ const editForm = ref({
 });
 
 const canEdit = computed(() => ["draft", "scheduled"].includes(election.value.status));
+
+const workspaceTiles = computed(() => {
+  const uuid = electionUuid.value;
+  const status = election.value.status;
+  return adminWorkspaceTiles.map((tile) => {
+    let to = tile.externalRoute || `/dashboard/elections/${uuid}/${tile.routeSuffix}`;
+    let actionLabel = "Manage";
+    let value = null;
+    let meta = "";
+    let disabled = false;
+
+    if (tile.id === "positions") value = election.value.position_count ?? 0;
+    if (tile.id === "candidates") {
+      value = election.value.candidate_count ?? 0;
+      meta = `${election.value.approved_candidate_count ?? 0} approved`;
+    }
+    if (tile.id === "readiness") actionLabel = "View checklist";
+    if (tile.id === "results") {
+      if (["closed", "archived"].includes(status)) {
+        to = "/dashboard/results";
+        actionLabel = "View results";
+      } else if (["open", "paused"].includes(status)) {
+        to = `/dashboard/elections/${uuid}/monitor`;
+        actionLabel = "Monitor turnout";
+      } else {
+        disabled = true;
+        actionLabel = "After closing";
+      }
+    }
+
+    return { ...tile, to, actionLabel, value, meta, disabled };
+  });
+});
 
 function toLocalInput(iso) {
   if (!iso) return "";
@@ -98,7 +133,16 @@ onMounted(refresh);
 </script>
 
 <template>
-  <div class="space-y-section">
+  <div class="vb-page space-y-section">
+    <PageHeader
+      :title="election.title || 'Election overview'"
+      subtitle="Configure positions, candidates, eligibility, and readiness before opening."
+      :breadcrumbs="[
+        { label: 'Election workspace', to: '/dashboard/elections' },
+        { label: election.title || 'Overview' },
+      ]"
+    />
+
     <VAlert v-if="electionStore.error" variant="error">{{ electionStore.error }}</VAlert>
 
     <section class="vb-election-hero">
@@ -134,53 +178,20 @@ onMounted(refresh);
 
     <LoadingSkeleton v-if="electionStore.loading && !election.title" variant="card" />
 
-    <section v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <VCard title="Positions" padding="compact">
-        <p class="text-2xl font-semibold text-slate-900">{{ election.position_count ?? 0 }}</p>
-        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/dashboard/elections/${electionUuid}/positions`)">
-          Manage
-        </VButton>
-      </VCard>
-      <VCard title="Candidates" padding="compact">
-        <p class="text-2xl font-semibold text-slate-900">{{ election.candidate_count ?? 0 }}</p>
-        <p class="text-xs text-slate-500">{{ election.approved_candidate_count ?? 0 }} approved</p>
-        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/dashboard/elections/${electionUuid}/candidates`)">
-          Manage
-        </VButton>
-      </VCard>
-      <VCard title="Eligibility" padding="compact">
-        <p class="text-sm text-slate-600">Voter roll and programme filters</p>
-        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/dashboard/elections/${electionUuid}/eligibility`)">
-          Manage
-        </VButton>
-      </VCard>
-      <VCard title="Readiness" padding="compact">
-        <p class="text-sm text-slate-600">Pre-open validation checklist</p>
-        <VButton class="mt-3" size="sm" variant="secondary" @click="router.push(`/dashboard/elections/${electionUuid}/readiness`)">
-          View checklist
-        </VButton>
-      </VCard>
-      <VCard title="Results" padding="compact">
-        <p class="text-sm text-slate-600">After closing, hand over to results.</p>
-        <VButton
-          v-if="['closed', 'archived'].includes(election.status)"
-          class="mt-3"
-          size="sm"
-          variant="secondary"
-          @click="router.push('/dashboard/results')"
-        >
-          View results
-        </VButton>
-        <VButton
-          v-else-if="['open', 'paused'].includes(election.status)"
-          class="mt-3"
-          size="sm"
-          variant="secondary"
-          @click="router.push(`/dashboard/elections/${electionUuid}/monitor`)"
-        >
-          Monitor turnout
-        </VButton>
-      </VCard>
+    <section v-else class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      <AdminWorkspaceTile
+        v-for="tile in workspaceTiles"
+        :key="tile.id"
+        :title="tile.title"
+        :description="tile.description"
+        :value="tile.value"
+        :meta="tile.meta"
+        :to="tile.to"
+        :action-label="tile.actionLabel"
+        :palette-key="tile.paletteKey"
+        :icon="tile.icon"
+        :disabled="tile.disabled"
+      />
     </section>
 
     <VModal v-model="showEdit" title="Edit election" size="lg">

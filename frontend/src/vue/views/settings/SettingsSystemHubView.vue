@@ -1,31 +1,16 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { ModuleNav, PageHeader, VCard, VButton } from "@/components/ui";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
+import { ModuleNav, PageHeader, VButton, VCard } from "@/components/ui";
 import { settingsNav } from "@/config/moduleNav";
 
 const router = useRouter();
 
 const sections = [
-  {
-    title: "Runtime configuration",
-    description: "Worker processes, cache, and live runtime parameters.",
-    to: "/dashboard/settings/runtime",
-  },
-  {
-    title: "Environment",
-    description: "Deployment environment variables and service endpoints.",
-    to: "/dashboard/settings/environment",
-  },
-  {
-    title: "Storage",
-    description: "Media and document storage backends.",
-    to: "/dashboard/settings/storage",
-  },
-  {
-    title: "Audit settings",
-    description: "Platform audit retention and logging policies.",
-    to: "/dashboard/settings/audit",
-  },
+  { title: "Runtime configuration", description: "Worker processes, cache, and live runtime parameters.", to: r.advanced.runtime },
+  { title: "Environment", description: "Deployment environment variables and service endpoints.", to: r.advanced.environment },
+  { title: "Storage", description: "Media and document storage backends.", to: r.advanced.storage },
+  { title: "Audit settings", description: "Platform audit retention and logging policies.", to: r.security.audit },
 ];
 </script>
 
@@ -34,7 +19,7 @@ const sections = [
     <PageHeader
       title="System configuration"
       subtitle="Advanced runtime and infrastructure settings."
-      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'System configuration' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'System configuration' }]"
     />
 
     <ModuleNav :items="settingsNav" />

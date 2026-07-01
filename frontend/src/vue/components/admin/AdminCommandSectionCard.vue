@@ -3,12 +3,14 @@ defineProps({
   title: { type: String, required: true },
   subtitle: { type: String, default: "" },
   noPadding: Boolean,
+  scrollable: Boolean,
 });
 </script>
 
 <template>
   <section
-    class="flex h-full flex-col overflow-hidden rounded-card border border-[#E5E7EB] bg-white shadow-[0_1px_3px_0_rgb(15_23_42_/_0.06)]"
+    class="flex h-full flex-col rounded-card border border-[#E5E7EB] bg-white shadow-[0_1px_3px_0_rgb(15_23_42_/_0.06)]"
+    :class="scrollable ? 'overflow-visible' : 'overflow-hidden'"
   >
     <header class="shrink-0 border-b border-[#E5E7EB] bg-[#F8FAFC] px-6 py-4">
       <h3 class="text-base font-semibold text-[#1F2937]">{{ title }}</h3>

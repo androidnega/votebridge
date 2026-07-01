@@ -96,12 +96,12 @@ class DashboardService:
         since = timezone.now() - timedelta(hours=hours)
         queryset = Vote.objects.filter(timestamp__gte=since)
         if election_uuid:
-            queryset = queryset.filter(election_id=election_uuid)
+            queryset = queryset.filter(election__uuid=election_uuid)
         else:
             active_ids = Election.objects.filter(status__in=self.ACTIVE_STATUSES).values_list(
                 "uuid", flat=True
             )
-            queryset = queryset.filter(election_id__in=active_ids)
+            queryset = queryset.filter(election__uuid__in=active_ids)
 
         rows = (
             queryset.annotate(bucket=TruncHour("timestamp"))
@@ -193,7 +193,7 @@ class DashboardService:
             active_ids = Election.objects.filter(status__in=self.ACTIVE_STATUSES).values_list(
                 "uuid", flat=True
             )
-            queryset = queryset.filter(election_id__in=active_ids)
+            queryset = queryset.filter(election__uuid__in=active_ids)
 
         stats = {
             VotingChannel.ChannelName.WEB: {"votes": 0, "voters": 0},

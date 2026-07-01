@@ -10,6 +10,26 @@ class BiometricEnrollmentSerializer(serializers.Serializer):
     )
 
 
+class BiometricEnrollLoginSerializer(serializers.Serializer):
+    pending_auth_token = serializers.CharField()
+    images = serializers.ListField(
+        child=serializers.CharField(),
+        min_length=5,
+        max_length=10,
+    )
+    device_signals = serializers.DictField(required=False)
+
+
+class BiometricResetRequestSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, min_length=8)
+
+
+class BiometricResetConfirmSerializer(serializers.Serializer):
+    password = serializers.CharField(write_only=True, min_length=8)
+    otp_request_uuid = serializers.UUIDField()
+    otp_code = serializers.CharField(min_length=4, max_length=10)
+
+
 class BiometricVerifyLoginSerializer(serializers.Serializer):
     pending_auth_token = serializers.CharField()
     challenge_id = serializers.CharField()

@@ -8,6 +8,9 @@ from .base import *  # noqa: F401, F403
 
 DEBUG = True
 
+# Override Django's WSGI runserver with core's uvicorn-based ASGI runserver.
+INSTALLED_APPS = ["core"] + INSTALLED_APPS  # noqa: F405
+
 ALLOWED_HOSTS = parse_allowed_hosts(
     env("DJANGO_ALLOWED_HOSTS"),  # noqa: F405
     debug=True,
@@ -37,6 +40,11 @@ CACHES = {
         "LOCATION": "votebridge-dev",
     }
 }
+
+# Relaxed auth limits for local development and demo flows.
+OTP_MAX_REQUESTS_PER_WINDOW = 20
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["login"] = "30/minute"  # noqa: F405
+REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["otp"] = "20/minute"  # noqa: F405
 
 # Close DB connections after each request in dev — prevents idle pool buildup from
 # runserver autoreload and long sessions exhausting local Postgres slots.

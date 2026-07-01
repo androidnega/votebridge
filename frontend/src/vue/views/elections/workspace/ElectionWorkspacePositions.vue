@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
+import { ElectionWorkspacePageShell } from "@/components/admin";
 import { EmptyState, LoadingSkeleton, VAlert, VButton, VCard, VInput, VTable } from "@/components/ui";
 import { emptyStates } from "@/config/emptyStates";
 import { toastMessages } from "@/config/toastMessages";
@@ -65,7 +66,7 @@ onMounted(loadPositions);
 </script>
 
 <template>
-  <div class="space-y-section">
+  <ElectionWorkspacePageShell title="Positions" subtitle="Define offices and how many votes each voter may cast.">
     <VAlert v-if="error" variant="error">{{ error }}</VAlert>
 
     <VCard title="Add position" class="max-w-2xl">
@@ -96,5 +97,5 @@ onMounted(loadPositions);
     </VCard>
 
     <EmptyState v-else v-bind="emptyStates.positions" />
-  </div>
+  </ElectionWorkspacePageShell>
 </template>

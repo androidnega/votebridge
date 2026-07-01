@@ -99,7 +99,7 @@ function navigate(route) {
       <template v-else>
         <!-- Row 1: KPIs -->
         <section aria-label="Key indicators">
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <div class="grid grid-cols-1 gap-3 xs:grid-cols-2 xl:grid-cols-5 xl:gap-4">
             <AdminKpiCard v-for="card in kpiCards" :key="card.id" v-bind="card" />
           </div>
         </section>
@@ -107,14 +107,15 @@ function navigate(route) {
         <!-- Row 2: Active elections + Readiness -->
         <section class="grid grid-cols-1 gap-6 xl:grid-cols-12">
           <AdminCommandSectionCard
-            class="xl:col-span-8"
+            :class="showReadiness ? 'xl:col-span-8' : 'xl:col-span-12'"
             title="Active Elections"
             subtitle="Open and paused elections with live turnout and control room access."
           >
-            <div v-if="activeElectionCards.length" class="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div v-if="activeElectionCards.length" class="flex w-full flex-col gap-4">
               <AdminActiveElectionCard
                 v-for="item in activeElectionCards"
                 :key="item.uuid"
+                class="w-full"
                 :election="item.election"
                 :turnout="item.turnout"
                 :monitor-route="item.monitorRoute"
@@ -186,7 +187,10 @@ function navigate(route) {
             <AdminLiveMonitoringList :items="liveMonitoringItems" />
           </AdminCommandSectionCard>
 
-          <AdminCommandSectionCard title="Election Lifecycle" subtitle="Current stage in the election operations pipeline.">
+          <AdminCommandSectionCard
+            title="Election Lifecycle"
+            subtitle="Current stage in the election operations pipeline."
+          >
             <AdminElectionLifecycle :stages="lifecycleStages" :current-stage="lifecycleStage" />
           </AdminCommandSectionCard>
         </section>

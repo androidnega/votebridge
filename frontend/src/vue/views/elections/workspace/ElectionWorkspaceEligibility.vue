@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
+import { ElectionWorkspacePageShell } from "@/components/admin";
 import { EmptyState, LoadingSkeleton, VAlert, VButton, VCard, VInput, VTable, ConfirmDialog } from "@/components/ui";
 import { emptyStates } from "@/config/emptyStates";
 import { toastMessages } from "@/config/toastMessages";
@@ -178,7 +179,7 @@ watch(() => electionUuid.value, loadRecords);
 </script>
 
 <template>
-  <div class="space-y-section">
+  <ElectionWorkspacePageShell title="Eligibility" subtitle="Manage the voter roll and programme filters for this election.">
     <VAlert v-if="error" variant="error">{{ error }}</VAlert>
 
     <VCard title="Find students">
@@ -240,5 +241,5 @@ watch(() => electionUuid.value, loadRecords);
       confirm-label="Remove"
       @confirm="confirmRemove"
     />
-  </div>
+  </ElectionWorkspacePageShell>
 </template>

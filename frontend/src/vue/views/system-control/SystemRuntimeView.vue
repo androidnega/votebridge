@@ -1,6 +1,7 @@
 <script setup>
 import { onMounted } from "vue";
 import SettingsForm from "@/components/system-control/SettingsForm.vue";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { systemControlNav } from "@/config/moduleNav";
 import { LoadingSkeleton, ModuleNav, PageHeader, VAlert, VCard } from "@/components/ui";
 import { useSystemControlStore } from "@/stores/systemControl";
@@ -15,7 +16,7 @@ onMounted(() => store.fetchRuntime().catch(() => {}));
     <PageHeader
       title="Runtime Configuration"
       subtitle="Adjust runtime values without redeploying where supported."
-      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: 'Runtime' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'System configuration', to: r.advanced.system }, { label: 'Runtime' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

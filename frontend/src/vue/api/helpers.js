@@ -21,6 +21,17 @@ export function getSessionUuid() {
   return localStorage.getItem(SESSION_UUID_KEY);
 }
 
+export function isAccessTokenExpired(token = getAccessToken()) {
+  if (!token) return true;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (!payload?.exp) return false;
+    return Date.now() >= payload.exp * 1000 - 30_000;
+  } catch {
+    return true;
+  }
+}
+
 export function setTokens(access, refresh) {
   if (access) localStorage.setItem(ACCESS_TOKEN_KEY, access);
   if (refresh) localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
@@ -61,10 +72,21 @@ export function clearOtpChallenge() {
   sessionStorage.removeItem(OTP_CHALLENGE_KEY);
 }
 
+function hashFingerprintSeed(raw) {
+  let hash = 5381;
+  for (let i = 0; i < raw.length; i += 1) {
+    hash = (hash * 33) ^ raw.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
 export function getDeviceFingerprint() {
   let fingerprint = localStorage.getItem(DEVICE_FINGERPRINT_KEY);
-  if (!fingerprint) {
-    fingerprint = buildDeviceFingerprintSeed();
+  const seed = buildDeviceFingerprintSeed();
+  const normalized = hashFingerprintSeed(seed);
+
+  if (!fingerprint || fingerprint.length > 64 || fingerprint.includes("|")) {
+    fingerprint = normalized;
     localStorage.setItem(DEVICE_FINGERPRINT_KEY, fingerprint);
   }
   return fingerprint;
@@ -95,7 +117,10 @@ export function getDeviceSignals() {
 
 export function extractApiError(error) {
   const data = error?.response?.data;
-  if (data?.error?.message) return data.error.message;
+  const code = data?.error?.code;
+  const message = data?.error?.message;
+  if (message && code) return `${message} (${code})`;
+  if (message) return message;
   if (data?.errors && typeof data.errors === "object") {
     const first = Object.values(data.errors).flat()[0];
     if (first) return String(first);

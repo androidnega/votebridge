@@ -6,6 +6,7 @@ import { VIcon } from "@/components/ui";
 
 const route = useRoute();
 const isInfoPage = computed(() => Boolean(route.meta.infoPage));
+const isBiometricPage = computed(() => Boolean(route.meta.authBiometric));
 </script>
 
 <template>
@@ -13,7 +14,13 @@ const isInfoPage = computed(() => Boolean(route.meta.infoPage));
     <div class="vb-public-frame">
       <div
         class="vb-public-card vb-auth-card"
-        :class="isInfoPage ? 'vb-auth-info-card max-w-lg' : 'max-w-md'"
+        :class="
+          isInfoPage
+            ? 'vb-auth-info-card max-w-lg'
+            : isBiometricPage
+              ? 'vb-auth-biometric-card max-w-sm'
+              : 'max-w-md'
+        "
       >
         <template v-if="isInfoPage">
           <RouterLink

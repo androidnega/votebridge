@@ -3,6 +3,7 @@ import { computed, onMounted } from "vue";
 import SettingsForm from "@/components/system-control/SettingsForm.vue";
 import StepUpModal from "@/components/system-control/StepUpModal.vue";
 import { platformDefaultGroups } from "@/config/platformDefaults";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { settingsNav } from "@/config/moduleNav";
 import { useStepUp } from "@/composables/useStepUp";
 import { useToast } from "@/composables/useToast";
@@ -48,7 +49,7 @@ function saveGroup(group, updates) {
     <PageHeader
       title="Platform defaults"
       subtitle="System-wide defaults applied when Election Administrators create elections. Individual election rules are configured in the Election workspace."
-      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Platform defaults' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'Platform defaults' }]"
     />
     <ModuleNav :items="settingsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

@@ -816,8 +816,8 @@ class SystemOverviewService:
         )
 
         components = {c["name"]: c for c in health.get("components", [])}
-        sms_providers = [p for p in comms.get("providers", []) if p.get("provider_type") == "sms"]
-        email_providers = [p for p in comms.get("providers", []) if p.get("provider_type") == "email"]
+        sms_providers = [p for p in comms.get("providers", []) if p.get("provider_type") == "arkesel_sms"]
+        email_providers = [p for p in comms.get("providers", []) if p.get("provider_type") == "smtp_email"]
         default_sms = sms_providers[0] if sms_providers else {}
         default_email = email_providers[0] if email_providers else {}
 

@@ -42,7 +42,23 @@ const router = createRouter({
           path: "biometric-verify",
           name: "auth-biometric-verify",
           component: () => import("@/views/biometrics/BiometricVerifyView.vue"),
-          meta: { title: "Identity verification", requiresBiometric: true, guest: true },
+          meta: {
+            title: "Identity verification",
+            requiresBiometric: true,
+            guest: true,
+            authBiometric: true,
+          },
+        },
+        {
+          path: "biometric-enroll",
+          name: "auth-biometric-enroll",
+          component: () => import("@/views/biometrics/BiometricEnrollAuthView.vue"),
+          meta: {
+            title: "Biometric enrollment",
+            requiresEnrollment: true,
+            guest: true,
+            authBiometric: true,
+          },
         },
         {
           path: "info/election-period",

@@ -1,5 +1,5 @@
 import apiClient from "./client";
-import { getDeviceSignals, getRefreshToken, getUserUuid, unwrapResponse } from "./helpers";
+import { getDeviceSignals, getRefreshToken, unwrapResponse } from "./helpers";
 
 export const authApi = {
   login(credentials) {
@@ -37,15 +37,11 @@ export const authApi = {
   },
 
   getProfile() {
-    const uuid = getUserUuid();
-    if (!uuid) {
-      return Promise.reject(new Error("No user session found."));
-    }
-    return apiClient.get(`/accounts/users/${uuid}/`).then(unwrapResponse);
+    return apiClient.get("/accounts/auth/me/").then(unwrapResponse);
   },
 
-  updateProfile(uuid, payload) {
-    return apiClient.patch(`/accounts/users/${uuid}/`, payload).then(unwrapResponse);
+  updateProfile(_uuid, payload) {
+    return apiClient.patch("/accounts/auth/me/", payload).then(unwrapResponse);
   },
 
   listSessions() {

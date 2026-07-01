@@ -13,12 +13,19 @@ export function useVaultAccessQueue() {
     loading.value = true;
     error.value = null;
     try {
-      const elections = results.length
-        ? results.filter((row) => ["closed", "archived"].includes(row.election_status))
+      const normalized = Array.isArray(results)
+        ? results
+        : Array.isArray(results?.items)
+          ? results.items
+          : [];
+
+      const elections = normalized.length
+        ? normalized.filter((row) => ["closed", "archived"].includes(row.election_status))
         : await strongroomApi.list().catch(() => []);
 
+      const electionList = Array.isArray(elections) ? elections : [];
       const collected = [];
-      const targets = elections.slice(0, 40);
+      const targets = electionList.slice(0, 40);
 
       await Promise.all(
         targets.map(async (election) => {

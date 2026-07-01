@@ -1,7 +1,7 @@
 <script setup>
 import { computed } from "vue";
 import VIcon from "@/components/ui/VIcon.vue";
-import { adminKpiHealthStripe } from "@/config/adminWorkspace";
+import { getCommandKpiPalette } from "@/config/adminCommandCenter";
 
 const props = defineProps({
   id: { type: String, default: "" },
@@ -18,55 +18,58 @@ defineEmits(["click"]);
 const icons = {
   "active-elections": "elections",
   turnout: "analytics",
-  positions: "elections",
-  candidates: "profile",
-  "completed-elections": "results",
-  "average-turnout": "analytics",
-  published: "results",
-  certification: "strongroom",
-  "voters-participated": "profile",
+  "votes-eligible": "profile",
   "pending-tasks": "tasks",
   "election-status": "elections",
-  "votes-eligible": "analytics",
-  "web-votes": "operations",
-  "ussd-votes": "operations",
-  "active-sessions": "operations",
-  "failed-sessions": "security",
-  "fraud-alerts": "fraud",
-  "security-alerts": "security",
-  "system-health": "operations",
 };
 
-const accent = computed(() => adminKpiHealthStripe[props.healthStatus] || adminKpiHealthStripe.unknown);
+const palette = computed(() => getCommandKpiPalette(props.id, props.healthStatus));
+
+const iconStyle = computed(() => ({
+  backgroundColor: palette.value.iconBg,
+  color: palette.value.icon,
+  boxShadow: `inset 0 0 0 1px ${palette.value.border}`,
+}));
+
+const footerStyle = computed(() => ({
+  backgroundColor: palette.value.iconBg,
+  color: palette.value.icon,
+}));
 </script>
 
 <template>
   <article
-    class="group relative flex min-h-[132px] flex-col overflow-hidden rounded-card border border-border bg-white shadow-card transition-all"
-    :class="clickable ? 'cursor-pointer hover:border-slate-300 hover:shadow-md' : ''"
+    class="flex min-h-[148px] flex-col rounded-card border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_3px_0_rgb(15_23_42_/_0.06)] transition-all sm:p-5"
+    :class="clickable ? 'cursor-pointer hover:-translate-y-0.5 hover:border-[#CBD5E1] hover:shadow-[0_8px_20px_-6px_rgb(15_23_42_/_0.12)]' : ''"
     @click="clickable ? $emit('click') : undefined"
   >
-    <span v-if="healthStatus" class="absolute inset-x-0 top-0 h-1" :class="accent" aria-hidden="true" />
-
-    <div class="flex flex-1 flex-col p-5 pt-6">
-      <div class="flex items-start justify-between gap-3">
-        <p class="text-sm font-medium text-slate-500">{{ title }}</p>
-        <span
-          class="flex h-9 w-9 shrink-0 items-center justify-center rounded-input bg-surface-muted text-slate-500 ring-1 ring-border"
-          aria-hidden="true"
-        >
-          <VIcon :name="icons[id] || 'elections'" size="sm" />
-        </span>
-      </div>
-
-      <div class="mt-3 flex-1">
-        <p class="text-2xl font-semibold tracking-tight text-slate-900">{{ value }}</p>
-        <p v-if="detail" class="mt-1 text-sm font-medium text-slate-700">{{ detail }}</p>
-      </div>
-
-      <p v-if="hint" class="mt-3 border-t border-border pt-3 text-xs leading-relaxed text-slate-500">
-        {{ hint }}
-      </p>
+    <div class="flex items-center gap-3">
+      <span
+        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+        :style="iconStyle"
+        aria-hidden="true"
+      >
+        <VIcon :name="icons[id] || 'elections'" size="sm" />
+      </span>
+      <p class="min-w-0 text-sm font-medium leading-snug text-[#64748B]">{{ title }}</p>
     </div>
+
+    <div class="mt-4 flex-1">
+      <p
+        class="text-[1.875rem] font-semibold leading-none tracking-tight tabular-nums sm:text-[2rem]"
+        :style="{ color: palette.valueColor }"
+      >
+        {{ value }}
+      </p>
+      <p v-if="detail" class="mt-2 text-sm font-medium text-[#475569]">{{ detail }}</p>
+    </div>
+
+    <p
+      v-if="hint"
+      class="mt-4 rounded-lg px-3 py-2 text-xs leading-relaxed"
+      :style="footerStyle"
+    >
+      {{ hint }}
+    </p>
   </article>
 </template>

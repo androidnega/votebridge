@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import CameraCapture from "@/components/biometrics/CameraCapture.vue";
 import { LoadingSkeleton, PageHeader, VAlert, VButton, VCard, VInput } from "@/components/ui";
 import { useBiometricsStore } from "@/stores/biometrics";
@@ -56,8 +57,9 @@ async function completeEnrollment() {
     <PageHeader
       title="Biometric enrollment"
       :breadcrumbs="[
-        { label: 'System', to: '/dashboard/system-control' },
-        { label: 'Identity configuration', to: '/dashboard/settings/identity-assurance' },
+        { label: 'Settings', to: r.overview },
+        { label: 'Security', to: r.security.hub },
+        { label: 'Identity assurance', to: r.security.identityAssurance },
         { label: 'Enroll' },
       ]"
     />

@@ -2,6 +2,7 @@
 import { onMounted } from "vue";
 import { StatCard } from "@/components/dashboard";
 import StepUpModal from "@/components/system-control/StepUpModal.vue";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { systemControlNav } from "@/config/moduleNav";
 import { useStepUp } from "@/composables/useStepUp";
 import { useToast } from "@/composables/useToast";
@@ -41,7 +42,7 @@ function cleanup() {
     <PageHeader
       title="Storage"
       subtitle="Disk, media, database, logs, and cache usage."
-      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: 'Storage' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'Storage' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

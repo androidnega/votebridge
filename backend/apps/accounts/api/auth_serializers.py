@@ -62,6 +62,8 @@ class AuthSuccessSerializer(serializers.Serializer):
     tokens = TokenResponseSerializer(required=False)
     redirect_path = serializers.CharField(required=False)
     requires_biometric = serializers.BooleanField(required=False)
+    requires_enrollment = serializers.BooleanField(required=False)
+    has_active_biometric_profile = serializers.BooleanField(required=False)
     pending_auth_token = serializers.CharField(required=False)
     challenge = serializers.DictField(required=False)
     expires_in_seconds = serializers.IntegerField(required=False)

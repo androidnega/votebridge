@@ -61,16 +61,20 @@ npm run dev
 
 ### 5. Run Backend
 
+Development `runserver` uses uvicorn (ASGI) and serves both REST and WebSockets:
+
 ```bash
 cd backend
 python manage.py runserver
 ```
 
-For WebSocket support (Channels):
+Or use the helper script (same ASGI stack):
 
 ```bash
-uvicorn config.asgi:application --reload --host 0.0.0.0 --port 8000
+./scripts/start-backend.sh
 ```
+
+Ensure Redis is running (`docker compose up -d`) — Channels uses it for the pub/sub layer.
 
 ## Cloudflare Quick Tunnel (development)
 

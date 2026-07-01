@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, reactive } from "vue";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { systemControlNav } from "@/config/moduleNav";
 import { useToast } from "@/composables/useToast";
 import { LoadingSkeleton, ModuleNav, PageHeader, VAlert, VButton, VCard, VInput } from "@/components/ui";
@@ -47,7 +48,7 @@ async function saveChanges() {
     <PageHeader
       title="Institution Settings"
       subtitle="Configure institution identity and contact information."
-      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: 'Institution' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Institution', to: r.institution.hub }, { label: 'Institution profile' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

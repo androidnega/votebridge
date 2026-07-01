@@ -109,6 +109,8 @@ class VaultAccessService:
             )
 
     def _serialize(self, access_request: VaultAccessRequest) -> dict:
+        created_at = access_request.created_at
+        reviewed_at = access_request.reviewed_at
         return {
             "uuid": str(access_request.uuid),
             "election_uuid": str(access_request.election.uuid),
@@ -118,8 +120,9 @@ class VaultAccessService:
             "status": access_request.status,
             "requested_by": access_request.requested_by.get_full_name(),
             "reviewed_by": access_request.reviewed_by.get_full_name() if access_request.reviewed_by else None,
-            "reviewed_at": access_request.reviewed_at,
-            "created_at": access_request.created_at,
+            "requested_at": created_at.isoformat() if created_at else None,
+            "reviewed_at": reviewed_at.isoformat() if reviewed_at else None,
+            "created_at": created_at.isoformat() if created_at else None,
         }
 
 

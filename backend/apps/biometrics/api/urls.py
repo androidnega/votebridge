@@ -6,6 +6,9 @@ app_name = "biometrics"
 
 urlpatterns = [
     path("enrollment/", views.BiometricEnrollmentView.as_view(), name="enrollment"),
+    path("enrollment/login/", views.BiometricEnrollLoginView.as_view(), name="enroll-login"),
+    path("reset/otp/", views.BiometricResetOtpView.as_view(), name="reset-otp"),
+    path("reset/", views.BiometricResetView.as_view(), name="reset"),
     path("verification/login/", views.BiometricVerifyLoginView.as_view(), name="verify-login"),
     path("verification/step-up/", views.BiometricStepUpView.as_view(), name="verify-step-up"),
     path("challenge/", views.BiometricChallengeView.as_view(), name="challenge"),

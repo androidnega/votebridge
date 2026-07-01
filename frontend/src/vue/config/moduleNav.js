@@ -1,5 +1,7 @@
 /** In-page module navigation — Phase 25 consolidated workspaces. */
 
+import { settingsRoutes } from "@/config/settingsRoutes";
+
 export const resultsNav = [
   { label: "Command center", to: "/dashboard/results", exact: true },
 ];
@@ -30,11 +32,32 @@ export const strongRoomIntegrityNav = [
 ];
 
 export const settingsNav = [
-  { label: "Overview", to: "/dashboard/settings", exact: true },
-  { label: "Institution", to: "/dashboard/settings/institution-hub" },
-  { label: "Integrations", to: "/dashboard/settings/integrations" },
-  { label: "Security", to: "/dashboard/settings/security-hub" },
-  { label: "Advanced", to: "/dashboard/settings/advanced-hub" },
+  {
+    label: "Overview",
+    to: settingsRoutes.overview,
+    exact: true,
+    activePathPrefix: settingsRoutes.overview,
+  },
+  {
+    label: "Institution",
+    to: settingsRoutes.institution.hub,
+    activePathPrefix: settingsRoutes.institution.hub,
+  },
+  {
+    label: "Integrations",
+    to: settingsRoutes.integrations.hub,
+    activePathPrefix: settingsRoutes.integrations.hub,
+  },
+  {
+    label: "Security",
+    to: settingsRoutes.security.hub,
+    activePathPrefix: settingsRoutes.security.hub,
+  },
+  {
+    label: "Advanced",
+    to: settingsRoutes.advanced.hub,
+    activePathPrefix: settingsRoutes.advanced.hub,
+  },
 ];
 
 export const analyticsNav = reportsNav;

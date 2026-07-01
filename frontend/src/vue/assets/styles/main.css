@@ -46,7 +46,7 @@
   }
 
   .vb-fade-in {
-    animation: vbFadeIn 0.2s ease-out;
+    animation: vbFadeIn 0.2s ease-out forwards;
   }
 
   .vb-content-max {
@@ -159,6 +159,34 @@
 
   .vb-auth-card {
     @apply py-6 sm:py-7;
+  }
+
+  .vb-auth-biometric-card {
+    @apply overflow-visible px-5 py-4 sm:px-6;
+  }
+
+  .vb-biometric-verify {
+    @apply space-y-2;
+  }
+
+  .vb-biometric-verify__title {
+    @apply text-center text-base font-semibold text-brand-700;
+  }
+
+  .vb-biometric-verify__instruction {
+    @apply text-center text-xs font-medium text-slate-600;
+  }
+
+  .vb-biometric-verify__alert {
+    @apply text-xs;
+  }
+
+  .vb-biometric-verify__hint {
+    @apply text-center text-[11px] text-warning-700;
+  }
+
+  .vb-biometric-verify__secondary {
+    @apply mx-auto block min-h-touch text-xs font-medium text-slate-500 transition hover:text-slate-800 disabled:opacity-50;
   }
 
   .vb-auth-info-card {

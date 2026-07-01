@@ -34,6 +34,16 @@ class DeviceContext:
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
+def normalize_browser_fingerprint(raw: str | None) -> str:
+    """Return a stable fingerprint that fits security DeviceLog limits (128 chars)."""
+    value = (raw or "").strip()
+    if not value:
+        return ""
+    if len(value) == 64 and all(ch in "0123456789abcdef" for ch in value.lower()):
+        return value.lower()
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
 def hash_device_token(raw_token: str, user_uuid: str) -> str:
     payload = f"{raw_token}:{user_uuid}:{settings.SECRET_KEY}"
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
@@ -78,7 +88,9 @@ def build_device_context(
     if signals.get("browser_version"):
         browser_version = signals["browser_version"]
 
-    fp = browser_fingerprint or signals.get("browser_fingerprint") or ""
+    fp = normalize_browser_fingerprint(
+        browser_fingerprint or signals.get("browser_fingerprint") or ""
+    )
     if not fp and user_agent:
         fp = hashlib.sha256(user_agent.encode("utf-8")).hexdigest()
 

@@ -1,11 +1,28 @@
 <script setup>
-import { onMounted } from "vue";
+import { onMounted, reactive, ref, watch } from "vue";
+import { useRoute } from "vue-router";
+import ProviderConfigForm from "@/components/system-control/ProviderConfigForm.vue";
 import StepUpModal from "@/components/system-control/StepUpModal.vue";
 import OpsHealthBadge from "@/components/operations/OpsHealthBadge.vue";
-import { systemControlNav } from "@/config/moduleNav";
+import {
+  buildProviderConfigPayload,
+  draftFromProvider,
+  getProviderConfigFields,
+} from "@/config/providerConfig";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
+import { settingsNav } from "@/config/moduleNav";
 import { useStepUp } from "@/composables/useStepUp";
 import { useToast } from "@/composables/useToast";
-import { LoadingSkeleton, ModuleNav, PageHeader, StatusBadge, VAlert, VButton, VCard } from "@/components/ui";
+import {
+  EmptyState,
+  LoadingSkeleton,
+  ModuleNav,
+  PageHeader,
+  StatusBadge,
+  VAlert,
+  VButton,
+  VCard,
+} from "@/components/ui";
 import { useSystemControlStore } from "@/stores/systemControl";
 
 const props = defineProps({
@@ -13,55 +30,202 @@ const props = defineProps({
   title: { type: String, default: "Communication Providers" },
 });
 
+const route = useRoute();
 const store = useSystemControlStore();
 const toast = useToast();
 const stepUp = useStepUp();
+const configDrafts = reactive({});
+const savingUuid = ref(null);
+const pendingSave = ref(null);
 
 onMounted(() => {
-  store.fetchProviders(props.providerType || undefined).catch(() => {});
+  loadProviders();
 });
+
+watch(
+  () => route.query.type,
+  () => loadProviders()
+);
+
+function resolvedProviderType() {
+  return props.providerType || route.query.type || undefined;
+}
+
+function loadProviders() {
+  store
+    .fetchProviders(resolvedProviderType())
+    .then((providers) => {
+      initDrafts(providers);
+      const focus = route.query.focus;
+      if (focus) {
+        requestAnimationFrame(() => {
+          document.getElementById(`provider-${focus}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+      }
+    })
+    .catch(() => {});
+}
+
+function initDrafts(providers) {
+  for (const provider of providers) {
+    configDrafts[provider.uuid] = draftFromProvider(provider);
+  }
+}
+
+function providerLabel(providerType) {
+  if (providerType === "arkesel_sms") return "Arkesel SMS";
+  if (providerType === "smtp_email") return "SMTP Email";
+  return providerType.replace(/_/g, " ");
+}
+
+function hasStoredSecret(provider) {
+  return provider.config?.api_key === "***";
+}
+
+function validateDraft(provider) {
+  const draft = configDrafts[provider.uuid];
+  const fields = getProviderConfigFields(provider.provider_type);
+  for (const field of fields) {
+    if (!field.required) continue;
+    if (field.type === "password" && hasStoredSecret(provider)) continue;
+    if (!draft?.[field.key]) {
+      toast.error(`${field.label} is required.`);
+      return false;
+    }
+  }
+  return true;
+}
+
+function saveProvider(provider) {
+  if (!validateDraft(provider)) return;
+  pendingSave.value = provider;
+  stepUp.requireStepUp(performSave);
+}
+
+async function performSave() {
+  const provider = pendingSave.value;
+  if (!provider) return;
+
+  savingUuid.value = provider.uuid;
+  try {
+    const config = buildProviderConfigPayload(
+      provider.provider_type,
+      configDrafts[provider.uuid],
+      provider.config
+    );
+    await store.saveProvider(provider.uuid, {
+      config,
+      is_active: true,
+    });
+    toast.success(`${provider.name} configuration saved.`);
+    const providers = await store.fetchProviders(resolvedProviderType());
+    initDrafts(providers);
+  } catch {
+    // store.error surfaced below
+  } finally {
+    savingUuid.value = null;
+    pendingSave.value = null;
+  }
+}
 
 function testProvider(uuid) {
   store
     .testProvider(uuid)
-    .then((result) => toast.success(result.message || "Connection test completed."))
+    .then((result) => {
+      toast.success(result.message || "Connection test completed.");
+      loadProviders();
+    })
     .catch(() => {});
 }
 
-function editProvider(provider) {
-  stepUp.requireStepUp(() =>
-    store
-      .saveProvider(provider.uuid, { is_active: !provider.is_active })
-      .then(() => {
-        toast.success("Provider updated.");
-        store.fetchProviders(props.providerType || undefined);
-      })
-      .catch(() => {})
-  );
+function toggleProvider(provider) {
+  pendingSave.value = provider;
+  stepUp.requireStepUp(async () => {
+    try {
+      await store.saveProvider(provider.uuid, { is_active: !provider.is_active });
+      toast.success("Provider updated.");
+      loadProviders();
+    } catch {
+      // store.error surfaced below
+    } finally {
+      pendingSave.value = null;
+    }
+  });
 }
 </script>
 
 <template>
-  <div class="vb-page">
+  <div class="vb-page space-y-section">
     <PageHeader
       :title="title"
-      subtitle="Manage provider connections, credentials, and priority."
-      :breadcrumbs="[{ label: 'Dashboard', to: '/dashboard' }, { label: 'System Control', to: '/dashboard/system-control' }, { label: title }]"
+      subtitle="Configure Arkesel SMS credentials, test connectivity, and manage provider status."
+      :breadcrumbs="[
+        { label: 'Settings', to: r.overview },
+        { label: 'Integrations', to: r.integrations.hub },
+        { label: title },
+      ]"
     />
-    <ModuleNav :items="systemControlNav" />
-    <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>
+    <ModuleNav :items="settingsNav" />
+    <VAlert v-if="store.error" variant="error" dismissible @dismiss="store.clearError()">
+      {{ store.error }}
+    </VAlert>
     <LoadingSkeleton v-if="store.loading && !store.providers.length" variant="list" :rows="4" />
 
-    <div v-else class="grid grid-cols-1 gap-4 lg:grid-cols-2">
-      <VCard v-for="provider in store.providers" :key="provider.uuid" :title="provider.name">
-        <div class="space-y-2 text-sm">
-          <p class="text-slate-500">{{ provider.provider_type }}</p>
-          <OpsHealthBadge :status="provider.connection_status === 'connected' ? 'healthy' : 'warning'" />
-          <StatusBadge :status="provider.is_active ? 'open' : 'closed'" />
-        </div>
+    <EmptyState
+      v-else-if="!store.providers.length"
+      icon="communications"
+      title="No providers found"
+      description="Run database migrations to seed default communication providers."
+    />
+
+    <div v-else class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <VCard
+        v-for="provider in store.providers"
+        :id="`provider-${provider.provider_type}`"
+        :key="provider.uuid"
+        padding="sm"
+        :title="provider.name || providerLabel(provider.provider_type)"
+      >
+        <template #header>
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h3 class="text-lg font-semibold text-ink-primary">
+                {{ provider.name || providerLabel(provider.provider_type) }}
+              </h3>
+              <p class="mt-1 text-sm text-ink-secondary">{{ providerLabel(provider.provider_type) }}</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              <OpsHealthBadge
+                :status="provider.connection_status === 'connected' ? 'healthy' : 'warning'"
+              />
+              <StatusBadge :status="provider.is_active ? 'open' : 'closed'" />
+            </div>
+          </div>
+        </template>
+
+        <ProviderConfigForm
+          v-if="configDrafts[provider.uuid]"
+          v-model="configDrafts[provider.uuid]"
+          :provider-type="provider.provider_type"
+          :has-stored-secret="hasStoredSecret(provider)"
+        />
+
+        <p v-if="provider.last_error" class="mt-4 rounded-input border border-danger-200 bg-danger-50 px-3 py-2 text-xs text-danger-700">
+          {{ provider.last_error }}
+        </p>
+
         <div class="mt-4 flex flex-wrap gap-2">
-          <VButton size="sm" variant="secondary" @click="testProvider(provider.uuid)">Test connection</VButton>
-          <VButton size="sm" variant="primary" @click="editProvider(provider)">
+          <VButton
+            size="sm"
+            :loading="savingUuid === provider.uuid"
+            @click="saveProvider(provider)"
+          >
+            Save configuration
+          </VButton>
+          <VButton size="sm" variant="secondary" :loading="store.actionLoading" @click="testProvider(provider.uuid)">
+            Test connection
+          </VButton>
+          <VButton size="sm" variant="ghost" @click="toggleProvider(provider)">
             {{ provider.is_active ? "Disable" : "Enable" }}
           </VButton>
         </div>

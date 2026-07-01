@@ -1,19 +1,24 @@
 <script setup>
 import { computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import { GovernanceActivityFeed } from "@/components/governance";
+import SettingsTintedCard from "@/components/system-control/SettingsTintedCard.vue";
 import SystemHealthTile from "@/components/system-control/SystemHealthTile.vue";
 import SystemSectionCard from "@/components/system-control/SystemSectionCard.vue";
 import OpsHealthBadge from "@/components/operations/OpsHealthBadge.vue";
 import {
+  getSettingsQuickActionPalette,
+  getSettingsSectionPalette,
   infrastructureServices,
   normalizeHealthStatus,
   quickActionRoutes,
   systemControlSections,
   systemStatusLabel,
 } from "@/config/systemControlHub";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { settingsNav } from "@/config/moduleNav";
 import { useToast } from "@/composables/useToast";
-import { EmptyState, LoadingSkeleton, ModuleNav, PageHeader, SectionHeader, VAlert, VButton, VCard, VIcon } from "@/components/ui";
+import { EmptyState, LoadingSkeleton, ModuleNav, PageHeader, SectionHeader, VAlert, VButton } from "@/components/ui";
 import { useSystemControlStore } from "@/stores/systemControl";
 
 const router = useRouter();
@@ -29,12 +34,12 @@ const maintenanceEnabled = computed(() => Boolean(overview.value?.maintenance_st
 
 const platformState = computed(() => overview.value?.platform_state || {});
 
-const statusBannerClass = computed(() => {
+const statusBorderClass = computed(() => {
   const styles = {
-    healthy: "border-success-200 bg-success-50",
-    warning: "border-warning-200 bg-warning-50",
-    critical: "border-danger-200 bg-danger-50",
-    unknown: "border-border bg-white",
+    healthy: "border-l-success-600",
+    warning: "border-l-warning-600",
+    critical: "border-l-danger-600",
+    unknown: "border-l-slate-300",
   };
   return styles[systemStatus.value] || styles.unknown;
 });
@@ -65,11 +70,24 @@ const platformFacts = computed(() => {
 
 const adminActivity = computed(() => overview.value?.admin_activity || []);
 
+const activityFeedItems = computed(() =>
+  adminActivity.value.map((item) => ({
+    id: item.id,
+    title: item.title,
+    meta: [
+      item.actor,
+      item.timestamp ? new Date(item.timestamp).toLocaleString() : null,
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  }))
+);
+
 const quickActions = computed(() => {
   const actions = overview.value?.quick_actions || [];
   return actions.map((action) => ({
     ...action,
-    to: quickActionRoutes[action.action] || "/dashboard/settings",
+    to: quickActionRoutes[action.action] || r.overview,
   }));
 });
 
@@ -84,6 +102,26 @@ function refresh() {
 
 function openAction(to) {
   router.push(to);
+}
+
+function factStyle(index) {
+  const keys = ["platform-defaults", "about", "institution", "integrations"];
+  const palette = getSettingsSectionPalette(keys[index % keys.length]);
+  return {
+    backgroundColor: palette.bg,
+    borderColor: palette.border,
+    color: palette.accent,
+  };
+}
+
+function quickActionStyle(action) {
+  const palette = getSettingsQuickActionPalette(action.action);
+  return {
+    "--tile-bg": palette.bg,
+    "--tile-border": palette.border,
+    "--tile-hover-bg": palette.hoverBg,
+    "--tile-hover-border": palette.border,
+  };
 }
 
 onMounted(() => {
@@ -125,132 +163,128 @@ onMounted(() => {
           variant="secondary"
           size="sm"
           class="mt-3"
-          @click="openAction('/dashboard/settings/maintenance')"
+          @click="openAction(r.advanced.maintenance)"
         >
           Manage maintenance
         </VButton>
       </VAlert>
 
+      <!-- Platform overview -->
       <section
-        class="rounded-card border p-card shadow-card"
-        :class="statusBannerClass"
+        class="grid grid-cols-1 gap-4 lg:grid-cols-12"
         aria-label="Platform status"
       >
-        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div class="flex items-start gap-3">
-            <span
-              class="mt-1.5 h-3 w-3 shrink-0 rounded-full"
-              :class="statusDotClass"
-              aria-hidden="true"
-            />
-            <div>
-              <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Platform status</p>
-              <h2 class="mt-1 text-xl font-semibold text-slate-900">{{ statusHeadline }}</h2>
-              <p class="mt-1 text-sm text-slate-600">
-                Release {{ overview.release_channel || "stable" }}
-                <span v-if="overview.build_number"> · Build {{ overview.build_number }}</span>
-              </p>
+        <div
+          class="overflow-hidden rounded-card border border-border bg-white shadow-card lg:col-span-5"
+        >
+          <div class="border-l-4 p-card" :class="statusBorderClass">
+            <div class="flex items-start gap-3">
+              <span
+                class="mt-1.5 h-3 w-3 shrink-0 rounded-full"
+                :class="statusDotClass"
+                aria-hidden="true"
+              />
+              <div class="min-w-0">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Platform status</p>
+                <h2 class="mt-1 text-xl font-semibold text-slate-900">{{ statusHeadline }}</h2>
+                <p class="mt-1 text-sm text-slate-600">
+                  Release {{ overview.release_channel || "stable" }}
+                  <span v-if="overview.build_number"> · Build {{ overview.build_number }}</span>
+                </p>
+              </div>
             </div>
           </div>
-          <div class="flex flex-wrap gap-2">
-            <span
-              v-for="fact in platformFacts"
-              :key="fact.label"
-              class="inline-flex max-w-full flex-col rounded-input border border-white/60 bg-white/80 px-3 py-2 text-left shadow-sm backdrop-blur-sm"
+        </div>
+
+        <dl class="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:col-span-7">
+          <div
+            v-for="(fact, index) in platformFacts"
+            :key="fact.label"
+            class="min-w-0 rounded-input border px-3 py-2.5 shadow-card"
+            :style="{
+              backgroundColor: factStyle(index).backgroundColor,
+              borderColor: factStyle(index).borderColor,
+            }"
+          >
+            <dt
+              class="text-[0.6875rem] font-semibold uppercase tracking-wide"
+              :style="{ color: factStyle(index).color }"
             >
-              <span class="text-[0.6875rem] font-semibold uppercase tracking-wide text-slate-500">
-                {{ fact.label }}
-              </span>
-              <span class="mt-0.5 truncate text-sm font-medium text-slate-800">{{ fact.value }}</span>
-              <span v-if="fact.detail" class="mt-0.5 text-xs text-slate-500">{{ fact.detail }}</span>
-            </span>
+              {{ fact.label }}
+            </dt>
+            <dd class="mt-0.5 truncate text-sm font-medium text-slate-800" :title="String(fact.value)">
+              {{ fact.value }}
+            </dd>
+            <dd v-if="fact.detail" class="mt-0.5 truncate text-xs text-slate-500" :title="fact.detail">
+              {{ fact.detail }}
+            </dd>
           </div>
+        </dl>
+      </section>
+
+      <!-- Infrastructure -->
+      <section aria-label="Infrastructure health">
+        <SectionHeader title="Infrastructure health" subtitle="Core services and integrations" />
+        <div class="mt-4 grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <SystemHealthTile
+            v-for="service in infrastructureServices"
+            :key="service.key"
+            compact
+            :label="service.label"
+            :icon="service.icon"
+            :status="overview[service.key]"
+          />
         </div>
       </section>
 
-      <div class="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <div class="space-y-4 xl:col-span-2">
-          <VCard title="Infrastructure health" subtitle="Core services and integrations">
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <SystemHealthTile
-                v-for="service in infrastructureServices"
-                :key="service.key"
-                :label="service.label"
-                :icon="service.icon"
-                :status="overview[service.key]"
-              />
-            </div>
-          </VCard>
-
-          <div>
-            <SectionHeader
-              title="Configuration areas"
-              subtitle="Platform governance grouped by responsibility."
+      <!-- Configuration + sidebar -->
+      <div class="grid grid-cols-1 gap-6 xl:grid-cols-12 xl:items-start">
+        <div class="space-y-4 xl:col-span-8">
+          <SectionHeader
+            title="Configuration areas"
+            subtitle="Platform governance grouped by responsibility."
+          />
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+            <SystemSectionCard
+              v-for="section in systemControlSections"
+              :key="section.id"
+              :section-id="section.id"
+              :title="section.title"
+              :description="section.description"
+              :icon="section.icon"
+              :items="section.items"
             />
-            <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-              <SystemSectionCard
-                v-for="section in systemControlSections"
-                :key="section.id"
-                :title="section.title"
-                :description="section.description"
-                :icon="section.icon"
-                :items="section.items"
-              />
-            </div>
           </div>
         </div>
 
-        <aside class="space-y-4">
-          <VCard title="Quick actions" subtitle="Common platform administration tasks">
-            <ul class="space-y-2">
-              <li v-for="action in quickActions" :key="action.action">
+        <aside class="space-y-4 xl:col-span-4 xl:sticky xl:top-24">
+          <SettingsTintedCard
+            title="Quick actions"
+            subtitle="Common platform administration tasks"
+            palette-key="quick-actions"
+          >
+            <ul class="flex flex-wrap gap-2">
+              <li v-for="action in quickActions" :key="action.action" class="max-w-full">
                 <button
                   type="button"
-                  class="flex w-full min-h-touch items-center justify-between gap-3 rounded-input border border-border px-4 py-3 text-left transition-colors hover:border-brand-200 hover:bg-brand-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+                  class="settings-quick-action inline-flex min-h-touch max-w-full flex-col items-start rounded-input border px-3 py-2.5 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600"
+                  :style="quickActionStyle(action)"
                   @click="openAction(action.to)"
                 >
-                  <span>
-                    <span class="block text-sm font-medium text-slate-800">{{ action.label }}</span>
-                    <span v-if="action.requires_step_up" class="mt-0.5 block text-xs text-slate-500">
-                      Step-up verification required on save
-                    </span>
+                  <span class="whitespace-nowrap text-sm font-medium text-slate-800">{{ action.label }}</span>
+                  <span v-if="action.requires_step_up" class="mt-0.5 whitespace-normal text-xs text-slate-600">
+                    Step-up verification required on save
                   </span>
-                  <VIcon name="chevronRight" size="sm" class="shrink-0 text-slate-400" />
                 </button>
               </li>
             </ul>
-          </VCard>
+          </SettingsTintedCard>
 
-          <VCard title="Administrative activity" subtitle="Recent platform administration events">
-            <ul v-if="adminActivity.length" class="divide-y divide-border">
-              <li v-for="item in adminActivity" :key="item.id" class="py-3">
-                <p class="text-sm font-medium text-slate-800">{{ item.title }}</p>
-                <p class="mt-0.5 text-xs text-slate-500">
-                  <span v-if="item.actor">{{ item.actor }} · </span>
-                  {{ item.timestamp ? new Date(item.timestamp).toLocaleString() : "" }}
-                </p>
-              </li>
-            </ul>
-            <EmptyState
-              v-else
-              title="No recent activity"
-              description="Backup, maintenance, and integration events appear here."
-            />
-            <VButton
-              variant="secondary"
-              size="sm"
-              class="mt-4"
-              @click="openAction('/dashboard/platform/logs')"
-            >
-              Export system audit
-            </VButton>
-          </VCard>
-
-          <VCard title="Maintenance & backups">
+          <SettingsTintedCard title="Maintenance & backups" palette-key="maintenance">
             <div class="space-y-4">
               <div>
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Maintenance</p>
-                <p class="mt-1 text-sm text-slate-700">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">Maintenance</p>
+                <p class="mt-1 text-sm text-slate-800">
                   {{ overview.maintenance_status?.message || "No maintenance message configured." }}
                 </p>
                 <OpsHealthBadge
@@ -258,31 +292,66 @@ onMounted(() => {
                   :status="maintenanceEnabled ? 'warning' : 'healthy'"
                 />
               </div>
-              <div class="border-t border-border pt-4">
-                <p class="text-xs font-semibold uppercase tracking-wide text-slate-500">Last backup</p>
-                <p class="mt-1 text-sm text-slate-700">{{ lastBackupLabel }}</p>
+              <div class="border-t pt-4" :style="{ borderColor: getSettingsSectionPalette('maintenance').border }">
+                <p class="text-xs font-semibold uppercase tracking-wide text-slate-600">Last backup</p>
+                <p class="mt-1 text-sm text-slate-800">{{ lastBackupLabel }}</p>
                 <VButton
                   variant="secondary"
                   size="sm"
                   class="mt-3"
-                  @click="openAction('/dashboard/settings/backup')"
+                  @click="openAction(r.advanced.backup)"
                 >
                   Open backup center
                 </VButton>
               </div>
             </div>
-          </VCard>
+          </SettingsTintedCard>
 
-          <VCard title="Operations center">
-            <p class="text-sm text-slate-600">
+          <SettingsTintedCard title="Operations center" palette-key="operations">
+            <p class="text-sm text-slate-700">
               Live queues, sessions, and infrastructure monitoring — separate from platform configuration.
             </p>
             <VButton variant="primary" size="sm" class="mt-4" @click="openAction('/dashboard/operations')">
               Open operations center
             </VButton>
-          </VCard>
+          </SettingsTintedCard>
         </aside>
       </div>
+
+      <!-- Administrative activity -->
+      <SettingsTintedCard
+        title="Administrative activity"
+        subtitle="Recent platform administration events"
+        palette-key="activity"
+      >
+        <GovernanceActivityFeed v-if="activityFeedItems.length" :items="activityFeedItems" />
+        <EmptyState
+          v-else
+          title="No recent activity"
+          description="Backup, maintenance, and integration events appear here."
+        />
+        <template #footer>
+          <VButton
+            variant="secondary"
+            size="sm"
+            @click="openAction('/dashboard/platform/logs')"
+          >
+            Export system audit
+          </VButton>
+        </template>
+      </SettingsTintedCard>
     </template>
   </div>
 </template>
+
+<style scoped>
+.settings-quick-action {
+  background-color: var(--tile-bg);
+  border-color: var(--tile-border);
+}
+
+.settings-quick-action:hover {
+  background-color: var(--tile-hover-bg);
+  border-color: var(--tile-hover-border);
+}
+</style>

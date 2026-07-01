@@ -4,11 +4,16 @@ import { useRouter } from "vue-router";
 import LineChart from "@/components/charts/LineChart.vue";
 import DonutChart from "@/components/charts/DonutChart.vue";
 import {
+  GovernanceActionList,
+  GovernanceActivityFeed,
   GovernanceKpiCard,
+  GovernanceQuickActionGrid,
   GovernanceSectionCard,
+  GovernanceStatTile,
   InfrastructureStatusList,
+  PlatformInfoGrid,
 } from "@/components/governance";
-import { LoadingSkeleton, VAlert, VButton } from "@/components/ui";
+import { EmptyState, LoadingSkeleton, VAlert, VButton, VIcon } from "@/components/ui";
 import { useDashboardRealtime } from "@/composables/useDashboardRealtime";
 import { useGovernanceDashboard } from "@/composables/useGovernanceDashboard";
 
@@ -44,82 +49,102 @@ function refresh() {
 }
 
 function navigate(route) {
-  if (typeof route === "string") {
-    router.push(route);
-  } else {
-    router.push(route);
-  }
+  router.push(route);
 }
 </script>
 
 <template>
-  <div class="space-y-8 bg-[#F8FAFC] pb-8">
-    <header class="flex flex-col gap-4 border-b border-[#E5E7EB] bg-white px-page py-6 lg:flex-row lg:items-start lg:justify-between">
-      <div class="min-w-0">
-        <p class="text-sm font-medium text-[#64748B]">Dashboard</p>
-        <h1 class="mt-1 text-2xl font-semibold tracking-tight text-[#1F2937]">Platform Governance Center</h1>
-        <p class="mt-2 text-sm text-[#64748B]">{{ platformStatusLabel }}</p>
-      </div>
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="rounded-input border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-2 text-sm text-[#64748B]">
-          <span class="block text-xs uppercase tracking-wide">Current time</span>
-          <span class="font-medium text-[#1F2937]">{{ currentTimeLabel }}</span>
-          <span class="ml-2 hidden sm:inline">· {{ todayLabel }}</span>
+  <div class="min-h-full bg-[#F8FAFC] pb-10">
+    <!-- Header -->
+    <header class="border-b border-[#E5E7EB]">
+      <div class="mx-auto flex max-w-[1400px] flex-col gap-5 px-page py-6 lg:flex-row lg:items-center lg:justify-between">
+        <div class="min-w-0">
+          <p class="text-xs font-semibold uppercase tracking-wider text-[#64748B]">Dashboard</p>
+          <h1 class="mt-1 text-2xl font-semibold tracking-tight text-[#1F2937] lg:text-[1.75rem]">
+            Platform Governance Center
+          </h1>
+          <p class="mt-2 inline-flex items-center gap-2 text-sm text-[#64748B]">
+            <span class="inline-flex h-2 w-2 rounded-full bg-[#2563EB]" aria-hidden="true" />
+            {{ platformStatusLabel }}
+          </p>
         </div>
-        <VButton variant="secondary" size="sm" :loading="loading" @click="refresh">Refresh</VButton>
-        <span
-          v-if="isLive"
-          class="inline-flex items-center gap-1.5 rounded-full bg-[#16A34A]/10 px-3 py-1 text-xs font-medium text-[#16A34A]"
-        >
-          <span class="h-2 w-2 rounded-full bg-[#16A34A]" aria-hidden="true" />
-          Live
-        </span>
+
+        <div class="flex flex-wrap items-stretch gap-3">
+          <div
+            class="flex min-h-touch min-w-[11rem] flex-col justify-center rounded-input border border-[#E5E7EB] bg-white px-4 py-2"
+          >
+            <p class="text-[0.6875rem] font-semibold uppercase tracking-wide text-[#64748B]">Current time</p>
+            <p class="mt-0.5 text-sm font-medium text-[#1F2937]">
+              {{ currentTimeLabel }}
+              <span class="font-normal text-[#64748B]"> · {{ todayLabel }}</span>
+            </p>
+          </div>
+          <VButton variant="secondary" size="sm" class="min-h-touch self-stretch" :loading="loading" @click="refresh">
+            Refresh
+          </VButton>
+          <span
+            v-if="isLive"
+            class="inline-flex min-h-touch items-center gap-1.5 self-stretch rounded-input border border-[#16A34A]/20 bg-[#16A34A]/10 px-3 text-xs font-semibold text-[#16A34A]"
+          >
+            <span class="h-2 w-2 animate-pulse rounded-full bg-[#16A34A]" aria-hidden="true" />
+            Live
+          </span>
+        </div>
       </div>
     </header>
 
-    <div class="space-y-section px-page">
+    <div class="mx-auto max-w-[1400px] space-y-8 px-page pt-8">
       <VAlert v-if="error" variant="error">{{ error }}</VAlert>
 
       <LoadingSkeleton v-if="loading" variant="stats" :rows="10" />
 
       <template v-else>
-        <section aria-label="Key governance indicators" class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-          <GovernanceKpiCard
-            v-for="card in kpiCards"
-            :key="card.id"
-            :title="card.title"
-            :value="card.value"
-            :detail="card.detail"
-            :hint="card.hint"
-            :health-status="card.healthStatus"
-            :clickable="card.clickable"
-            @click="card.route && navigate(card.route)"
-          />
+        <!-- KPI row -->
+        <section aria-label="Key governance indicators">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            <GovernanceKpiCard
+              v-for="card in kpiCards"
+              :key="card.id"
+              :id="card.id"
+              :title="card.title"
+              :value="card.value"
+              :detail="card.detail"
+              :hint="card.hint"
+              :health-status="card.healthStatus"
+              :clickable="card.clickable"
+              @click="card.route && navigate(card.route)"
+            />
+          </div>
         </section>
 
-        <section class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <!-- Governance + Infrastructure -->
+        <section class="grid grid-cols-1 gap-6 lg:grid-cols-5">
           <GovernanceSectionCard
+            class="lg:col-span-3"
             title="Election governance overview"
             subtitle="Lifecycle counts only — no vote totals or election management."
           >
-            <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-              <div
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
+              <GovernanceStatTile
                 v-for="item in governanceSummary"
                 :key="item.label"
-                class="rounded-input border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-4 text-center"
-              >
-                <p class="text-2xl font-semibold tabular-nums text-[#1F2937]">{{ item.value }}</p>
-                <p class="mt-1 text-xs leading-snug text-[#64748B]">{{ item.label }}</p>
-              </div>
+                :label="item.label"
+                :value="item.value"
+              />
             </div>
           </GovernanceSectionCard>
 
-          <GovernanceSectionCard title="Infrastructure status" subtitle="Core platform services">
+          <GovernanceSectionCard
+            class="lg:col-span-2"
+            title="Infrastructure status"
+            subtitle="Core platform services"
+          >
             <InfrastructureStatusList :items="infrastructureItems" />
           </GovernanceSectionCard>
         </section>
 
-        <section class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <!-- Charts -->
+        <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <GovernanceSectionCard
             title="Election activity trend"
             subtitle="Votes processed over the last 24 hours"
@@ -130,9 +155,14 @@ function navigate(route) {
               :series="participationSeries"
               :smooth="false"
               :animated="false"
-              height="260px"
+              height="280px"
             />
-            <p v-else class="py-12 text-center text-sm text-[#64748B]">No activity trend data yet.</p>
+            <EmptyState
+              v-else
+              icon="analytics"
+              title="No activity trend yet"
+              description="Vote processing data will appear here when elections are active."
+            />
           </GovernanceSectionCard>
 
           <GovernanceSectionCard
@@ -145,65 +175,78 @@ function navigate(route) {
               :colors="chartColors"
               donut
               :animated="false"
-              height="260px"
+              height="280px"
             />
-            <p v-else class="py-12 text-center text-sm text-[#64748B]">No lifecycle data available.</p>
+            <EmptyState
+              v-else
+              icon="elections"
+              title="No lifecycle data"
+              description="Election status counts will display once elections exist on the platform."
+            />
           </GovernanceSectionCard>
         </section>
 
-        <section class="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <!-- Activity + Actions -->
+        <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <GovernanceSectionCard
             title="Administrative activity"
             subtitle="Platform administration events only"
           >
-            <ul v-if="adminActivity.length" class="divide-y divide-[#E5E7EB]">
-              <li v-for="item in adminActivity" :key="item.id" class="py-3">
-                <p class="text-sm font-medium text-[#1F2937]">{{ item.title }}</p>
-                <p v-if="item.meta" class="mt-0.5 text-xs text-[#64748B]">{{ item.meta }}</p>
-              </li>
-            </ul>
-            <p v-else class="py-8 text-center text-sm text-[#64748B]">No recent platform administration events.</p>
+            <GovernanceActivityFeed v-if="adminActivity.length" :items="adminActivity" />
+            <EmptyState
+              v-else
+              icon="inbox"
+              title="No recent activity"
+              description="Backup, maintenance, and integration events will appear here."
+            />
+            <div v-if="adminActivity.length" class="mt-4 border-t border-[#E5E7EB] pt-4">
+              <button
+                type="button"
+                class="inline-flex items-center gap-1 text-sm font-medium text-[#2563EB] hover:underline"
+                @click="navigate({ name: 'platform-logs' })"
+              >
+                View full audit log
+                <VIcon name="chevronRight" size="sm" />
+              </button>
+            </div>
           </GovernanceSectionCard>
 
-          <GovernanceSectionCard title="Pending governance actions" subtitle="Actionable items requiring attention">
-            <ul v-if="pendingActions.length" class="space-y-3">
-              <li v-for="action in pendingActions" :key="action.id">
-                <button
-                  type="button"
-                  class="flex w-full min-h-touch items-center justify-between gap-3 rounded-input border border-[#E5E7EB] px-4 py-3 text-left transition hover:border-[#2563EB]/30 hover:bg-[#2563EB]/5"
-                  @click="navigate(action.route)"
-                >
-                  <span class="text-sm font-medium text-[#1F2937]">{{ action.title }}</span>
-                  <span class="text-xs font-medium text-[#2563EB]">Review</span>
-                </button>
-              </li>
-            </ul>
-            <p v-else class="py-8 text-center text-sm text-[#64748B]">No pending governance actions.</p>
+          <GovernanceSectionCard
+            title="Pending governance actions"
+            subtitle="Actionable items requiring attention"
+          >
+            <GovernanceActionList
+              v-if="pendingActions.length"
+              :actions="pendingActions"
+              @select="navigate"
+            />
+            <EmptyState
+              v-else
+              icon="help"
+              title="All clear"
+              description="No pending governance actions right now."
+            />
           </GovernanceSectionCard>
         </section>
 
-        <GovernanceSectionCard title="Quick actions" subtitle="Super Admin platform operations">
-          <div class="flex flex-wrap gap-2">
-            <VButton
-              v-for="action in quickActions"
-              :key="action.id"
-              variant="secondary"
-              size="sm"
-              @click="navigate(action.route)"
-            >
-              {{ action.label }}
-            </VButton>
-          </div>
-        </GovernanceSectionCard>
+        <!-- Quick actions + Platform info (two sections per row) -->
+        <section class="grid grid-cols-1 items-stretch gap-6 md:grid-cols-2 md:items-stretch">
+          <GovernanceSectionCard
+            class="flex h-full min-h-0 flex-col"
+            title="Quick actions"
+            subtitle="Super Admin platform operations"
+          >
+            <GovernanceQuickActionGrid class="h-full" :actions="quickActions" @select="navigate" />
+          </GovernanceSectionCard>
 
-        <GovernanceSectionCard title="Platform information" subtitle="Runtime and deployment context">
-          <dl class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            <div v-for="item in platformInfo" :key="item.label">
-              <dt class="text-xs font-semibold uppercase tracking-wide text-[#64748B]">{{ item.label }}</dt>
-              <dd class="mt-1 text-sm font-medium text-[#1F2937]">{{ item.value }}</dd>
-            </div>
-          </dl>
-        </GovernanceSectionCard>
+          <GovernanceSectionCard
+            class="flex h-full min-h-0 flex-col"
+            title="Platform information"
+            subtitle="Runtime and deployment context"
+          >
+            <PlatformInfoGrid :items="platformInfo" />
+          </GovernanceSectionCard>
+        </section>
       </template>
     </div>
   </div>

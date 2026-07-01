@@ -86,7 +86,14 @@ export const useNotificationsStore = defineStore("notifications", {
       this.loading = true;
       this.error = null;
       try {
-        const data = await notificationsApi.getNotificationCenter(params);
+        const { page_size, limit, offset = 0, archived = false, unread = false, ...rest } = params;
+        const data = await notificationsApi.getNotificationCenter({
+          limit: limit ?? page_size ?? 50,
+          offset,
+          archived,
+          unread,
+          ...rest,
+        });
         this.notifications = data.items || [];
         this.notificationsTotal = data.total || 0;
         this.unreadCount = data.unread_count || 0;

@@ -13,14 +13,17 @@ const toneClasses = {
 </script>
 
 <template>
-  <ul class="space-y-3">
+  <ul class="grid grid-cols-2 gap-3 md:grid-cols-3">
     <li
       v-for="item in items"
       :key="item.id"
-      class="flex items-center justify-between gap-4 rounded-input border border-[#E5E7EB] bg-[#F8FAFC] px-4 py-3"
+      class="flex min-h-touch flex-col justify-center gap-1 rounded-input border border-[#E5E7EB] bg-[#F8FAFC] px-3 py-3 sm:px-4"
     >
-      <span class="text-sm text-[#64748B]">{{ item.label }}</span>
-      <span class="text-sm font-semibold tabular-nums" :class="toneClasses[item.tone] || toneClasses.default">
+      <span class="text-xs leading-snug text-[#64748B]">{{ item.label }}</span>
+      <span
+        class="text-lg font-semibold tabular-nums leading-tight"
+        :class="toneClasses[item.tone] || toneClasses.default"
+      >
         {{ item.value }}
       </span>
     </li>

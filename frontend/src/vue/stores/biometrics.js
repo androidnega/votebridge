@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { biometricsApi } from "@/api/biometrics";
 import { extractApiError, getDeviceSignals, setSessionMeta, setTokens } from "@/api/helpers";
+import { bioDebug } from "@/utils/biometricDebug";
 
 export const useBiometricsStore = defineStore("biometrics", {
   state: () => ({
@@ -114,6 +115,60 @@ export const useBiometricsStore = defineStore("biometrics", {
       }
     },
 
+    async enrollLogin({ pendingAuthToken, frames }) {
+      this.actionLoading = true;
+      this.error = null;
+      try {
+        const result = await biometricsApi.enrollLogin({
+          pending_auth_token: pendingAuthToken,
+          images: frames,
+          device_signals: getDeviceSignals(),
+        });
+        setTokens(result.tokens.access, result.tokens.refresh);
+        setSessionMeta({ userUuid: result.user_uuid, sessionUuid: result.session_uuid });
+        if (result.high_assurance?.high_assurance_token) {
+          this.setHighAssuranceToken(result.high_assurance.high_assurance_token);
+        }
+        this.clearPendingAuth();
+        return result;
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw new Error(this.error);
+      } finally {
+        this.actionLoading = false;
+      }
+    },
+
+    async requestResetOtp(password) {
+      this.actionLoading = true;
+      this.error = null;
+      try {
+        return await biometricsApi.requestResetOtp(password);
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw error;
+      } finally {
+        this.actionLoading = false;
+      }
+    },
+
+    async resetProfile({ password, otpRequestUuid, otpCode }) {
+      this.actionLoading = true;
+      this.error = null;
+      try {
+        return await biometricsApi.resetProfile({
+          password,
+          otp_request_uuid: otpRequestUuid,
+          otp_code: otpCode,
+        });
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw new Error(this.error);
+      } finally {
+        this.actionLoading = false;
+      }
+    },
+
     async requestChallenge(pendingAuthToken) {
       this.actionLoading = true;
       try {
@@ -130,6 +185,10 @@ export const useBiometricsStore = defineStore("biometrics", {
       this.actionLoading = true;
       this.error = null;
       try {
+        bioDebug.log("verification_submit", {
+          challengeId,
+          frameCount: frames?.length ?? 0,
+        });
         const result = await biometricsApi.verifyLogin({
           pending_auth_token: pendingAuthToken,
           challenge_id: challengeId,
@@ -142,11 +201,14 @@ export const useBiometricsStore = defineStore("biometrics", {
           this.setHighAssuranceToken(result.high_assurance.high_assurance_token);
         }
         this.clearPendingAuth();
+        bioDebug.log("verification_success", { userUuid: result.user_uuid });
         return result;
-      } catch (error) {
-        this.error = extractApiError(error);
-        throw error;
-      } finally {
+  } catch (error) {
+    const message = extractApiError(error);
+    this.error = message;
+    bioDebug.error("verification_failed", { message });
+    throw new Error(message);
+  } finally {
         this.actionLoading = false;
       }
     },

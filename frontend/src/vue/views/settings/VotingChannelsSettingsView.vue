@@ -3,6 +3,7 @@ import { computed, onMounted, ref } from "vue";
 import { useRouter } from "vue-router";
 import { ussdApi } from "@/api/ussd";
 import { ModuleNav, PageHeader, VAlert, VButton, VCard, LoadingSkeleton } from "@/components/ui";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { settingsNav } from "@/config/moduleNav";
 
 const router = useRouter();
@@ -15,17 +16,17 @@ const channels = [
   {
     title: "Integration health",
     description: "Validate SMS, USSD, email, Redis, and WebSocket connectivity.",
-    to: "/dashboard/settings/integrations",
+    to: r.integrations.hub,
   },
   {
     title: "USSD gateway",
     description: "Mobile USSD menu codes, session limits, and provider routing.",
-    to: "/dashboard/settings/ussd",
+    to: r.integrations.ussd,
   },
   {
     title: "SMS notifications",
     description: "SMS delivery settings and notification templates.",
-    to: "/dashboard/settings/notifications",
+    to: r.integrations.notifications,
   },
   {
     title: "Channel monitoring",
@@ -81,7 +82,7 @@ onMounted(async () => {
     <PageHeader
       title="Voting channels"
       subtitle="Configure how students vote and receive election communications."
-      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Voting channels' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Integrations', to: r.integrations.hub }, { label: 'Voting channels' }]"
     />
 
     <ModuleNav :items="settingsNav" />

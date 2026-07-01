@@ -4,6 +4,7 @@ import { useRouter } from "vue-router";
 import { useElectionAdministrators } from "@/composables/useElectionAdministrators";
 import { useToast } from "@/composables/useToast";
 import { securityApi } from "@/api/security";
+import { settingsRoutes as r } from "@/config/settingsRoutes";
 import { settingsNav } from "@/config/moduleNav";
 import {
   EmptyState,
@@ -137,7 +138,7 @@ async function handleResetMfa(user) {
     <PageHeader
       title="Election administration"
       subtitle="Manage Election Administrators who configure and run elections. Super Admins govern the platform — not individual elections."
-      :breadcrumbs="[{ label: 'Settings', to: '/dashboard/settings' }, { label: 'Election administration' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Security', to: r.security.hub }, { label: 'Election administration' }]"
     />
     <ModuleNav :items="settingsNav" />
 
