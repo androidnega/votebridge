@@ -3,6 +3,7 @@ export { default as VButton } from "./VButton.vue";
 export { default as VInput } from "./VInput.vue";
 export { default as VCard } from "./VCard.vue";
 export { default as VTable } from "./VTable.vue";
+export { default as VPagination } from "./VPagination.vue";
 export { default as VModal } from "./VModal.vue";
 export { default as VAlert } from "./VAlert.vue";
 export { default as VToast } from "./VToast.vue";

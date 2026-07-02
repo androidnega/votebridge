@@ -26,9 +26,9 @@ def validate_election_can_be_opened(election: Election):
 
 
 def validate_election_can_be_deleted(election: Election):
-    if election.voting_has_begun:
+    if election.status not in {Election.Status.DRAFT, Election.Status.SCHEDULED}:
         raise DjangoValidationError(
-            "Election cannot be deleted after voting has begun."
+            "Only draft or scheduled elections that have not started can be deleted."
         )
 
 

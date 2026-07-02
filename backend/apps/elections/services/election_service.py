@@ -78,7 +78,9 @@ class ElectionService:
         except DjangoValidationError as exc:
             raise ConflictError(message=str(exc.message), code="election_delete_denied") from exc
 
-        self.repository.delete(election)
+        from apps.elections.services.election_purge_service import election_purge_service
+
+        election_purge_service.purge_election(election)
         logger.info("Election deleted: %s", uuid)
 
     def schedule_election(self, uuid) -> Election:

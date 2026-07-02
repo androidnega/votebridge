@@ -1,11 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from "vue";
-import {
-  formatSvtTokenInput,
-  isValidSvtToken,
-  normalizeSvtToken,
-  svtTokenSegments,
-} from "@/utils/svtToken";
+import { formatSvtTokenInput, isValidSvtToken } from "@/utils/svtToken";
 
 const props = defineProps({
   modelValue: { type: String, default: "" },
@@ -20,12 +15,11 @@ const emit = defineEmits(["update:modelValue", "submit"]);
 const inputRef = ref(null);
 
 const displayValue = computed(() => formatSvtTokenInput(props.modelValue));
-const segments = computed(() => svtTokenSegments(props.modelValue));
 const isComplete = computed(() => isValidSvtToken(props.modelValue));
 
 onMounted(() => {
   if (props.autofocus) {
-    window.setTimeout(() => inputRef.value?.focus(), 80);
+    window.setTimeout(() => inputRef.value?.focus(), 120);
   }
 });
 
@@ -38,13 +32,10 @@ watch(
   }
 );
 
-function updateValue(raw) {
-  emit("update:modelValue", formatSvtTokenInput(raw));
-}
-
 function handleInput(event) {
-  updateValue(event.target.value);
-  event.target.value = formatSvtTokenInput(event.target.value);
+  const formatted = formatSvtTokenInput(event.target.value);
+  emit("update:modelValue", formatted);
+  event.target.value = formatted;
 }
 
 function handlePaste(event) {
@@ -67,15 +58,10 @@ function handleKeydown(event) {
 </script>
 
 <template>
-  <div class="vb-svt-code-field" :class="{ 'vb-svt-code-field--error': error }">
-    <div class="vb-svt-code-segments" aria-hidden="true">
-      <span class="vb-svt-code-segment" :class="{ 'is-filled': segments[0] }">{{ segments[0] || "VB" }}</span>
-      <span class="vb-svt-code-separator">-</span>
-      <span class="vb-svt-code-segment" :class="{ 'is-filled': segments[1] }">{{ segments[1] || "····" }}</span>
-      <span class="vb-svt-code-separator">-</span>
-      <span class="vb-svt-code-segment" :class="{ 'is-filled': segments[2] }">{{ segments[2] || "····" }}</span>
-    </div>
-
+  <div class="space-y-1.5">
+    <label :for="inputId" class="block text-sm font-medium text-ink-primary">
+      Voting code
+    </label>
     <input
       :id="inputId"
       ref="inputRef"
@@ -87,21 +73,18 @@ function handleKeydown(event) {
       autocorrect="off"
       spellcheck="false"
       maxlength="13"
+      placeholder="VB-XXXX-XXXX"
       :disabled="disabled"
       :aria-invalid="error ? 'true' : 'false'"
-      :aria-describedby="error ? `${inputId}-error` : `${inputId}-hint`"
-      class="vb-svt-code-input"
+      :aria-describedby="error ? `${inputId}-error` : undefined"
+      class="block w-full min-h-[48px] rounded-lg border-2 border-slate-300 bg-white px-4 py-3 text-center font-mono text-lg tracking-wider text-ink-primary shadow-sm placeholder:font-sans placeholder:text-sm placeholder:tracking-normal placeholder:text-slate-400 focus:border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-600/20 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:opacity-70"
+      :class="error ? 'border-red-400 focus:border-red-500 focus:ring-red-500/20' : ''"
       aria-label="Secure Voting Token"
       @input="handleInput"
       @paste="handlePaste"
       @keydown="handleKeydown"
     />
-
-    <p :id="`${inputId}-hint`" class="sr-only">
-      Enter your voting code in the format V B dash four characters dash four characters.
-      Current value: {{ normalizeSvtToken(modelValue) || "empty" }}.
-    </p>
-    <p v-if="error" :id="`${inputId}-error`" class="vb-svt-code-error" role="alert">
+    <p v-if="error" :id="`${inputId}-error`" class="text-sm text-red-600" role="alert">
       {{ error }}
     </p>
   </div>

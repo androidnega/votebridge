@@ -119,13 +119,41 @@ class SVTService:
         self.audit_service = audit_service or SVTAuditService()
 
     def _user_has_submitted_ballot(self, user, election) -> bool:
-        return self.svt_repository.get_queryset().filter(
+        if self.svt_repository.get_queryset().filter(
             user=user,
             election=election,
             status=SVTToken.Status.USED,
-        ).exists()
+        ).exists():
+            return True
+        positions = self.eligibility_repository.get_eligible_positions_for_user(election, user)
+        position_list = list(positions)
+        if not position_list:
+            return False
+        return all(
+            self.vote_repository.count_for_user_position(user, position)
+            >= (position.max_votes_allowed or 1)
+            for position in position_list
+        )
+
+    def _log_dev_svt_code(self, user, election, plain_code: str, expires_at) -> None:
+        """Development only — print voting code to the runserver terminal for manual copy."""
+        if not settings.DEBUG:
+            return
+        logger.warning(
+            "\n========== DEV VOTING CODE (copy from terminal) ==========\n"
+            "  Election: %s\n"
+            "  User:     %s\n"
+            "  Code:     %s\n"
+            "  Expires:  %s\n"
+            "==========================================================",
+            election.title,
+            user.email or user.uuid,
+            plain_code,
+            expires_at.strftime("%H:%M"),
+        )
 
     def _send_svt_sms(self, user, election, plain_code: str, expires_at) -> None:
+        self._log_dev_svt_code(user, election, plain_code, expires_at)
         phone = (user.phone_number or "").strip()
         if not phone:
             logger.warning("SVT SMS skipped — no phone on file for user %s", user.uuid)
@@ -440,6 +468,35 @@ class SVTService:
             self._record_failed_validation_attempt(user, election)
             raise NotFoundError(message="Invalid voting token.", code="svt_not_found")
 
+        if svt.status == SVTToken.Status.VALIDATED:
+            try:
+                if svt.user_id != user.id:
+                    raise DjangoValidationError("This voting token does not belong to you.")
+                if svt.election_id != election.id:
+                    raise DjangoValidationError("This voting token does not belong to this election.")
+                from apps.security.validators import (
+                    _check_ballot_session_active,
+                    _check_svt_not_expired_or_revoked,
+                )
+
+                _check_svt_not_expired_or_revoked(svt)
+                _check_ballot_session_active(svt)
+            except DjangoValidationError as exc:
+                raise ValidationError(message=str(exc), code="svt_invalid") from exc
+
+            session_minutes = int(getattr(settings, "BALLOT_SESSION_MINUTES", 15))
+            return {
+                "svt_id": str(svt.svt_id),
+                "election_uuid": str(election.uuid),
+                "election_title": election.title,
+                "status": svt.status,
+                "expires_at": svt.expires_at,
+                "validated_at": svt.validated_at,
+                "session_expires_at": (svt.validated_at or timezone.now())
+                + timedelta(minutes=session_minutes),
+                "message": "Ballot session active. Continue your selections and submit your ballot.",
+            }
+
         try:
             validate_svt_for_ballot_start(svt, user, election)
         except DjangoValidationError as exc:
@@ -690,6 +747,7 @@ class SVTService:
         )
 
         self.audit_service.log_reissued(admin_user, old_svt, new_svt, ip_address, user_agent)
+        self._log_dev_svt_code(old_svt.user, old_svt.election, plain_code, expires_at)
 
         return {
             "svt_id": str(new_svt.svt_id),

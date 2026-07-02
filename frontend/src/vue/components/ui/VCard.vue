@@ -25,7 +25,10 @@ const paddingClasses = {
       hoverable ? 'transition hover:shadow-md' : '',
     ]"
   >
-    <header v-if="title || subtitle || $slots.header" class="mb-4">
+    <header
+      v-if="title || subtitle || $slots.header"
+      :class="padding === 'none' ? 'shrink-0 border-b border-border px-4 py-3' : 'mb-4'"
+    >
       <slot name="header">
         <h3 v-if="title" class="text-lg font-semibold text-ink-primary">{{ title }}</h3>
         <p v-if="subtitle" class="mt-1 text-sm text-ink-secondary">{{ subtitle }}</p>

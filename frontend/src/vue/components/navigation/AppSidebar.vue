@@ -33,7 +33,6 @@ const electionStatus = computed(
 
 const visibleItems = computed(() => {
   const base = getSidebarNav(authStore.role);
-  if (authStore.isAdmin) return base;
 
   if (!electionUuid.value) return base;
 
@@ -45,7 +44,17 @@ const visibleItems = computed(() => {
 
   if (!children.length) return base;
 
-  return base.map((item) => (item.key === "elections" ? { ...item, children } : item));
+  return base.map((item) => {
+    if (item.key !== "election-management" && item.key !== "elections") return item;
+
+    return {
+      ...item,
+      children: [
+        { name: "All elections", to: dashboardPath("elections"), exact: true },
+        ...children,
+      ],
+    };
+  });
 });
 
 watch(
@@ -74,9 +83,7 @@ function isActive(item) {
     );
   }
   if (item.key === "control-room") {
-    return (
-      route.path.startsWith(dashboardPath("control-room")) || /\/elections\/[^/]+\/monitor$/.test(route.path)
-    );
+    return route.path.startsWith(dashboardPath("control-room"));
   }
   if (item.to === dashboardPath("reports")) {
     return route.path.startsWith(dashboardPath("reports")) || route.path.startsWith(dashboardPath("analytics"));
@@ -103,14 +110,32 @@ function visibleChildren(item) {
   return item.children || [];
 }
 
-function groupIsActive(item) {
-  if (isActive(item)) return true;
+function hasActiveChild(item) {
   return visibleChildren(item).some((child) => isChildActive(child));
 }
 
+function isParentActive(item) {
+  if (visibleChildren(item).length && hasActiveChild(item)) return false;
+  return isActive(item);
+}
+
+function groupIsActive(item) {
+  if (visibleChildren(item).length && !props.collapsed) {
+    return isParentActive(item);
+  }
+  return isActive(item) || hasActiveChild(item);
+}
+
 function groupExpanded(item) {
-  if (item.key === "election-management" && route.path.startsWith(dashboardPath("elections"))) return true;
+  if (
+    item.key === "election-management" &&
+    (route.path.startsWith(dashboardPath("elections")) ||
+      route.path.startsWith(dashboardPath("election-management")))
+  ) {
+    return true;
+  }
   if (item.key === "elections" && electionUuid.value) return true;
+  if (hasActiveChild(item)) return true;
   return isGroupExpanded(item.key || item.name);
 }
 
@@ -138,14 +163,17 @@ async function handleLogout() {
           <button
             type="button"
             class="vb-sidebar-group-btn"
-            :class="groupIsActive(item) ? 'vb-sidebar-group-btn--active' : ''"
+            :class="[
+              isParentActive(item) ? 'vb-sidebar-group-btn--active' : '',
+              hasActiveChild(item) && !isParentActive(item) ? 'vb-sidebar-group-btn--child-active' : '',
+            ]"
             :aria-expanded="groupExpanded(item)"
             @click="onGroupToggle(item)"
           >
             <VIcon
               :name="item.icon"
               class="vb-sidebar-icon"
-              :class="groupIsActive(item) ? 'vb-sidebar-icon--active' : ''"
+              :class="isParentActive(item) ? 'vb-sidebar-icon--active' : ''"
             />
             <span class="flex-1 truncate text-left">{{ item.name }}</span>
             <VIcon
@@ -153,13 +181,13 @@ async function handleLogout() {
               class="h-4 w-4 shrink-0 text-shell-sidebar-icon transition-transform duration-200"
               :class="[
                 groupExpanded(item) ? 'rotate-180' : '',
-                groupIsActive(item) ? 'text-shell-accent' : '',
+                hasActiveChild(item) ? 'text-brand-600' : '',
               ]"
             />
           </button>
           <ul
             v-show="groupExpanded(item)"
-            class="mt-1.5 space-y-1 border-l border-shell-sidebar-border pl-3"
+            class="vb-sidebar-subnav"
             role="list"
           >
             <li v-for="child in visibleChildren(item)" :key="child.to">

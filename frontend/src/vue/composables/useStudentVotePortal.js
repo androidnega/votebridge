@@ -175,7 +175,9 @@ export function useStudentVotePortal() {
     };
   }
 
-  const portalElectionCards = computed(() => activeElectionRows.value.map(buildElectionCard));
+  const portalElectionCards = computed(() =>
+    actionableElectionRows.value.map(buildElectionCard)
+  );
 
   const electionCards = computed(() => openElectionRows.value.map(buildElectionCard));
 

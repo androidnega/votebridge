@@ -727,6 +727,12 @@ const router = createRouter({
           component: () => import("@/views/system-control/SystemAboutView.vue"),
           meta: { title: "About VoteBridge", roles: ["super_admin"] },
         },
+        {
+          path: "settings/advanced/data-reset",
+          name: "settings-data-reset",
+          component: () => import("@/views/system-control/SystemDataResetView.vue"),
+          meta: { title: "Operational Data Reset", roles: ["super_admin"] },
+        },
         ...settingsLegacyRedirects.map(({ path, redirect }) => ({ path, redirect })),
         {
           path: "biometrics/enroll",

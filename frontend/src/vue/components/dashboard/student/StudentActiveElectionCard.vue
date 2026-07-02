@@ -1,43 +1,59 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { FaIcon, StatusBadge } from "@/components/ui";
+import { useElectionCountdown } from "@/composables/useElectionCountdown";
 import {
   actionButtonClasses,
   electionStatusBadge,
-  formatClosingDateParts,
-  formatCountdownPill,
-  relativeUpdatedLabel,
   resolveCardCountdownTarget,
   resolveElectionAction,
   resolveStudentVotingStatus,
-  studentStatusToneClasses,
 } from "@/utils/studentActiveElectionDisplay";
 
 const props = defineProps({
   election: { type: Object, required: true },
-  actionLoading: { type: Boolean, default: false },
+  isEntering: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(["vote"]);
 
 const router = useRouter();
 
-const countdown = ref(formatCountdownPill(null));
-let countdownTimer = null;
-
 const statusBadge = computed(() => electionStatusBadge(props.election.status));
 const studentStatus = computed(() => resolveStudentVotingStatus(props.election));
 const action = computed(() => resolveElectionAction(props.election));
-const closing = computed(() => formatClosingDateParts(props.election.endDate));
-const actionClass = computed(() => actionButtonClasses(action.value.tone));
+const actionClass = computed(() => {
+  const tone = action.value.handler === "vote" ? "primary" : action.value.tone;
+  return actionButtonClasses(tone).replace(" w-full", "");
+});
+const isSubmitted = computed(() => props.election.hasVoted);
 
-function updateCountdown() {
-  countdown.value = formatCountdownPill(resolveCardCountdownTarget(props.election));
-}
+const countdownTarget = computed(() => resolveCardCountdownTarget(props.election));
+const { countdownText } = useElectionCountdown(countdownTarget);
+
+const positionSummary = computed(() => {
+  const count = props.election.positionCount;
+  if (count > 0) return `${count} position${count === 1 ? "" : "s"}`;
+  const preview = props.election.positionPreview?.length || 0;
+  const more = props.election.moreCount || 0;
+  const total = preview + more;
+  if (total > 0) return `${total} position${total === 1 ? "" : "s"}`;
+  return "";
+});
+
+const statusTextClass = computed(() => {
+  const map = {
+    green: "text-success-700",
+    orange: "text-warning-700",
+    blue: "text-info-700",
+    red: "text-danger-700",
+  };
+  return map[studentStatus.value.tone] || map.green;
+});
 
 function runAction() {
-  if (props.actionLoading) return;
+  if (props.isEntering) return;
   if (action.value.handler === "vote") {
     emit("vote", props.election.uuid);
     return;
@@ -51,119 +67,80 @@ function handleCardClick(event) {
   if (event.target.closest("button, a")) return;
   runAction();
 }
-
-onMounted(() => {
-  updateCountdown();
-  countdownTimer = window.setInterval(updateCountdown, 30_000);
-});
-
-onUnmounted(() => {
-  if (countdownTimer) window.clearInterval(countdownTimer);
-});
 </script>
 
 <template>
   <article
-    class="group flex h-full cursor-pointer flex-col rounded-2xl border border-border bg-surface p-6 shadow-card transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-md"
+    v-if="isSubmitted"
+    class="flex w-full cursor-pointer items-center gap-3 rounded-lg border border-success-100 bg-success-50 px-4 py-3 transition hover:border-success-200"
     @click="handleCardClick"
   >
-    <header class="flex items-start justify-between gap-3">
-      <div class="flex min-w-0 items-start gap-3">
-        <div
-          class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700"
-          aria-hidden="true"
-        >
-          <FaIcon icon="fa-box-ballot" :fixed-width="false" class="text-lg" />
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-base font-semibold leading-snug text-ink-primary sm:text-lg">
+    <FaIcon icon="fa-circle-check" class="shrink-0 text-success-600" />
+    <div class="min-w-0 flex-1">
+      <p class="truncate text-sm font-semibold text-ink-primary">{{ election.title }}</p>
+      <p class="text-xs text-success-700">Vote recorded</p>
+    </div>
+    <button
+      type="button"
+      class="shrink-0 text-xs font-semibold text-brand-700 hover:text-brand-hover"
+      @click.stop="runAction"
+    >
+      Receipt
+    </button>
+  </article>
+
+  <article
+    v-else
+    class="w-full cursor-pointer overflow-hidden rounded-lg border border-border bg-surface transition"
+    :class="
+      isEntering
+        ? 'border-brand-300 ring-2 ring-brand-100'
+        : 'hover:border-brand-200'
+    "
+    @click="handleCardClick"
+  >
+    <div class="px-4 py-3">
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
+          <h3 class="text-sm font-semibold leading-snug text-ink-primary sm:text-base">
             {{ election.title }}
           </h3>
-          <p class="mt-0.5 text-xs text-ink-secondary">{{ election.electionTypeLabel }}</p>
+          <p class="mt-0.5 text-xs font-semibold" :class="statusTextClass">
+            {{ studentStatus.label }}
+          </p>
+          <p v-if="positionSummary" class="mt-0.5 text-xs text-ink-secondary">
+            {{ positionSummary }}
+          </p>
         </div>
-      </div>
-      <StatusBadge :status="statusBadge.variant" :label="statusBadge.label" size="sm" />
-    </header>
-
-    <div class="mt-5 space-y-4 border-t border-border pt-5">
-      <div class="flex gap-3 text-sm">
-        <FaIcon icon="fa-calendar-days" class="mt-0.5 shrink-0 text-ink-secondary" />
-        <div>
-          <p class="text-xs font-medium uppercase tracking-wide text-ink-secondary">Closes</p>
-          <p class="font-medium text-ink-primary">{{ closing.dateLine }}</p>
-          <p v-if="closing.timeLine" class="text-ink-secondary">{{ closing.timeLine }}</p>
-        </div>
-      </div>
-
-      <div class="flex gap-3 text-sm">
-        <FaIcon icon="fa-users" class="mt-0.5 shrink-0 text-ink-secondary" />
-        <div class="min-w-0">
-          <p class="text-xs font-medium uppercase tracking-wide text-ink-secondary">Positions</p>
-          <ul class="mt-1 space-y-0.5 text-ink-primary">
-            <li v-for="title in election.positionPreview" :key="title">{{ title }}</li>
-            <li v-if="election.moreCount > 0" class="text-ink-secondary">
-              +{{ election.moreCount }} more position{{ election.moreCount === 1 ? "" : "s" }}
-            </li>
-            <li v-if="!election.positionPreview.length && !election.moreCount" class="text-ink-secondary">
-              Positions loading…
-            </li>
-          </ul>
-        </div>
+        <StatusBadge :status="statusBadge.variant" :label="statusBadge.label" size="sm" />
       </div>
     </div>
 
-    <div class="mt-5">
-      <div
-        class="inline-flex items-center gap-2 rounded-full bg-surface-muted px-4 py-2.5 text-sm font-semibold text-ink-primary ring-1 ring-border"
-        :class="countdown.expired ? 'text-ink-secondary' : ''"
-      >
-        <FaIcon icon="fa-clock" class="text-brand-700" />
-        <span class="text-xs font-medium uppercase tracking-wide text-ink-secondary">Voting ends in</span>
-        <span>{{ countdown.label }}</span>
+    <div class="flex items-center justify-between gap-4 border-t border-border px-4 py-3">
+      <div class="min-w-0">
+        <p class="text-[10px] font-medium uppercase tracking-wide text-ink-secondary">Ends in</p>
+        <p
+          class="mt-0.5 text-xl font-bold tabular-nums leading-none text-brand-700 sm:text-2xl"
+          aria-live="polite"
+        >
+          {{ countdownText }}
+        </p>
       </div>
-    </div>
 
-    <div
-      class="mt-4 inline-flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium ring-1 ring-inset"
-      :class="studentStatusToneClasses(studentStatus.tone)"
-    >
-      <span class="h-2 w-2 rounded-full bg-current opacity-80" aria-hidden="true" />
-      {{ studentStatus.label }}
-    </div>
-
-    <div class="mt-auto pt-5">
       <button
         type="button"
+        class="shrink-0 px-4"
         :class="actionClass"
-        :disabled="actionLoading && action.handler === 'vote'"
+        :disabled="isEntering && action.handler === 'vote'"
         @click.stop="runAction"
       >
         <span
-          v-if="actionLoading && action.handler === 'vote'"
-          class="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"
+          v-if="isEntering && action.handler === 'vote'"
+          class="mr-1.5 inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white"
           aria-hidden="true"
         />
         {{ action.label }}
       </button>
     </div>
-
-    <footer class="mt-5 grid gap-2 border-t border-border pt-4 text-xs text-ink-secondary sm:grid-cols-3">
-      <p class="inline-flex items-center gap-1.5">
-        <FaIcon icon="fa-circle-check" class="text-brand-700" />
-        <span>Eligible</span>
-      </p>
-      <p class="inline-flex items-center gap-1.5">
-        <FaIcon icon="fa-mobile-screen" class="text-brand-700" />
-        <span>{{ election.channels.join(" · ") }}</span>
-      </p>
-      <p class="inline-flex items-center gap-1.5">
-        <FaIcon icon="fa-shield-halved" class="text-brand-700" />
-        <span>Protected by SVT</span>
-      </p>
-    </footer>
-
-    <p class="mt-3 text-[11px] text-ink-secondary">
-      Last updated {{ relativeUpdatedLabel(election.lastUpdatedAt) }}
-    </p>
   </article>
 </template>

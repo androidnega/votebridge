@@ -8,19 +8,14 @@ import { useAuthStore } from "@/stores/auth";
 const route = useRoute();
 const authStore = useAuthStore();
 const isStudentPortal = computed(() => authStore.isStudent);
-const isSvtVerify = computed(() => Boolean(route.meta.svtVerify));
 </script>
 
 <template>
-  <div v-if="isStudentPortal && isSvtVerify" class="vb-svt-booth-screen">
+  <StudentAppShell v-if="isStudentPortal" :title="(route.meta.title || 'Dashboard')">
     <RouterView v-slot="{ Component, route: activeRoute }">
-      <component :is="Component" :key="activeRoute.path" />
-    </RouterView>
-  </div>
-
-  <StudentAppShell v-else-if="isStudentPortal" :title="(route.meta.title || 'Dashboard')">
-    <RouterView v-slot="{ Component, route: activeRoute }">
-      <component :is="Component" :key="activeRoute.path" />
+      <Transition name="vb-page" mode="out-in">
+        <component :is="Component" :key="activeRoute.path" />
+      </Transition>
     </RouterView>
   </StudentAppShell>
 

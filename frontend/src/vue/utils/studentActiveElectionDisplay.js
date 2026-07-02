@@ -119,7 +119,7 @@ export function studentStatusToneClasses(tone) {
 
 export function actionButtonClasses(tone) {
   const base =
-    "inline-flex min-h-[44px] w-full items-center justify-center rounded-xl px-4 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
+    "inline-flex min-h-[38px] w-full items-center justify-center rounded-lg px-3 text-xs font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-50";
   const map = {
     primary: `${base} bg-brand-600 text-white shadow-sm hover:bg-brand-hover focus-visible:outline-brand-600`,
     blue: `${base} bg-blue-600 text-white shadow-sm hover:bg-blue-700 focus-visible:outline-blue-600`,

@@ -74,6 +74,7 @@ export const systemControlSections = [
       { label: "Maintenance mode", to: r.advanced.maintenance, description: "Schedule downtime and user messaging" },
       { label: "Backup & recovery", to: r.advanced.backup, description: "Create and verify platform backups" },
       { label: "Storage", to: r.advanced.storage, description: "Disk usage and cleanup" },
+      { label: "Operational data reset", to: r.advanced.dataReset, description: "Clear elections, votes, and results (Super Admin)" },
       { label: "Environment", to: r.advanced.environment, description: "Deployment and runtime context" },
       { label: "Runtime config", to: r.advanced.runtime, description: "Live tunable system parameters" },
     ],

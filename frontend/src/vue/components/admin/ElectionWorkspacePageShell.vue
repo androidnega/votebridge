@@ -7,6 +7,11 @@ import { useElectionStore } from "@/stores/election";
 const props = defineProps({
   title: { type: String, required: true },
   subtitle: { type: String, default: "" },
+  layout: {
+    type: String,
+    default: "default",
+    validator: (value) => ["default", "list"].includes(value),
+  },
 });
 
 const route = useRoute();
@@ -23,8 +28,17 @@ const breadcrumbs = computed(() => [
 </script>
 
 <template>
-  <div class="vb-page space-y-section">
-    <PageHeader :title="title" :subtitle="subtitle" :breadcrumbs="breadcrumbs" />
+  <div :class="layout === 'list' ? 'vb-page vb-page--list' : 'vb-page space-y-section'">
+    <PageHeader
+      class="shrink-0"
+      :title="title"
+      :subtitle="subtitle"
+      :breadcrumbs="breadcrumbs"
+    >
+      <template v-if="$slots.actions" #actions>
+        <slot name="actions" />
+      </template>
+    </PageHeader>
     <slot />
   </div>
 </template>

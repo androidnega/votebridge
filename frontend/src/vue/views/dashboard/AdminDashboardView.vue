@@ -76,7 +76,7 @@ function navigate(route) {
         </DashboardWelcomeBanner>
 
         <section aria-label="Election summary">
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-7">
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
             <DashboardKpiCard
               v-for="card in kpiCards"
               :key="card.id"

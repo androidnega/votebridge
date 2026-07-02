@@ -17,13 +17,13 @@ defineProps({
 });
 
 const router = useRouter();
-const { enterVoteFlow, entering } = useVoteEntry();
+const { enterVoteFlow, enteringElectionUuid } = useVoteEntry();
 </script>
 
 <template>
   <section class="mb-8" :aria-labelledby="headingId">
-    <div class="mb-6 flex flex-wrap items-center justify-between gap-3">
-      <h2 :id="headingId" class="text-xl font-semibold text-ink-primary sm:text-2xl">
+    <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <h2 :id="headingId" class="text-lg font-semibold text-ink-primary sm:text-xl">
         {{ heading }}
       </h2>
       <span
@@ -34,35 +34,35 @@ const { enterVoteFlow, entering } = useVoteEntry();
       </span>
     </div>
 
-    <div v-if="loading" class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div v-if="loading" class="flex w-full flex-col gap-3">
       <div
         v-for="n in 2"
         :key="n"
-        class="h-80 animate-pulse rounded-2xl border border-border bg-surface"
+        class="h-32 w-full animate-pulse rounded-lg border border-border bg-white"
       />
     </div>
 
-    <div v-else-if="elections.length" class="grid grid-cols-1 gap-6 md:grid-cols-2">
+    <div v-else-if="elections.length" class="flex w-full flex-col gap-3">
       <StudentActiveElectionCard
         v-for="election in elections"
         :key="election.uuid"
         :election="election"
-        :action-loading="entering"
+        :is-entering="enteringElectionUuid === election.uuid"
         @vote="enterVoteFlow"
       />
     </div>
 
     <div
       v-else
-      class="flex flex-col items-center rounded-2xl border border-dashed border-border bg-surface px-6 py-12 text-center"
+      class="flex flex-col items-center rounded-xl border border-dashed border-border bg-surface px-5 py-8 text-center"
     >
       <div
-        class="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-muted text-2xl text-brand-700"
+        class="mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-surface-muted text-brand-700"
         aria-hidden="true"
       >
-        <FaIcon icon="fa-box-ballot" :fixed-width="false" />
+        <FaIcon icon="fa-square-poll-vertical" :fixed-width="false" class="text-xl" />
       </div>
-      <h3 class="text-lg font-semibold text-ink-primary">No Active Elections</h3>
+      <h3 class="text-base font-semibold text-ink-primary">No Active Elections</h3>
       <p class="mt-2 max-w-md text-sm text-ink-secondary">
         {{ emptyMessage }}
       </p>

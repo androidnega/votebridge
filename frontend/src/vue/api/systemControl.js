@@ -107,4 +107,8 @@ export const systemControlApi = {
   getRuntime() {
     return apiClient.get("/system/runtime/").then(unwrapResponse);
   },
+
+  resetOperationalData(payload) {
+    return apiClient.post("/system/data-reset/", payload).then(unwrapResponse);
+  },
 };

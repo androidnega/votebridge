@@ -9,6 +9,7 @@ export const toastMessages = {
     resumed: "Election resumed.",
     closed: "Election closed successfully.",
     archived: "Election archived.",
+    deleted: "Election deleted.",
   },
   position: {
     added: "Position added successfully.",
@@ -47,6 +48,9 @@ export const toastMessages = {
   },
   settings: {
     saved: "Settings saved successfully.",
+  },
+  system: {
+    dataReset: "Operational data reset completed.",
   },
   generic: {
     saved: "Changes saved successfully.",

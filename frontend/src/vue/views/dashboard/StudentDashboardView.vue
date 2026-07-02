@@ -2,7 +2,6 @@
 import { onMounted } from "vue";
 import {
   StudentActiveElectionList,
-  StudentRecentActivity,
   StudentStatCards,
   StudentWelcomeHeader,
 } from "@/components/dashboard/student";
@@ -20,7 +19,6 @@ const {
   votesCastCount,
   countdownText,
   portalElectionCards,
-  recentActivity,
   portalLoading,
   portalError,
   loadDashboard,
@@ -53,8 +51,6 @@ onMounted(() => {
       />
 
       <StudentActiveElectionList :elections="portalElectionCards" :loading="portalLoading" />
-
-      <StudentRecentActivity :items="recentActivity" />
     </template>
   </div>
 </template>

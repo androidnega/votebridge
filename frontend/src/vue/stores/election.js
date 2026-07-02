@@ -142,6 +142,24 @@ export const useElectionStore = defineStore("election", {
       return this._lifecycle(uuid, () => electionsApi.archive(uuid));
     },
 
+    async deleteElection(uuid) {
+      this.actionLoading = true;
+      this.error = null;
+      try {
+        await electionsApi.delete(uuid);
+        this.elections = this.elections.filter((item) => item.uuid !== uuid);
+        if (this.currentElection?.uuid === uuid) {
+          this.currentElection = null;
+          this.readinessReport = null;
+        }
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw error;
+      } finally {
+        this.actionLoading = false;
+      }
+    },
+
     setPendingLifecycleAction(action) {
       this.pendingLifecycleAction = action;
     },

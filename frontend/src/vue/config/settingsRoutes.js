@@ -40,6 +40,7 @@ export const settingsRoutes = {
     storage: `${BASE}/advanced/storage`,
     license: `${BASE}/advanced/license`,
     about: `${BASE}/advanced/about`,
+    dataReset: `${BASE}/advanced/data-reset`,
   },
 };
 

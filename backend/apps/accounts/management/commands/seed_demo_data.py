@@ -104,11 +104,11 @@ class Command(BaseCommand):
         elections_spec = [
             {
                 "title": "SRC General Elections 2025",
-                "description": "Student Representative Council general elections for TTU.",
+                "description": "Archived demo election — superseded by current season.",
                 "election_type": Election.ElectionType.STUDENT_UNION,
-                "status": Election.Status.OPEN,
-                "start": now - timedelta(days=2),
-                "end": now + timedelta(days=5),
+                "status": Election.Status.ARCHIVED,
+                "start": now - timedelta(days=90),
+                "end": now - timedelta(days=83),
                 "positions": ["President", "Vice President", "General Secretary"],
             },
             {

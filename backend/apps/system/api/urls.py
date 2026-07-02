@@ -24,4 +24,5 @@ urlpatterns = [
     path("environment/", views.EnvironmentView.as_view(), name="environment"),
     path("license/", views.LicenseView.as_view(), name="license"),
     path("runtime/", views.RuntimeConfigView.as_view(), name="runtime"),
+    path("data-reset/", views.OperationalDataResetView.as_view(), name="data-reset"),
 ]

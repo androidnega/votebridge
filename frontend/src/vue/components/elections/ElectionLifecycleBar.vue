@@ -1,7 +1,6 @@
 <script setup>
 import { computed } from "vue";
 import { useRouter } from "vue-router";
-import { ElectionStatusBadge } from "@/components/voting";
 import { ConfirmDialog, VButton } from "@/components/ui";
 import { toastMessages } from "@/config/toastMessages";
 import { useToast } from "@/composables/useToast";
@@ -32,15 +31,18 @@ const showConfirm = computed({
 });
 
 const confirmVariant = computed(() =>
-  ["close", "archive"].includes(confirmAction.value?.action) ? "danger" : "primary"
+  ["close", "archive", "delete"].includes(confirmAction.value?.action) ? "danger" : "primary"
 );
 
 const confirmIcon = computed(() => {
   const action = confirmAction.value?.action;
   if (action === "close") return "strongroom";
   if (action === "pause") return "bolt";
+  if (action === "delete") return "fraud";
   return "help";
 });
+
+const canDelete = computed(() => ["draft", "scheduled"].includes(status.value));
 
 const toastForAction = {
   schedule: toastMessages.election.scheduled,
@@ -49,6 +51,7 @@ const toastForAction = {
   resume: toastMessages.election.resumed,
   close: toastMessages.election.closed,
   archive: toastMessages.election.archived,
+  delete: toastMessages.election.deleted,
 };
 
 async function runAction(action) {
@@ -60,10 +63,13 @@ async function runAction(action) {
     else if (action === "resume") await electionStore.openElection(uuid);
     else if (action === "close") await electionStore.closeElection(uuid);
     else if (action === "archive") await electionStore.archiveElection(uuid);
+    else if (action === "delete") await electionStore.deleteElection(uuid);
     toast.success(toastForAction[action] || toastMessages.generic.saved);
     emit("updated");
     if (action === "close") {
       router.push("/dashboard/results");
+    } else if (action === "delete") {
+      router.push("/dashboard/elections");
     }
   } catch {
     toast.error(electionStore.error || toastMessages.generic.error);
@@ -88,8 +94,6 @@ function cancelConfirm() {
 
 <template>
   <div class="flex flex-wrap items-center gap-2">
-    <ElectionStatusBadge :status="status" />
-
     <VButton
       v-if="status === 'draft'"
       size="sm"
@@ -144,13 +148,29 @@ function cancelConfirm() {
       Archive
     </VButton>
 
+    <VButton
+      v-if="canDelete"
+      size="sm"
+      variant="danger"
+      :loading="loading"
+      @click="
+        askConfirm(
+          'delete',
+          'Delete election?',
+          'Permanently remove this election and its setup data. Only available before voting starts.'
+        )
+      "
+    >
+      Delete
+    </VButton>
+
     <ConfirmDialog
       v-model="showConfirm"
       :title="confirmAction?.label || 'Confirm'"
       :description="confirmAction?.message || ''"
       :variant="confirmVariant"
       :icon="confirmIcon"
-      confirm-label="Confirm"
+      :confirm-label="confirmAction?.action === 'delete' ? 'Delete election' : 'Confirm'"
       cancel-label="Cancel"
       :loading="loading"
       @confirm="confirm"

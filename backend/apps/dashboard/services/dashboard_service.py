@@ -422,10 +422,11 @@ class DashboardService:
             .first()
         )
         svt_status = latest_svt.status if latest_svt else None
+        all_positions_voted = self._user_completed_all_positions(user, election)
         has_submitted = bool(latest_svt and latest_svt.status == SVTToken.Status.USED)
-        ballot_complete = has_submitted
+        ballot_complete = has_submitted or all_positions_voted
 
-        if has_submitted:
+        if ballot_complete:
             confirmation_status = "recorded"
         elif svt_status == SVTToken.Status.VALIDATED:
             confirmation_status = "in_progress"

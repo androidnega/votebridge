@@ -90,35 +90,53 @@
   }
 
   .vb-sidebar-link {
-    @apply flex min-h-touch items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-2.5 text-sm font-medium text-shell-sidebar-text transition duration-150 hover:bg-shell-sidebar-hover;
+    @apply flex min-h-touch items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-shell-sidebar-text transition duration-150 hover:bg-brand-50 hover:font-semibold hover:text-brand-700 hover:ring-1 hover:ring-brand-100;
   }
 
   .vb-sidebar-link--active {
-    @apply border-l-shell-accent bg-shell-active text-shell-accent;
+    @apply bg-brand-50 font-semibold text-brand-700 ring-1 ring-brand-100;
   }
 
   .vb-sidebar-link--collapsed {
-    @apply h-11 w-11 justify-center border-l-0 px-0;
+    @apply h-11 w-11 justify-center px-0;
   }
 
   .vb-sidebar-link--collapsed.vb-sidebar-link--active {
-    @apply bg-shell-active text-shell-accent ring-1 ring-inset ring-shell-accent/20;
+    @apply bg-brand-50 text-brand-700 ring-1 ring-brand-100;
   }
 
   .vb-sidebar-group-btn {
-    @apply flex min-h-touch w-full items-center gap-3 rounded-lg border-l-4 border-transparent px-3 py-2.5 text-sm font-medium text-shell-sidebar-text transition duration-150 hover:bg-shell-sidebar-hover;
+    @apply flex min-h-touch w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-shell-sidebar-text transition duration-150 hover:bg-brand-50 hover:font-semibold hover:text-brand-700 hover:ring-1 hover:ring-brand-100;
   }
 
   .vb-sidebar-group-btn--active {
-    @apply border-l-shell-accent bg-shell-active text-shell-accent;
+    @apply bg-brand-50 font-semibold text-brand-700 ring-1 ring-brand-100;
+  }
+
+  .vb-sidebar-group-btn--child-active {
+    @apply font-medium text-brand-700;
+  }
+
+  .vb-sidebar-subnav {
+    @apply mt-1.5 space-y-0.5 pl-3;
   }
 
   .vb-sidebar-child-link {
-    @apply flex min-h-touch items-center rounded-lg border-l-4 border-transparent py-2 pl-3 pr-2 text-sm text-shell-sidebar-text transition duration-150 hover:bg-shell-sidebar-hover;
+    @apply relative flex min-h-[2.25rem] items-center rounded-lg py-2 pl-3 pr-2 text-sm text-shell-sidebar-text transition duration-150 hover:bg-brand-600 hover:font-semibold hover:text-white hover:shadow-sm;
   }
 
   .vb-sidebar-child-link--active {
-    @apply border-l-shell-accent bg-shell-active font-medium text-shell-accent;
+    @apply bg-brand-600 font-semibold text-white shadow-sm;
+  }
+
+  .vb-sidebar-child-link--active::before {
+    content: "";
+    @apply absolute -left-3 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-brand-400;
+  }
+
+  .vb-sidebar-link:hover .vb-sidebar-icon,
+  .vb-sidebar-group-btn:hover .vb-sidebar-icon {
+    @apply text-brand-700;
   }
 
   .vb-sidebar-icon {
@@ -126,7 +144,7 @@
   }
 
   .vb-sidebar-icon--active {
-    @apply text-shell-accent;
+    @apply text-brand-700;
   }
 
   .vb-sidebar-footer-btn {
@@ -278,6 +296,44 @@
     @apply text-sm font-medium text-ink-primary transition-opacity duration-300;
   }
 
+  .vb-vote-validate-success-icon {
+    @apply mb-5 flex h-14 w-14 items-center justify-center rounded-full border border-success-200 bg-success-50;
+    animation: vbSvtShieldPulse 0.55s ease-out;
+  }
+
+  .vb-vote-validate-checklist {
+    @apply mt-6 w-full max-w-xs space-y-2 border-t border-border pt-4 text-left;
+  }
+
+  .vb-vote-validate-checklist-item {
+    @apply flex items-center gap-2.5 text-xs text-ink-secondary transition-all duration-300;
+  }
+
+  .vb-vote-validate-checklist-item.is-current {
+    @apply font-medium text-brand-700;
+  }
+
+  .vb-vote-validate-checklist-item.is-done {
+    @apply text-ink-primary;
+  }
+
+  .vb-vote-validate-checklist-dot {
+    @apply flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border bg-surface-muted text-transparent transition-all duration-300;
+  }
+
+  .vb-vote-validate-checklist-item.is-current .vb-vote-validate-checklist-dot {
+    @apply border-brand-300 bg-brand-50;
+    animation: vbVoteValidatePulse 1.6s ease-in-out infinite;
+  }
+
+  .vb-vote-validate-checklist-item.is-done .vb-vote-validate-checklist-dot {
+    @apply border-success-200 bg-success-50 text-success-700;
+  }
+
+  .vb-vote-phase {
+    @apply w-full;
+  }
+
   @keyframes vbVoteValidatePulse {
     0%,
     100% {
@@ -383,47 +439,43 @@
   }
 
   .vb-svt-booth-card {
-    @apply w-full rounded-card border border-border bg-surface px-6 py-8 shadow-sm sm:px-8 sm:py-9;
+    @apply w-full rounded-card border border-border bg-surface px-5 py-5 shadow-sm sm:px-6 sm:py-5;
   }
 
   .vb-svt-booth-header {
     @apply text-center;
   }
 
-  .vb-svt-booth-logo {
-    @apply mx-auto h-12 w-12 object-contain;
-  }
-
   .vb-svt-booth-brand {
-    @apply mt-3 text-xs font-semibold uppercase tracking-[0.18em] text-brand-700;
+    @apply text-[11px] font-semibold uppercase tracking-[0.16em] text-brand-700;
   }
 
   .vb-svt-booth-title {
-    @apply mt-2 text-xl font-bold tracking-tight text-ink-primary sm:text-2xl;
+    @apply mt-1 text-lg font-bold tracking-tight text-ink-primary;
   }
 
   .vb-svt-booth-subtitle {
-    @apply mt-3 text-sm leading-relaxed text-ink-secondary;
+    @apply mt-1.5 text-xs leading-snug text-ink-secondary;
   }
 
-  .vb-svt-booth-phone {
-    @apply mt-4 text-sm text-ink-secondary;
+  .vb-svt-booth-meta {
+    @apply mt-2 text-xs text-ink-secondary;
   }
 
-  .vb-svt-booth-phone-label {
-    @apply block text-xs font-medium uppercase tracking-wide text-ink-secondary;
+  .vb-svt-booth-meta strong {
+    @apply font-mono font-semibold text-ink-primary;
   }
 
-  .vb-svt-booth-phone-value {
-    @apply mt-1 block font-mono text-base font-semibold tracking-wide text-ink-primary;
+  .vb-svt-booth-meta-divider {
+    @apply mx-1.5 text-border;
   }
 
-  .vb-svt-booth-election {
-    @apply mt-2 text-xs font-medium text-brand-700;
+  .vb-svt-booth-form {
+    @apply mt-4;
   }
 
-  .vb-svt-booth-visual {
-    @apply mb-5 flex flex-col items-center gap-2;
+  .vb-svt-booth-actions {
+    @apply mt-3 space-y-2 text-center;
   }
 
   .vb-svt-booth-shield {
@@ -445,20 +497,12 @@
     animation: vbSvtLockOpen 0.7s ease-out forwards;
   }
 
-  .vb-svt-booth-form {
-    @apply mt-6;
-  }
-
-  .vb-svt-booth-actions {
-    @apply mt-4 space-y-3 text-center;
-  }
-
   .vb-svt-booth-link {
-    @apply min-h-touch text-sm font-medium text-brand-700 transition hover:text-brand-hover disabled:cursor-not-allowed disabled:opacity-50;
+    @apply text-xs font-medium text-brand-700 transition hover:text-brand-hover disabled:cursor-not-allowed disabled:opacity-50;
   }
 
   .vb-svt-booth-help {
-    @apply text-sm text-ink-secondary;
+    @apply text-xs text-ink-secondary;
   }
 
   .vb-svt-booth-help-link {
@@ -466,24 +510,19 @@
   }
 
   .vb-svt-booth-info {
-    @apply mt-8 border-t border-border pt-6;
-  }
-
-  .vb-svt-booth-info-title {
-    @apply text-sm font-semibold text-ink-primary;
+    @apply mt-4 border-t border-border pt-3;
   }
 
   .vb-svt-booth-info-list {
-    @apply mt-3 space-y-2 text-sm text-ink-secondary;
+    @apply space-y-1 text-center text-[11px] text-ink-secondary;
   }
 
   .vb-svt-booth-info-list li::before {
-    content: "✓";
-    @apply mr-2 text-brand-700;
+    content: none;
   }
 
   .vb-svt-booth-loading {
-    @apply mt-8 flex flex-col items-center gap-3 text-sm text-ink-secondary;
+    @apply mt-4 flex items-center justify-center gap-2 text-xs text-ink-secondary;
   }
 
   .vb-svt-booth-spinner {
@@ -536,7 +575,7 @@
   }
 
   .vb-svt-code-input {
-    @apply w-full rounded-lg border border-slate-300 bg-white py-3.5 text-center font-mono text-xl tracking-[0.12em] text-slate-900 caret-brand-700 placeholder:text-slate-300 focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-700/15 disabled:opacity-60 sm:text-2xl;
+    @apply w-full rounded-lg border border-slate-300 bg-white py-2.5 text-center font-mono text-lg tracking-[0.1em] text-slate-900 caret-brand-700 placeholder:text-sm placeholder:tracking-normal placeholder:text-slate-300 focus:border-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-700/15 disabled:opacity-60;
   }
 
   .vb-svt-code-field--error .vb-svt-code-input {
@@ -732,6 +771,22 @@
     @apply overflow-hidden rounded-card border border-border bg-white shadow-card;
   }
 
+  .vb-page--list {
+    @apply flex max-h-[calc(100vh-9.5rem)] min-h-0 flex-col gap-4;
+  }
+
+  .vb-list-panel {
+    @apply flex min-h-0 flex-1 flex-col overflow-hidden;
+  }
+
+  .vb-list-panel--bounded {
+    @apply flex max-h-[min(28rem,calc(100vh-20rem))] min-h-[12rem] flex-col overflow-hidden;
+  }
+
+  .vb-table-shell--scrollable {
+    @apply min-h-0 flex-1 overflow-hidden rounded-none border-0 bg-transparent shadow-none;
+  }
+
   .vb-kpi-card {
     @apply rounded-card border border-border bg-white p-card shadow-card vb-fade-in;
   }
@@ -744,32 +799,36 @@
     @apply inline-flex h-10 w-10 items-center justify-center rounded-input text-ink-primary transition hover:bg-surface-muted;
   }
 
-  .student-sidebar-link {
-    @apply flex min-h-touch items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-300 transition hover:bg-navy-700 hover:text-white;
+  .student-profile-trigger {
+    @apply inline-flex min-h-touch items-center gap-2 rounded-input px-1 py-1 text-left transition hover:bg-surface-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600;
   }
 
-  .student-sidebar-link--active {
-    @apply bg-navy-700 text-white;
+  .student-nav-link {
+    @apply flex min-h-touch items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-shell-sidebar-text transition duration-150 hover:bg-brand-50/60;
   }
 
-  .student-sidebar-icon {
-    @apply h-5 w-5 shrink-0 text-slate-400;
+  .student-nav-link--collapsed {
+    @apply h-11 w-11 justify-center gap-0 px-0;
   }
 
-  .student-sidebar-link--active .student-sidebar-icon {
-    @apply text-white;
+  .student-nav-link--collapsed.student-nav-link--active {
+    @apply ring-1 ring-brand-100;
   }
 
-  .student-stat-card {
-    @apply rounded-card border border-border bg-surface p-5 shadow-card;
+  .student-nav-link--active {
+    @apply bg-brand-50 font-semibold text-brand-700 ring-1 ring-brand-100;
   }
 
-  .student-stat-label {
-    @apply text-sm font-medium text-ink-secondary;
+  .student-nav-icon {
+    @apply h-[1.125rem] w-[1.125rem] shrink-0 text-shell-sidebar-icon transition duration-150;
   }
 
-  .student-stat-value {
-    @apply mt-2 text-3xl font-bold tracking-tight text-ink-primary;
+  .student-nav-icon--active {
+    @apply text-brand-700;
+  }
+
+  .student-nav-footer-btn {
+    @apply flex min-h-touch items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-shell-sidebar-icon transition duration-150 hover:bg-brand-50/60 hover:text-shell-sidebar-text;
   }
 
   .student-panel {
@@ -829,4 +888,102 @@
 .vb-tab-leave-to {
   opacity: 0;
   transform: translateY(6px);
+}
+
+.vb-page-enter-active,
+.vb-page-leave-active {
+  transition: opacity 0.24s ease, transform 0.24s ease;
+}
+
+.vb-page-enter-from {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.vb-page-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.vb-ballot-step-enter-active,
+.vb-ballot-step-leave-active {
+  transition: opacity 0.22s ease, transform 0.22s ease;
+}
+
+.vb-ballot-step-enter-from {
+  opacity: 0;
+  transform: translateX(12px);
+}
+
+.vb-ballot-step-leave-to {
+  opacity: 0;
+  transform: translateX(-12px);
+}
+
+.vb-step-label-enter-active,
+.vb-step-label-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.vb-step-label-enter-from {
+  opacity: 0;
+  transform: translateY(4px);
+}
+
+.vb-step-label-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.vb-vote-phase-enter-active,
+.vb-vote-phase-leave-active {
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.vb-vote-phase-enter-from,
+.vb-vote-phase-leave-to {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* Election control room */
+.vb-control-room {
+  @apply mx-auto flex max-w-6xl flex-col gap-5 pb-8;
+}
+
+.vb-control-room-header {
+  @apply flex flex-col gap-4 rounded-2xl border border-border bg-white p-5 shadow-sm sm:flex-row sm:items-start sm:justify-between sm:p-6;
+}
+
+.vb-control-room-hero {
+  @apply grid grid-cols-1 gap-4 lg:grid-cols-12;
+}
+
+.vb-control-room-panel {
+  @apply rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6;
+}
+
+.vb-control-room-turnout {
+  @apply lg:col-span-7;
+}
+
+.vb-control-room-countdown {
+  @apply flex flex-col justify-center lg:col-span-5;
+  background: linear-gradient(135deg, rgb(240 253 244) 0%, rgb(255 255 255) 55%);
+}
+
+.vb-control-room-metrics {
+  @apply grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6;
+}
+
+.vb-control-room-metric {
+  @apply rounded-xl border border-border bg-white p-4 shadow-sm transition-shadow hover:shadow-md;
+}
+
+.vb-control-room-metric--warn {
+  @apply border-warning-200 bg-warning-50/40;
+}
+
+.vb-control-room-actions {
+  @apply flex flex-wrap gap-3 rounded-2xl border border-border bg-white p-4 shadow-sm;
 }

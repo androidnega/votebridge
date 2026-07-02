@@ -5,7 +5,6 @@ import {
   chartTimeRanges,
   dashboardChartColors,
   greetingForHour,
-  isSameCalendarDay,
   sliceTrendByRange,
 } from "@/config/dashboardExperience";
 import {
@@ -71,25 +70,6 @@ export function useAdminCommandCenter() {
   const primaryElection = computed(() => openElectionsList.value[0] || null);
   const primaryUuid = computed(() => electionUuid(primaryElection.value));
 
-  const allTrackedElections = computed(() => [
-    ...openElectionsList.value,
-    ...(scheduledElections.value || []),
-  ]);
-
-  const electionsClosingToday = computed(() =>
-    allTrackedElections.value.filter((election) =>
-      isSameCalendarDay(election.end_date)
-    ).length
-  );
-
-  const pendingCandidateApprovals = computed(() =>
-    allTrackedElections.value.reduce((sum, election) => {
-      const total = election.candidate_count ?? 0;
-      const approved = election.approved_candidate_count ?? 0;
-      return sum + Math.max(0, total - approved);
-    }, 0)
-  );
-
   const welcomeBanner = computed(() => {
     const election = primaryElection.value || scheduledElections.value?.[0];
     const status = election ? electionStatus(election) : "none";
@@ -122,14 +102,6 @@ export function useAdminCommandCenter() {
       route: "/dashboard/elections",
     },
     {
-      id: "registered-voters",
-      title: "Registered Voters",
-      value: monitoring.value.eligible_voters ?? dashboardStore.registeredVoters,
-      hint: "Eligible voters across active elections",
-      icon: "profile",
-      accent: "blue",
-    },
-    {
       id: "votes-cast",
       title: "Votes Cast",
       value: monitoring.value.voters_participated ?? dashboardStore.totalVotesCast,
@@ -148,28 +120,10 @@ export function useAdminCommandCenter() {
       trend: (adminTrends.value.turnoutHourly || []).slice(-8).map((p) => p.value),
     },
     {
-      id: "closing-today",
-      title: "Elections Closing Today",
-      value: electionsClosingToday.value,
-      hint: electionsClosingToday.value ? "Requires close-of-poll planning" : "No elections closing today",
-      icon: "tasks",
-      accent: electionsClosingToday.value ? "amber" : "slate",
-    },
-    {
-      id: "candidate-approvals",
-      title: "Pending Candidate Approvals",
-      value: pendingCandidateApprovals.value,
-      hint: "Nominated candidates awaiting approval",
-      icon: "profile",
-      accent: pendingCandidateApprovals.value > 0 ? "amber" : "green",
-      clickable: Boolean(primaryUuid.value),
-      route: primaryUuid.value ? `/dashboard/elections/${primaryUuid.value}/candidates` : null,
-    },
-    {
       id: "security-alerts",
-      title: "Recent Security Alerts",
+      title: "Security Alerts",
       value: dashboardStore.pendingSecurityAlerts,
-      hint: "Open security incidents requiring review",
+      hint: "Open incidents requiring review",
       icon: "security",
       accent: dashboardStore.pendingSecurityAlerts > 0 ? "red" : "green",
       clickable: true,

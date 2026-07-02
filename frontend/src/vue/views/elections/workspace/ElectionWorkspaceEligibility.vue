@@ -5,6 +5,8 @@ import { ElectionWorkspacePageShell } from "@/components/admin";
 import { EmptyState, LoadingSkeleton, VAlert, VButton, VCard, VInput, VTable, ConfirmDialog } from "@/components/ui";
 import { emptyStates } from "@/config/emptyStates";
 import { toastMessages } from "@/config/toastMessages";
+import { useClientListPagination } from "@/composables/useClientListPagination";
+import { useServerListPagination } from "@/composables/useServerListPagination";
 import { useToast } from "@/composables/useToast";
 import { electionsApi } from "@/api/elections";
 import { usersApi } from "@/api/users";
@@ -14,21 +16,46 @@ const route = useRoute();
 const toast = useToast();
 const electionUuid = computed(() => route.params.uuid);
 
-const records = ref([]);
+const filters = ref({
+  indexNumber: "",
+  name: "",
+  programmeCode: "",
+});
+
 const searchResults = ref([]);
 const selectedUsers = ref([]);
-const loading = ref(false);
 const searching = ref(false);
 const saving = ref(false);
 const error = ref(null);
 const pendingRemove = ref(null);
 const hasSearched = ref(false);
 
-const filters = ref({
-  indexNumber: "",
-  name: "",
-  programmeCode: "",
-});
+const {
+  page: rollPage,
+  total: rollTotal,
+  totalPages: rollTotalPages,
+  rangeLabel: rollRangeLabel,
+  items: rollRecords,
+  loading,
+  load: loadRollRecords,
+  goToPage: goToRollPage,
+} = useServerListPagination(
+  (params) =>
+    electionsApi.listEligibility(electionUuid.value, {
+      ...params,
+      search: filters.value.name || filters.value.indexNumber || undefined,
+    }),
+  { pageSize: 15 }
+);
+
+const {
+  page: searchPage,
+  total: searchTotal,
+  totalPages: searchTotalPages,
+  rangeLabel: searchRangeLabel,
+  items: pagedSearchResults,
+  goToPage: goToSearchPage,
+} = useClientListPagination(searchResults, { pageSize: 10 });
 
 const columns = [
   { key: "user_name", label: "Voter" },
@@ -60,18 +87,12 @@ function matchesProgrammeFilter(user) {
   return (user.index_number || "").toUpperCase().includes(code);
 }
 
-async function loadRecords() {
-  loading.value = true;
+async function refreshRoll() {
   error.value = null;
   try {
-    const result = await electionsApi.listEligibility(electionUuid.value, {
-      search: filters.value.name || filters.value.indexNumber || undefined,
-    });
-    records.value = result.items;
+    await loadRollRecords();
   } catch (err) {
     error.value = extractApiError(err);
-  } finally {
-    loading.value = false;
   }
 }
 
@@ -120,7 +141,7 @@ async function addSingle(user) {
       eligibility_reason: eligibleForm.value.eligibility_reason,
     });
     toast.success(toastMessages.eligibility.added);
-    await loadRecords();
+    await refreshRoll();
   } catch (err) {
     error.value = extractApiError(err);
   } finally {
@@ -139,7 +160,7 @@ async function bulkAddSelected() {
     });
     toast.success(toastMessages.eligibility.bulkAdded(selectedUsers.value.length));
     selectedUsers.value = [];
-    await loadRecords();
+    await refreshRoll();
   } catch (err) {
     error.value = extractApiError(err);
   } finally {
@@ -158,7 +179,7 @@ function askRemoveRecord(row) {
 async function removeRecord(row) {
   await electionsApi.deleteEligibility(electionUuid.value, row.uuid);
   toast.success(toastMessages.eligibility.removed);
-  await loadRecords();
+  await refreshRoll();
 }
 
 const confirmRemoveOpen = computed({
@@ -174,8 +195,8 @@ async function confirmRemove() {
   pendingRemove.value = null;
 }
 
-onMounted(loadRecords);
-watch(() => electionUuid.value, loadRecords);
+onMounted(refreshRoll);
+watch(() => electionUuid.value, refreshRoll);
 </script>
 
 <template>
@@ -199,8 +220,18 @@ watch(() => electionUuid.value, loadRecords);
       </div>
     </VCard>
 
-    <VCard v-if="searchResults.length" padding="none" title="Search results">
-      <VTable :columns="searchColumns" :rows="searchResults" :loading="searching">
+    <VCard v-if="searchTotal" padding="none" title="Search results" class="vb-list-panel--bounded">
+      <VTable
+        scrollable
+        :columns="searchColumns"
+        :rows="pagedSearchResults"
+        :loading="searching"
+        :page="searchPage"
+        :total-pages="searchTotalPages"
+        :total="searchTotal"
+        :range-label="searchRangeLabel"
+        @update:page="goToSearchPage"
+      >
         <template #cell-actions="{ row }">
           <div class="flex gap-1">
             <VButton size="sm" variant="secondary" @click="addSingle(row)">Add</VButton>
@@ -221,9 +252,20 @@ watch(() => electionUuid.value, loadRecords);
       v-bind="emptyStates.searchStudents"
     />
 
-    <VCard title="Voter roll" padding="none">
-      <LoadingSkeleton v-if="loading && !records.length" variant="list" :rows="4" class="p-card" />
-      <VTable v-else-if="records.length" :columns="columns" :rows="records" :loading="loading">
+    <VCard title="Voter roll" padding="none" class="vb-list-panel--bounded">
+      <LoadingSkeleton v-if="loading && !rollTotal" variant="list" :rows="4" class="p-card" />
+      <VTable
+        v-else-if="rollTotal"
+        scrollable
+        :columns="columns"
+        :rows="rollRecords"
+        :loading="loading"
+        :page="rollPage"
+        :total-pages="rollTotalPages"
+        :total="rollTotal"
+        :range-label="rollRangeLabel"
+        @update:page="goToRollPage"
+      >
         <template #cell-is_eligible="{ row }">{{ row.is_eligible ? "Yes" : "No" }}</template>
         <template #cell-actions="{ row }">
           <VButton size="sm" variant="ghost" @click="askRemoveRecord(row)">Remove</VButton>

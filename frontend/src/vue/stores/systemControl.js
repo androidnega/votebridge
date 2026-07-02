@@ -341,5 +341,23 @@ export const useSystemControlStore = defineStore("systemControl", {
         this.actionLoading = false;
       }
     },
+
+    async resetOperationalData(confirmation) {
+      this.actionLoading = true;
+      this.error = null;
+      try {
+        const data = await systemControlApi.resetOperationalData({
+          confirmation,
+          step_up_token: this.stepUpToken,
+        });
+        this.clearStepUp();
+        return data;
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw error;
+      } finally {
+        this.actionLoading = false;
+      }
+    },
   },
 });

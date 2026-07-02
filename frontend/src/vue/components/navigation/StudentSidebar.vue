@@ -1,6 +1,7 @@
 <script setup>
 import { useRoute, useRouter } from "vue-router";
 import VIcon from "@/components/ui/VIcon.vue";
+import VTooltip from "@/components/ui/VTooltip.vue";
 import { studentPrimaryNav, studentSupportNav } from "@/config/studentPortalNav";
 import { useAuthStore } from "@/stores/auth";
 
@@ -27,19 +28,35 @@ async function handleLogout() {
 <template>
   <nav class="flex flex-1 flex-col" aria-label="Student navigation">
     <ul role="list" class="flex flex-1 flex-col gap-y-1">
-      <li v-for="item in studentPrimaryNav" :key="item.key">
+      <li v-for="item in studentPrimaryNav" :key="item.key" :class="collapsed ? 'flex justify-center' : ''">
+        <VTooltip v-if="collapsed" :label="item.name" position="right">
+          <router-link
+            :to="item.to"
+            :aria-label="item.name"
+            class="student-nav-link student-nav-link--collapsed"
+            :class="isActive(item) ? 'student-nav-link--active' : ''"
+            @click="onNavigate?.()"
+          >
+            <VIcon
+              :name="item.icon"
+              class="student-nav-icon"
+              :class="isActive(item) ? 'student-nav-icon--active' : ''"
+            />
+          </router-link>
+        </VTooltip>
         <router-link
+          v-else
           :to="item.to"
-          class="vb-sidebar-link"
-          :class="isActive(item) ? 'vb-sidebar-link--active' : ''"
+          class="student-nav-link"
+          :class="isActive(item) ? 'student-nav-link--active' : ''"
           @click="onNavigate?.()"
         >
           <VIcon
             :name="item.icon"
-            class="vb-sidebar-icon"
-            :class="isActive(item) ? 'vb-sidebar-icon--active' : ''"
+            class="student-nav-icon"
+            :class="isActive(item) ? 'student-nav-icon--active' : ''"
           />
-          <span v-if="!collapsed" class="truncate">{{ item.name }}</span>
+          <span class="truncate">{{ item.name }}</span>
         </router-link>
       </li>
     </ul>
@@ -52,16 +69,36 @@ async function handleLogout() {
         Support
       </p>
       <ul role="list" class="space-y-1">
-        <li v-for="item in studentSupportNav" :key="item.key">
-          <router-link :to="item.to" class="vb-sidebar-link" @click="onNavigate?.()">
-            <VIcon :name="item.icon" class="vb-sidebar-icon" />
-            <span v-if="!collapsed" class="truncate">{{ item.name }}</span>
+        <li v-for="item in studentSupportNav" :key="item.key" :class="collapsed ? 'flex justify-center' : ''">
+          <VTooltip v-if="collapsed" :label="item.name" position="right">
+            <router-link
+              :to="item.to"
+              :aria-label="item.name"
+              class="student-nav-link student-nav-link--collapsed"
+              @click="onNavigate?.()"
+            >
+              <VIcon :name="item.icon" class="student-nav-icon" />
+            </router-link>
+          </VTooltip>
+          <router-link v-else :to="item.to" class="student-nav-link" @click="onNavigate?.()">
+            <VIcon :name="item.icon" class="student-nav-icon" />
+            <span class="truncate">{{ item.name }}</span>
           </router-link>
         </li>
-        <li>
-          <button type="button" class="vb-sidebar-footer-btn w-full" @click="handleLogout">
-            <VIcon name="logout" class="vb-sidebar-icon" />
-            <span v-if="!collapsed">Log out</span>
+        <li :class="collapsed ? 'flex justify-center' : ''">
+          <VTooltip v-if="collapsed" label="Log out" position="right">
+            <button
+              type="button"
+              class="student-nav-footer-btn student-nav-link--collapsed !justify-center"
+              aria-label="Log out"
+              @click="handleLogout"
+            >
+              <VIcon name="logout" class="student-nav-icon" />
+            </button>
+          </VTooltip>
+          <button v-else type="button" class="student-nav-footer-btn w-full" @click="handleLogout">
+            <VIcon name="logout" class="student-nav-icon" />
+            <span>Log out</span>
           </button>
         </li>
       </ul>

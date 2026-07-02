@@ -259,3 +259,17 @@ class RuntimeConfigView(APIView):
                 },
             }
         )
+
+
+class OperationalDataResetView(APIView):
+    permission_classes = [CanAccessSystemControlCenter]
+
+    def post(self, request):
+        validate_step_up_token(request.data.get("step_up_token"))
+        from apps.system.services.data_reset_service import data_reset_service
+
+        data = data_reset_service.reset_operational_data(
+            actor=request.user,
+            confirmation=(request.data.get("confirmation") or "").strip(),
+        )
+        return Response({"success": True, "data": data})
