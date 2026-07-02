@@ -9,13 +9,11 @@ defineProps({
 defineEmits(["select"]);
 
 const icons = {
-  "validate-ussd": "ussd",
-  "validate-sms": "communications",
-  "create-backup": "inbox",
-  maintenance: "settings",
+  certifications: "results",
+  reports: "analytics",
   settings: "settings",
-  results: "results",
   operations: "operations",
+  results: "results",
 };
 
 function cardStyle(actionId) {

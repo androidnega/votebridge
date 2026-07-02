@@ -6,10 +6,6 @@ import VIcon from "@/components/ui/VIcon.vue";
 import { branding } from "@/config/branding";
 import { useAuthStore } from "@/stores/auth";
 
-defineProps({
-  compact: { type: Boolean, default: false },
-});
-
 const router = useRouter();
 const authStore = useAuthStore();
 const open = ref(false);
@@ -66,27 +62,25 @@ onUnmounted(() => {
     <VButton
       variant="ghost"
       size="sm"
-      :class="compact ? '!min-h-touch !px-1.5' : '!min-h-touch gap-2 !px-2'"
+      class="!min-h-touch gap-2 !px-2"
       :aria-expanded="open"
       aria-haspopup="menu"
       aria-label="User menu"
       @click="toggle"
     >
+      <span class="hidden min-w-0 text-right sm:block">
+        <span class="block max-w-[11rem] truncate text-sm font-medium text-ink-primary">
+          {{ userLabel }}
+        </span>
+        <span v-if="roleLabel" class="block truncate text-xs text-ink-secondary">{{ roleLabel }}</span>
+      </span>
       <span
         class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-shell-active text-xs font-semibold text-shell-accent"
         aria-hidden="true"
       >
         {{ initials }}
       </span>
-      <template v-if="!compact">
-        <span class="hidden min-w-0 text-left md:block">
-          <span class="block max-w-[10rem] truncate text-sm font-medium text-ink-primary">
-            {{ userLabel }}
-          </span>
-          <span v-if="roleLabel" class="block truncate text-xs text-ink-secondary">{{ roleLabel }}</span>
-        </span>
-        <VIcon name="chevronDown" class="hidden h-4 w-4 text-ink-secondary md:block" />
-      </template>
+      <VIcon name="chevronDown" class="hidden h-4 w-4 shrink-0 text-ink-secondary sm:block" />
     </VButton>
 
     <Transition
@@ -102,7 +96,7 @@ onUnmounted(() => {
         role="menu"
         class="absolute right-0 z-50 mt-2 w-56 origin-top-right rounded-card border border-border bg-white py-1 shadow-card"
       >
-        <div class="border-b border-border px-4 py-3" :class="compact ? '' : 'md:hidden'">
+        <div class="border-b border-border px-4 py-3 sm:hidden">
           <p class="truncate text-sm font-medium text-ink-primary">{{ userLabel }}</p>
           <p v-if="roleLabel" class="truncate text-xs text-ink-secondary">{{ roleLabel }}</p>
         </div>

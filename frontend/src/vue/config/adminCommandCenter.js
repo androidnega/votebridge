@@ -103,30 +103,17 @@ export const electionLifecycleStages = [
 
 export const commandQuickActions = [
   { id: "create", label: "Create Election", route: "/dashboard/elections/create" },
-  { id: "candidates", label: "Manage Candidates", routeKey: "candidates" },
-  { id: "eligibility", label: "Manage Eligibility", routeKey: "eligibility" },
-  { id: "export", label: "Export Voter List", routeKey: "eligibility" },
-  { id: "reports", label: "Open Reports", route: "/dashboard/reports" },
+  { id: "elections", label: "Manage Elections", route: "/dashboard/elections" },
+  { id: "results", label: "Results", route: "/dashboard/results" },
+  { id: "reports", label: "Reports", route: "/dashboard/reports" },
 ];
 
+/** @deprecated Phase 62 — use getSidebarNav from sidebarNav.js instead. */
 export const adminSidebarNav = [
   { name: "Dashboard", to: "/dashboard", icon: "home" },
-  {
-    name: "Election Management",
-    to: "/dashboard/elections",
-    icon: "elections",
-    key: "election-management",
-    children: [
-      { name: "Elections", to: "/dashboard/elections", exact: true },
-      { name: "Candidates", to: "/dashboard/election-management/candidates" },
-      { name: "Positions", to: "/dashboard/election-management/positions" },
-      { name: "Voter Eligibility", to: "/dashboard/election-management/eligibility" },
-    ],
-  },
-  { name: "Control Room", to: "/dashboard/control-room", icon: "operations", key: "control-room" },
+  { name: "Elections", to: "/dashboard/elections", icon: "elections", key: "elections" },
   { name: "Results", to: "/dashboard/results", icon: "results" },
   { name: "Reports", to: "/dashboard/reports", icon: "analytics" },
-  { name: "Profile", to: "/dashboard/profile", icon: "profile" },
 ];
 
 const ELECTION_ACTIVITY_EVENTS = new Set([

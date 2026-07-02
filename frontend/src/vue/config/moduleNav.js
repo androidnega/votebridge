@@ -11,6 +11,7 @@ export const reportsNav = [];
 /** @deprecated Phase 36 — explore pages consolidated into Reports workspace filters. */
 export const reportsAdvancedNav = [];
 
+/** @deprecated Phase 62 — in-page strong room nav; not a primary sidebar destination. */
 export const strongRoomNav = [
   { label: "Overview", to: "/dashboard/strongroom", exact: true },
   { label: "Certification", to: "/dashboard/results/certification", roles: ["super_admin"] },
@@ -63,6 +64,7 @@ export const settingsNav = [
 export const analyticsNav = reportsNav;
 export const systemControlNav = settingsNav;
 
+/** @deprecated Phase 62 — provider config lives under Settings / Integrations; not primary nav. */
 export const communicationsNav = [
   { label: "Overview", to: "/dashboard/communications", exact: true },
   { label: "Templates", to: "/dashboard/communications/templates" },

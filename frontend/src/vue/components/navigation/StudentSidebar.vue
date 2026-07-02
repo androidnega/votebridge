@@ -1,9 +1,8 @@
 <script setup>
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import VIcon from "@/components/ui/VIcon.vue";
 import VTooltip from "@/components/ui/VTooltip.vue";
 import { studentPrimaryNav, studentSupportNav } from "@/config/studentPortalNav";
-import { useAuthStore } from "@/stores/auth";
 
 defineProps({
   collapsed: { type: Boolean, default: false },
@@ -11,17 +10,10 @@ defineProps({
 });
 
 const route = useRoute();
-const router = useRouter();
-const authStore = useAuthStore();
 
 function isActive(item) {
-  if (item.key === "home") return route.path === item.to;
+  if (item.key === "dashboard") return route.path === item.to;
   return route.path === item.to || route.path.startsWith(`${item.to}/`);
-}
-
-async function handleLogout() {
-  await authStore.logout();
-  router.push({ name: "auth-login" });
 }
 </script>
 
@@ -84,22 +76,6 @@ async function handleLogout() {
             <VIcon :name="item.icon" class="student-nav-icon" />
             <span class="truncate">{{ item.name }}</span>
           </router-link>
-        </li>
-        <li :class="collapsed ? 'flex justify-center' : ''">
-          <VTooltip v-if="collapsed" label="Log out" position="right">
-            <button
-              type="button"
-              class="student-nav-footer-btn student-nav-link--collapsed !justify-center"
-              aria-label="Log out"
-              @click="handleLogout"
-            >
-              <VIcon name="logout" class="student-nav-icon" />
-            </button>
-          </VTooltip>
-          <button v-else type="button" class="student-nav-footer-btn w-full" @click="handleLogout">
-            <VIcon name="logout" class="student-nav-icon" />
-            <span>Log out</span>
-          </button>
         </li>
       </ul>
     </div>

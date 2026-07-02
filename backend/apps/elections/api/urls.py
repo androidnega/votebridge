@@ -58,6 +58,7 @@ eligibility_detail = VoterEligibilityViewSet.as_view(
     }
 )
 eligibility_bulk = VoterEligibilityViewSet.as_view({"post": "bulk_manage"})
+eligibility_import = VoterEligibilityViewSet.as_view({"post": "import_upload"})
 
 election_candidate_list = CandidateViewSet.as_view({"get": "list", "post": "create"})
 election_candidate_detail = CandidateViewSet.as_view(
@@ -103,6 +104,11 @@ urlpatterns = [
         "<uuid:election_uuid>/eligibility/bulk/",
         eligibility_bulk,
         name="election-eligibility-bulk",
+    ),
+    path(
+        "<uuid:election_uuid>/eligibility/import/",
+        eligibility_import,
+        name="election-eligibility-import",
     ),
     path(
         "<uuid:election_uuid>/eligibility/<uuid:uuid>/",

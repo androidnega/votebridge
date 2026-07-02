@@ -26,7 +26,7 @@ const showLiveStatus = computed(() => notificationsStore.realtimeStatus === "con
 
 <template>
   <header class="vb-topbar">
-    <div class="flex min-w-0 items-center gap-3">
+    <div class="flex min-w-0 shrink-0 items-center gap-3">
       <button
         type="button"
         class="vb-topbar-icon-btn"
@@ -43,7 +43,7 @@ const showLiveStatus = computed(() => notificationsStore.realtimeStatus === "con
       <GlobalSearch />
     </div>
 
-    <div class="flex shrink-0 items-center gap-1 sm:gap-2">
+    <div class="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
       <slot name="actions" />
 
       <SuperAdminTopbarActions v-if="authStore.isSuperAdmin" />
@@ -54,7 +54,7 @@ const showLiveStatus = computed(() => notificationsStore.realtimeStatus === "con
 
       <NotificationDropdown />
 
-      <UserMenu :compact="!authStore.isSuperAdmin" />
+      <UserMenu />
     </div>
   </header>
 </template>

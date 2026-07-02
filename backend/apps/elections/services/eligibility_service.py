@@ -166,6 +166,92 @@ class VoterEligibilityService:
         )
         return results
 
+    def import_eligibility_rows(
+        self,
+        election_uuid,
+        rows: list[dict],
+        *,
+        default_is_eligible: bool = True,
+        default_eligibility_reason: str = "Bulk import",
+        verified_by=None,
+    ) -> dict:
+        """Resolve uploaded rows to users and create or update eligibility records."""
+        election = self.election_repository.get_by_uuid(election_uuid)
+        if not election:
+            raise NotFoundError(message="Election not found.", code="election_not_found")
+
+        try:
+            validate_eligibility_election_editable(election)
+        except DjangoValidationError as exc:
+            raise ValidationError(message=str(exc.message), code="election_read_only") from exc
+
+        imported = 0
+        updated = 0
+        not_found: list[str] = []
+        seen_users: set[int] = set()
+
+        for row in rows:
+            index_number = (row.get("index_number") or "").strip()
+            email = (row.get("email") or "").strip()
+            if not index_number and not email:
+                continue
+
+            user = None
+            if index_number:
+                user = self.user_repository.get_by_index_number(index_number)
+            if not user and email:
+                user = self.user_repository.get_by_email(email)
+
+            identifier = index_number or email
+            if not user:
+                not_found.append(identifier)
+                continue
+
+            if user.id in seen_users:
+                continue
+            seen_users.add(user.id)
+
+            is_eligible = row.get("is_eligible", default_is_eligible)
+            eligibility_reason = row.get("eligibility_reason") or default_eligibility_reason
+
+            existing = self.eligibility_repository.get_by_election_and_user(election, user)
+            if existing:
+                self.eligibility_repository.update(
+                    existing,
+                    is_eligible=is_eligible,
+                    eligibility_reason=eligibility_reason,
+                    verified_by=verified_by,
+                    verified_at=timezone.now() if verified_by else existing.verified_at,
+                )
+                updated += 1
+            else:
+                self.eligibility_repository.create(
+                    election=election,
+                    user=user,
+                    is_eligible=is_eligible,
+                    eligibility_reason=eligibility_reason,
+                    verified_by=verified_by,
+                    verified_at=timezone.now() if verified_by else None,
+                )
+                imported += 1
+
+        logger.info(
+            "Eligibility import for election %s: %d created, %d updated, %d not found",
+            election_uuid,
+            imported,
+            updated,
+            len(not_found),
+        )
+
+        return {
+            "imported": imported,
+            "updated": updated,
+            "processed": imported + updated,
+            "not_found": not_found,
+            "not_found_count": len(not_found),
+            "total_rows": len(rows),
+        }
+
     def check_voter_eligible(self, election_uuid, user) -> bool:
         election = self.election_repository.get_by_uuid(election_uuid)
         if not election:

@@ -28,22 +28,20 @@ export const chartTimeRanges = [
   { id: "period", label: "Election Period" },
 ];
 
+/** Phase 62 — trimmed admin quick actions; election-scoped tools live in the workspace. */
 export const adminQuickActionsPhase51 = [
   { id: "create", label: "Create Election", icon: "elections", route: "/dashboard/elections/create" },
-  { id: "candidates", label: "Manage Candidates", icon: "profile", routeKey: "candidates" },
-  { id: "positions", label: "Manage Positions", icon: "tasks", routeKey: "positions" },
-  { id: "eligibility", label: "Manage Eligibility", icon: "profile", routeKey: "eligibility" },
-  { id: "reports", label: "Open Reports", icon: "analytics", route: "/dashboard/reports" },
-  { id: "import", label: "Import Students", icon: "profile", route: "/dashboard/election-management/eligibility" },
+  { id: "elections", label: "Manage Elections", icon: "elections", route: "/dashboard/elections" },
+  { id: "results", label: "Results", icon: "results", route: "/dashboard/results" },
+  { id: "reports", label: "Reports", icon: "analytics", route: "/dashboard/reports" },
 ];
 
+/** Phase 62 — governance-level destinations only; no duplicate provider or audit shortcuts. */
 export const governanceQuickActionsPhase51 = [
+  { id: "certifications", label: "Results / Certification", icon: "results", route: "/dashboard/results?filter=certification" },
+  { id: "reports", label: "Reports", icon: "analytics", route: "/dashboard/reports" },
   { id: "settings", label: "Settings", icon: "settings", route: "/dashboard/settings" },
-  { id: "certifications", label: "Review Certifications", icon: "results", route: "/dashboard/results?filter=certification" },
-  { id: "audit", label: "Audit Logs", icon: "analytics", route: "/dashboard/platform-logs" },
-  { id: "health", label: "System Health", icon: "operations", route: "/dashboard/operations" },
-  { id: "providers", label: "Communication Providers", icon: "communications", route: "/dashboard/settings/integrations/sms" },
-  { id: "users", label: "Platform Users", icon: "profile", route: "/dashboard/settings/security/election-administration" },
+  { id: "operations", label: "Operations", icon: "operations", route: "/dashboard/operations" },
 ];
 
 export function greetingForHour(hour = new Date().getHours()) {

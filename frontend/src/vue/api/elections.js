@@ -131,6 +131,20 @@ export const electionsApi = {
       .then(unwrapResponse);
   },
 
+  importEligibility(electionUuid, file, { is_eligible = true, eligibility_reason = "Bulk import" } = {}) {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("is_eligible", is_eligible ? "true" : "false");
+    if (eligibility_reason) {
+      form.append("eligibility_reason", eligibility_reason);
+    }
+    return apiClient
+      .post(`/elections/${electionUuid}/eligibility/import/`, form, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then(unwrapResponse);
+  },
+
   createCandidateWithImage(electionUuid, payload, imageFile) {
     const form = new FormData();
     Object.entries(payload).forEach(([key, value]) => {

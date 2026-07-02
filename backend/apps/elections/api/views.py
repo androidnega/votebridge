@@ -10,6 +10,7 @@ from apps.elections.api.serializers import (
     BulkEligibilitySerializer,
     ElectionCreateSerializer,
     ElectionSerializer,
+    EligibilityImportSerializer,
     PositionCreateUpdateSerializer,
     PositionSerializer,
     VoterEligibilityCreateSerializer,
@@ -30,7 +31,7 @@ from apps.elections.services import (
     position_service,
     voting_channel_service,
 )
-from apps.security.models import AuditLog
+from apps.elections.services.eligibility_import_service import parse_eligibility_upload
 from apps.security.services.monitoring_service import monitoring_service
 from core.client_meta import get_client_context
 
@@ -298,6 +299,7 @@ class PositionViewSet(viewsets.ViewSet):
 
 class VoterEligibilityViewSet(viewsets.ViewSet):
     permission_classes = [CanManageVoterEligibility]
+    parser_classes = [JSONParser, MultiPartParser, FormParser]
 
     def list(self, request, election_uuid=None):
         query = request.query_params.get("search")
@@ -381,6 +383,47 @@ class VoterEligibilityViewSet(viewsets.ViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+    @action(detail=False, methods=["post"], url_path="import")
+    def import_upload(self, request, election_uuid=None):
+        serializer = EligibilityImportSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        try:
+            rows, parse_errors = parse_eligibility_upload(
+                data["file"],
+                default_is_eligible=data.get("is_eligible", True),
+                default_reason=data.get("eligibility_reason") or "Bulk import",
+            )
+        except ValueError as exc:
+            return Response(
+                {"success": False, "message": str(exc), "code": "invalid_import_file"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if parse_errors and not rows:
+            return Response(
+                {
+                    "success": False,
+                    "message": parse_errors[0],
+                    "code": "invalid_import_file",
+                    "errors": parse_errors,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        result = eligibility_service.import_eligibility_rows(
+            election_uuid=election_uuid,
+            rows=rows,
+            default_is_eligible=data.get("is_eligible", True),
+            default_eligibility_reason=data.get("eligibility_reason") or "Bulk import",
+            verified_by=request.user,
+        )
+        if parse_errors:
+            result["warnings"] = parse_errors
+
+        return Response({"success": True, "data": result}, status=status.HTTP_200_OK)
 
 
 class PublicCampusStatusView(APIView):

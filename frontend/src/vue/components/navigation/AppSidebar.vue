@@ -1,6 +1,6 @@
 <script setup>
 import { computed, watch } from "vue";
-import { useRoute, useRouter } from "vue-router";
+import { useRoute } from "vue-router";
 import VIcon from "@/components/ui/VIcon.vue";
 import VTooltip from "@/components/ui/VTooltip.vue";
 import { dashboardPath, DASHBOARD_ROOT } from "@/config/routes";
@@ -16,7 +16,6 @@ const props = defineProps({
 });
 
 const route = useRoute();
-const router = useRouter();
 const authStore = useAuthStore();
 const electionStore = useElectionStore();
 const votingStore = useVotingStore();
@@ -45,7 +44,7 @@ const visibleItems = computed(() => {
   if (!children.length) return base;
 
   return base.map((item) => {
-    if (item.key !== "election-management" && item.key !== "elections") return item;
+    if (item.key !== "elections") return item;
 
     return {
       ...item,
@@ -70,20 +69,11 @@ function isActive(item) {
   if (item.to === DASHBOARD_ROOT) {
     return route.path === DASHBOARD_ROOT;
   }
-  if (item.key === "election-management") {
+  if (item.key === "elections" || item.to === dashboardPath("elections")) {
     return (
       route.path.startsWith(dashboardPath("elections")) ||
       route.path.startsWith(dashboardPath("election-management"))
     );
-  }
-  if (item.key === "elections" || item.to === dashboardPath("elections")) {
-    return (
-      route.path.startsWith(dashboardPath("elections")) ||
-      route.path.startsWith("/election-management")
-    );
-  }
-  if (item.key === "control-room") {
-    return route.path.startsWith(dashboardPath("control-room"));
   }
   if (item.to === dashboardPath("reports")) {
     return route.path.startsWith(dashboardPath("reports")) || route.path.startsWith(dashboardPath("analytics"));
@@ -128,7 +118,7 @@ function groupIsActive(item) {
 
 function groupExpanded(item) {
   if (
-    item.key === "election-management" &&
+    item.key === "elections" &&
     (route.path.startsWith(dashboardPath("elections")) ||
       route.path.startsWith(dashboardPath("election-management")))
   ) {
@@ -147,11 +137,6 @@ function onGroupToggle(item) {
 function childLinkTo(child) {
   if (child.disabled) return route.path;
   return child.to;
-}
-
-async function handleLogout() {
-  await authStore.logout();
-  router.push({ name: "auth-login" });
 }
 </script>
 
@@ -237,25 +222,5 @@ async function handleLogout() {
         </template>
       </li>
     </ul>
-
-    <div
-      class="mt-8 border-t border-shell-sidebar-border pt-5"
-      :class="collapsed ? 'flex justify-center' : ''"
-    >
-      <VTooltip v-if="collapsed" label="Sign out" position="right">
-        <button
-          type="button"
-          class="vb-sidebar-link vb-sidebar-link--collapsed vb-sidebar-footer-btn !justify-center"
-          aria-label="Sign out"
-          @click="handleLogout"
-        >
-          <VIcon name="logout" class="vb-sidebar-icon" />
-        </button>
-      </VTooltip>
-      <button v-else type="button" class="vb-sidebar-footer-btn w-full" @click="handleLogout">
-        <VIcon name="logout" class="vb-sidebar-icon" />
-        <span>Sign out</span>
-      </button>
-    </div>
   </nav>
 </template>

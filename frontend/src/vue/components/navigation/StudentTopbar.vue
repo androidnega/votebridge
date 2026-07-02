@@ -10,8 +10,8 @@ defineEmits(["toggle-sidebar"]);
 </script>
 
 <template>
-  <header class="student-topbar">
-    <div class="flex min-w-0 items-center gap-3">
+  <header class="student-topbar w-full">
+    <div class="flex min-w-0 shrink-0 items-center gap-3">
       <button
         type="button"
         class="student-topbar-menu-btn"
@@ -23,6 +23,8 @@ defineEmits(["toggle-sidebar"]);
       <h1 class="truncate text-base font-semibold text-ink-primary lg:hidden">{{ title }}</h1>
     </div>
 
-    <StudentProfileMenu />
+    <div class="ml-auto shrink-0">
+      <StudentProfileMenu />
+    </div>
   </header>
 </template>

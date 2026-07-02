@@ -70,7 +70,7 @@ onUnmounted(() => {
   <div ref="menuRef" class="relative">
     <button
       type="button"
-      class="student-profile-trigger"
+      class="student-profile-trigger ml-auto"
       :aria-expanded="open"
       aria-haspopup="menu"
       aria-label="Student profile menu"

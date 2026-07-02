@@ -26,6 +26,13 @@ export const toastMessages = {
   eligibility: {
     added: "Voter added to the roll.",
     bulkAdded: (count) => `${count} voters added to the roll.`,
+    imported: (summary) => {
+      const parts = [];
+      if (summary.imported) parts.push(`${summary.imported} added`);
+      if (summary.updated) parts.push(`${summary.updated} updated`);
+      if (summary.not_found_count) parts.push(`${summary.not_found_count} not found`);
+      return parts.length ? `Import complete: ${parts.join(", ")}.` : "Import complete.";
+    },
     removed: "Voter removed from the roll.",
   },
   results: {

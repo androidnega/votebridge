@@ -152,6 +152,7 @@ const router = createRouter({
           meta: { title: "Server Error" },
         },
         {
+          // Phase 62 — compatibility redirect: picks an election and forwards to workspace section.
           path: "election-management/candidates",
           name: "admin-election-candidates",
           component: () => import("@/views/elections/AdminWorkspaceRedirectView.vue"),
@@ -159,6 +160,7 @@ const router = createRouter({
           meta: { title: "Candidates", roles: ["admin"] },
         },
         {
+          // Phase 62 — compatibility redirect (hidden from sidebar).
           path: "election-management/positions",
           name: "admin-election-positions",
           component: () => import("@/views/elections/AdminWorkspaceRedirectView.vue"),
@@ -166,6 +168,7 @@ const router = createRouter({
           meta: { title: "Positions", roles: ["admin"] },
         },
         {
+          // Phase 62 — compatibility redirect (hidden from sidebar).
           path: "election-management/eligibility",
           name: "admin-election-eligibility",
           component: () => import("@/views/elections/AdminWorkspaceRedirectView.vue"),
@@ -173,6 +176,7 @@ const router = createRouter({
           meta: { title: "Voter Eligibility", roles: ["admin"] },
         },
         {
+          // Phase 62 — compatibility redirect to election workspace monitor (hidden from sidebar).
           path: "control-room",
           name: "admin-control-room",
           component: () => import("@/views/elections/AdminControlRoomRedirectView.vue"),
@@ -408,14 +412,17 @@ const router = createRouter({
           }),
         },
         {
+          // Phase 62 — legacy strong room root; redirects to Results (not primary nav).
           path: "strongroom",
           redirect: { name: "results" },
         },
         {
+          // Phase 62 — legacy strong room catch-all; redirects to Results.
           path: "strongroom/:pathMatch(.*)*",
           redirect: { name: "results" },
         },
         {
+          // Phase 62 — not in primary nav; provider config lives under Settings / Integrations.
           path: "communications",
           name: "communications",
           component: () => import("@/views/communications/CommunicationDashboardView.vue"),

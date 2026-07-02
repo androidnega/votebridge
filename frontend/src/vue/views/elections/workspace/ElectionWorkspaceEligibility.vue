@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from "vue";
 import { useRoute } from "vue-router";
 import { ElectionWorkspacePageShell } from "@/components/admin";
-import { EmptyState, LoadingSkeleton, VAlert, VButton, VCard, VInput, VTable, ConfirmDialog } from "@/components/ui";
+import { ConfirmDialog, EmptyState, LoadingSkeleton, VAlert, VButton, VCard, VInput, VModal, VTable } from "@/components/ui";
 import { emptyStates } from "@/config/emptyStates";
 import { toastMessages } from "@/config/toastMessages";
 import { useClientListPagination } from "@/composables/useClientListPagination";
@@ -29,6 +29,10 @@ const saving = ref(false);
 const error = ref(null);
 const pendingRemove = ref(null);
 const hasSearched = ref(false);
+const importOpen = ref(false);
+const importFile = ref(null);
+const importing = ref(false);
+const importResult = ref(null);
 
 const {
   page: rollPage,
@@ -73,6 +77,11 @@ const searchColumns = [
 ];
 
 const eligibleForm = ref({
+  eligibility_reason: "Registered student voter",
+  is_eligible: true,
+});
+
+const importForm = ref({
   eligibility_reason: "Registered student voter",
   is_eligible: true,
 });
@@ -195,12 +204,70 @@ async function confirmRemove() {
   pendingRemove.value = null;
 }
 
+function openImportModal() {
+  importOpen.value = true;
+  importResult.value = null;
+  importFile.value = null;
+  error.value = null;
+}
+
+function closeImportModal() {
+  importOpen.value = false;
+  importFile.value = null;
+  importResult.value = null;
+}
+
+function onImportFileChange(event) {
+  importFile.value = event.target.files?.[0] || null;
+  importResult.value = null;
+}
+
+function downloadImportTemplate() {
+  const csv = [
+    "index_number,email,is_eligible,eligibility_reason",
+    "BC/ITS/24/047,,yes,Registered student voter",
+    ",student@example.com,yes,Registered student voter",
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "voter-roll-template.csv";
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+async function runImport() {
+  if (!importFile.value) return;
+  importing.value = true;
+  error.value = null;
+  importResult.value = null;
+  try {
+    const result = await electionsApi.importEligibility(electionUuid.value, importFile.value, {
+      is_eligible: importForm.value.is_eligible,
+      eligibility_reason: importForm.value.eligibility_reason,
+    });
+    importResult.value = result;
+    toast.success(toastMessages.eligibility.imported(result));
+    await refreshRoll();
+  } catch (err) {
+    error.value = extractApiError(err);
+    toast.error(extractApiError(err));
+  } finally {
+    importing.value = false;
+  }
+}
+
 onMounted(refreshRoll);
 watch(() => electionUuid.value, refreshRoll);
 </script>
 
 <template>
   <ElectionWorkspacePageShell title="Eligibility" subtitle="Manage the voter roll and programme filters for this election.">
+    <template #actions>
+      <VButton variant="secondary" @click="openImportModal">Import CSV / Excel</VButton>
+    </template>
+
     <VAlert v-if="error" variant="error">{{ error }}</VAlert>
 
     <VCard title="Find students">
@@ -283,5 +350,76 @@ watch(() => electionUuid.value, refreshRoll);
       confirm-label="Remove"
       @confirm="confirmRemove"
     />
+
+    <VModal v-model="importOpen" title="Import voter roll" size="md" @close="closeImportModal">
+      <p class="mb-4 text-sm text-slate-600">
+        Upload a CSV or Excel (.xlsx) file with student index numbers and/or emails. Each row should
+        identify one voter already registered in the system.
+      </p>
+
+      <div class="mb-4 flex flex-wrap gap-2">
+        <VButton size="sm" variant="ghost" type="button" @click="downloadImportTemplate">
+          Download CSV template
+        </VButton>
+      </div>
+
+      <div class="space-y-4">
+        <div class="space-y-1.5">
+          <label class="vb-label" for="eligibility-import-file">File</label>
+          <input
+            id="eligibility-import-file"
+            type="file"
+            accept=".csv,.xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv"
+            class="vb-input file:mr-3 file:rounded-md file:border-0 file:bg-brand-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-brand-700"
+            @change="onImportFileChange"
+          />
+          <p class="text-xs text-ink-secondary">Supported formats: CSV, Excel (.xlsx)</p>
+        </div>
+
+        <VInput
+          v-model="importForm.eligibility_reason"
+          label="Default eligibility reason"
+          placeholder="Registered student voter"
+        />
+
+        <label class="flex min-h-touch items-center gap-2 text-sm text-slate-700">
+          <input
+            v-model="importForm.is_eligible"
+            type="checkbox"
+            class="rounded border-border text-brand-600"
+          />
+          Mark imported voters as eligible
+        </label>
+      </div>
+
+      <VAlert v-if="importResult" variant="info" class="mt-4">
+        <p class="font-medium">Import summary</p>
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-sm">
+          <li>{{ importResult.imported || 0 }} added to the roll</li>
+          <li>{{ importResult.updated || 0 }} updated</li>
+          <li>{{ importResult.not_found_count || 0 }} not found in the system</li>
+        </ul>
+        <p
+          v-if="importResult.not_found?.length"
+          class="mt-2 text-xs text-ink-secondary"
+        >
+          Not found: {{ importResult.not_found.slice(0, 8).join(", ") }}
+          <span v-if="importResult.not_found.length > 8">
+            (+{{ importResult.not_found.length - 8 }} more)
+          </span>
+        </p>
+      </VAlert>
+
+      <template #footer>
+        <div class="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <VButton variant="secondary" type="button" :disabled="importing" @click="closeImportModal">
+            Close
+          </VButton>
+          <VButton type="button" :loading="importing" :disabled="!importFile" @click="runImport">
+            Import voters
+          </VButton>
+        </div>
+      </template>
+    </VModal>
   </ElectionWorkspacePageShell>
 </template>

@@ -39,13 +39,11 @@ export const governanceSoftPalettes = [
 ];
 
 export const governanceQuickActionPaletteIndex = {
-  "validate-ussd": 9,
-  "validate-sms": 1,
-  "create-backup": 2,
-  maintenance: 3,
+  certifications: 5,
+  reports: 1,
   settings: 4,
-  results: 5,
   operations: 6,
+  results: 5,
 };
 
 export function getGovernanceSoftPalette(indexOrActionId) {

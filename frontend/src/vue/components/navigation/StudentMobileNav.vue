@@ -6,7 +6,7 @@ import { studentPrimaryNav } from "@/config/studentPortalNav";
 const route = useRoute();
 
 function isActive(item) {
-  if (item.key === "home") return route.path === item.to;
+  if (item.key === "dashboard") return route.path === item.to;
   return route.path === item.to || route.path.startsWith(`${item.to}/`);
 }
 </script>
@@ -16,7 +16,7 @@ function isActive(item) {
     class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white pb-[env(safe-area-inset-bottom)] lg:hidden"
     aria-label="Mobile navigation"
   >
-    <ul class="grid grid-cols-4">
+    <ul class="grid grid-cols-3">
       <li v-for="item in studentPrimaryNav" :key="item.key">
         <router-link
           :to="item.to"

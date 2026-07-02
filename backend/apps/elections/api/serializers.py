@@ -212,3 +212,9 @@ class BulkEligibilitySerializer(serializers.Serializer):
     )
     is_eligible = serializers.BooleanField()
     eligibility_reason = serializers.CharField(required=False, allow_blank=True)
+
+
+class EligibilityImportSerializer(serializers.Serializer):
+    file = serializers.FileField()
+    is_eligible = serializers.BooleanField(required=False, default=True)
+    eligibility_reason = serializers.CharField(required=False, allow_blank=True, default="Bulk import")
