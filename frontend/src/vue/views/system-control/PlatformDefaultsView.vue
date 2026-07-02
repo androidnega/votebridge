@@ -49,7 +49,7 @@ function saveGroup(group, updates) {
     <PageHeader
       title="Platform defaults"
       subtitle="System-wide defaults applied when Election Administrators create elections. Individual election rules are configured in the Election workspace."
-      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'Platform defaults' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Election Governance', to: r.governance.hub }, { label: 'Platform defaults' }]"
     />
     <ModuleNav :items="settingsNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

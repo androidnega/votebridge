@@ -40,7 +40,7 @@ function save() {
     <PageHeader
       title="System Maintenance"
       subtitle="Configure maintenance messaging, emergency stops, and availability controls. Enable maintenance mode from Feature Flags."
-      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'Maintenance' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Operations', to: r.operations.hub }, { label: 'Maintenance' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

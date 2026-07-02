@@ -7,9 +7,11 @@ export const settingsLegacyRedirects = [
   { path: "settings/institution-hub", redirect: r.institution.hub },
   { path: "settings/security-hub", redirect: r.security.hub },
   { path: "settings/advanced-hub", redirect: r.advanced.hub },
+  { path: "settings/governance-hub", redirect: r.governance.hub },
+  { path: "settings/operations-hub", redirect: r.operations.hub },
   { path: "settings/voting-hub", redirect: r.integrations.hub },
 
-  // Institution (profile moved under /institution/profile)
+  // Institution
   { path: "settings/branding", redirect: r.institution.branding },
 
   // Integrations
@@ -20,35 +22,47 @@ export const settingsLegacyRedirects = [
   { path: "settings/sms", redirect: r.integrations.sms },
   { path: "settings/email", redirect: r.integrations.email },
 
-  // Security (hub now lives at /settings/security)
+  // Security
   { path: "settings/authentication", redirect: r.security.authentication },
   { path: "settings/identity-assurance", redirect: r.security.identityAssurance },
-  { path: "settings/election-administration", redirect: r.security.electionAdministration },
-  { path: "settings/strongroom-config", redirect: r.security.strongroom },
   { path: "settings/api", redirect: r.security.api },
   { path: "settings/audit", redirect: r.security.audit },
+  { path: "settings/security-policies", redirect: r.security.policies },
 
-  // Advanced
-  { path: "settings/platform-defaults", redirect: r.advanced.platformDefaults },
-  { path: "settings/election-policies", redirect: r.advanced.platformDefaults },
+  // Phase 63 — moved under Election Governance
+  { path: "settings/election-administration", redirect: r.governance.electionAdministration },
+  { path: "settings/strongroom-config", redirect: r.governance.strongroom },
+  { path: "settings/security/election-administration", redirect: r.governance.electionAdministration },
+  { path: "settings/security/strongroom", redirect: r.governance.strongroom },
+
+  // Phase 63 — moved under Operations
+  { path: "settings/maintenance", redirect: r.operations.maintenance },
+  { path: "settings/backup", redirect: r.operations.backup },
+  { path: "settings/storage", redirect: r.operations.storage },
+  { path: "settings/advanced/maintenance", redirect: r.operations.maintenance },
+  { path: "settings/advanced/backup", redirect: r.operations.backup },
+  { path: "settings/advanced/storage", redirect: r.operations.storage },
+  { path: "settings/advanced/data-reset", redirect: r.operations.dataReset },
+
+  // Phase 63 — moved under Election Governance
+  { path: "settings/platform-defaults", redirect: r.governance.platformDefaults },
+  { path: "settings/election-policies", redirect: r.governance.platformDefaults },
+  { path: "settings/advanced/platform-defaults", redirect: r.governance.platformDefaults },
+
+  // Advanced (unchanged slugs)
   { path: "settings/feature-flags", redirect: r.advanced.featureFlags },
-  { path: "settings/maintenance", redirect: r.advanced.maintenance },
-  { path: "settings/backup", redirect: r.advanced.backup },
-  { path: "settings/system", redirect: r.advanced.system },
+  { path: "settings/system", redirect: r.advanced.hub },
+  { path: "settings/advanced/system", redirect: r.advanced.hub },
   { path: "settings/runtime", redirect: r.advanced.runtime },
   { path: "settings/environment", redirect: r.advanced.environment },
-  { path: "settings/storage", redirect: r.advanced.storage },
   { path: "settings/license", redirect: r.advanced.license },
   { path: "settings/about", redirect: r.advanced.about },
-
-  // Legacy flat paths that shared a slug with a new hub page
   { path: "settings/institution-profile", redirect: r.institution.profile },
-  { path: "settings/security-policies", redirect: r.security.policies },
 
   // Legacy system-control mirror
   { path: "system-control/institution", redirect: r.institution.profile },
   { path: "system-control/branding", redirect: r.institution.branding },
-  { path: "system-control/election-policies", redirect: r.advanced.platformDefaults },
+  { path: "system-control/election-policies", redirect: r.governance.platformDefaults },
   { path: "system-control/authentication", redirect: r.security.authentication },
   { path: "system-control/identity-assurance", redirect: r.security.identityAssurance },
   { path: "system-control/security", redirect: r.security.policies },
@@ -60,9 +74,9 @@ export const settingsLegacyRedirects = [
   { path: "system-control/sms", redirect: r.integrations.sms },
   { path: "system-control/email", redirect: r.integrations.email },
   { path: "system-control/feature-flags", redirect: r.advanced.featureFlags },
-  { path: "system-control/maintenance", redirect: r.advanced.maintenance },
-  { path: "system-control/storage", redirect: r.advanced.storage },
-  { path: "system-control/backup", redirect: r.advanced.backup },
+  { path: "system-control/maintenance", redirect: r.operations.maintenance },
+  { path: "system-control/storage", redirect: r.operations.storage },
+  { path: "system-control/backup", redirect: r.operations.backup },
   { path: "system-control/environment", redirect: r.advanced.environment },
   { path: "system-control/runtime", redirect: r.advanced.runtime },
   { path: "system-control/license", redirect: r.advanced.license },

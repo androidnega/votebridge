@@ -138,7 +138,7 @@ async function handleResetMfa(user) {
     <PageHeader
       title="Election administration"
       subtitle="Manage Election Administrators who configure and run elections. Super Admins govern the platform — not individual elections."
-      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Security', to: r.security.hub }, { label: 'Election administration' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Election Governance', to: r.governance.hub }, { label: 'Election administrators' }]"
     />
     <ModuleNav :items="settingsNav" />
 

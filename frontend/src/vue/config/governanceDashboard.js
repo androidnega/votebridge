@@ -60,8 +60,8 @@ export function getGovernanceSoftPalette(indexOrActionId) {
 export const governanceQuickActions = [
   { id: "validate-ussd", label: "Validate USSD", route: `${r.integrations.hub}?focus=ussd` },
   { id: "validate-sms", label: "Validate SMS", route: r.integrations.sms },
-  { id: "create-backup", label: "Create backup", route: r.advanced.backup },
-  { id: "maintenance", label: "Maintenance mode", route: r.advanced.maintenance },
+  { id: "create-backup", label: "Create backup", route: r.operations.backup },
+  { id: "maintenance", label: "Maintenance mode", route: r.operations.maintenance },
   { id: "settings", label: "Open settings", route: r.overview },
   { id: "results", label: "Open results queue", route: "/dashboard/results?filter=certification" },
   { id: "operations", label: "Open operations center", route: "/dashboard/operations" },

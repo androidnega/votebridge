@@ -49,7 +49,7 @@ async function runReset() {
       subtitle="Remove all elections, votes, results, and related operational records. User accounts and platform settings are kept."
       :breadcrumbs="[
         { label: 'Settings', to: r.overview },
-        { label: 'Advanced', to: r.advanced.hub },
+        { label: 'Operations', to: r.operations.hub },
         { label: 'Data reset' },
       ]"
     />

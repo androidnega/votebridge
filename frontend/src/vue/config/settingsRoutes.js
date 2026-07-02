@@ -1,4 +1,4 @@
-/** Settings workspace URL slugs — single source of truth for Super Admin routes. */
+/** Settings workspace URL slugs — Phase 63 governance IA. */
 
 const BASE = "/dashboard/settings";
 
@@ -9,6 +9,14 @@ export const settingsRoutes = {
     profile: `${BASE}/institution/profile`,
     branding: `${BASE}/institution/branding`,
   },
+  security: {
+    hub: `${BASE}/security`,
+    authentication: `${BASE}/security/authentication`,
+    identityAssurance: `${BASE}/security/identity-assurance`,
+    policies: `${BASE}/security/policies`,
+    api: `${BASE}/security/api`,
+    audit: `${BASE}/security/audit`,
+  },
   integrations: {
     hub: `${BASE}/integrations`,
     providers: `${BASE}/integrations/providers`,
@@ -18,29 +26,26 @@ export const settingsRoutes = {
     sms: `${BASE}/integrations/sms`,
     email: `${BASE}/integrations/email`,
   },
-  security: {
-    hub: `${BASE}/security`,
-    authentication: `${BASE}/security/authentication`,
-    identityAssurance: `${BASE}/security/identity-assurance`,
-    policies: `${BASE}/security/policies`,
-    electionAdministration: `${BASE}/security/election-administration`,
-    strongroom: `${BASE}/security/strongroom`,
-    api: `${BASE}/security/api`,
-    audit: `${BASE}/security/audit`,
+  governance: {
+    hub: `${BASE}/governance`,
+    electionAdministration: `${BASE}/governance/election-administration`,
+    strongroom: `${BASE}/governance/strongroom`,
+    platformDefaults: `${BASE}/governance/platform-defaults`,
+  },
+  operations: {
+    hub: `${BASE}/operations`,
+    maintenance: `${BASE}/operations/maintenance`,
+    backup: `${BASE}/operations/backup`,
+    storage: `${BASE}/operations/storage`,
+    dataReset: `${BASE}/operations/data-reset`,
   },
   advanced: {
     hub: `${BASE}/advanced`,
-    platformDefaults: `${BASE}/advanced/platform-defaults`,
     featureFlags: `${BASE}/advanced/feature-flags`,
-    maintenance: `${BASE}/advanced/maintenance`,
-    backup: `${BASE}/advanced/backup`,
-    system: `${BASE}/advanced/system`,
     runtime: `${BASE}/advanced/runtime`,
     environment: `${BASE}/advanced/environment`,
-    storage: `${BASE}/advanced/storage`,
     license: `${BASE}/advanced/license`,
     about: `${BASE}/advanced/about`,
-    dataReset: `${BASE}/advanced/data-reset`,
   },
 };
 
@@ -50,6 +55,8 @@ export const settingsNavPrefixes = {
   institution: settingsRoutes.institution.hub,
   integrations: settingsRoutes.integrations.hub,
   security: settingsRoutes.security.hub,
+  governance: settingsRoutes.governance.hub,
+  operations: settingsRoutes.operations.hub,
   advanced: settingsRoutes.advanced.hub,
 };
 

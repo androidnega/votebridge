@@ -48,7 +48,7 @@ function formatRows(rows) {
     <PageHeader
       title="Backup & Recovery"
       subtitle="Create, verify, and manage configuration backups."
-      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'Backup & recovery' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Operations', to: r.operations.hub }, { label: 'Backup & recovery' }]"
     >
       <template #actions>
         <VButton variant="primary" @click="createBackup">Create backup</VButton>

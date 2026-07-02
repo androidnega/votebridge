@@ -42,7 +42,7 @@ function cleanup() {
     <PageHeader
       title="Storage"
       subtitle="Disk, media, database, logs, and cache usage."
-      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced', to: r.advanced.hub }, { label: 'Storage' }]"
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Operations', to: r.operations.hub }, { label: 'Storage' }]"
     />
     <ModuleNav :items="systemControlNav" />
     <VAlert v-if="store.error" variant="error">{{ store.error }}</VAlert>

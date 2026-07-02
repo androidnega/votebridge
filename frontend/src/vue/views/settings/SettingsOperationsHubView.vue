@@ -9,34 +9,28 @@ const router = useRouter();
 
 const links = [
   {
-    title: "Authentication",
-    description: "OTP, sessions, and login policies.",
-    to: r.security.authentication,
-    paletteKey: "security",
+    title: "Maintenance mode",
+    description: "Schedule downtime windows and user-facing messages.",
+    to: r.operations.maintenance,
+    paletteKey: "maintenance",
   },
   {
-    title: "Identity assurance",
-    description: "Biometrics and step-up verification.",
-    to: r.security.identityAssurance,
-    paletteKey: "security",
+    title: "Backup & recovery",
+    description: "Create, verify, and restore platform backups.",
+    to: r.operations.backup,
+    paletteKey: "operations",
   },
   {
-    title: "Security policies",
-    description: "Rate limits, lockouts, and alert thresholds.",
-    to: r.security.policies,
-    paletteKey: "security",
+    title: "Storage",
+    description: "Disk usage, media storage, and cleanup.",
+    to: r.operations.storage,
+    paletteKey: "operations",
   },
   {
-    title: "API management",
-    description: "Keys, webhooks, and integration limits.",
-    to: r.security.api,
-    paletteKey: "security",
-  },
-  {
-    title: "Audit settings",
-    description: "Retention and audit log policies.",
-    to: r.security.audit,
-    paletteKey: "security",
+    title: "Operational data reset",
+    description: "Clear elections, votes, and results (Super Admin only).",
+    to: r.operations.dataReset,
+    paletteKey: "operations",
   },
 ];
 
@@ -49,9 +43,9 @@ function cardStyle(paletteKey) {
 <template>
   <div class="vb-page space-y-section">
     <PageHeader
-      title="Security"
-      subtitle="Authentication, identity assurance, and platform protection."
-      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Security' }]"
+      title="Operations"
+      subtitle="Platform reliability, maintenance, backups, and recoverability."
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Operations' }]"
     />
     <ModuleNav :items="settingsNav" />
     <div class="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">

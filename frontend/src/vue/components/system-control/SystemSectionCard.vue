@@ -8,6 +8,7 @@ const props = defineProps({
   title: { type: String, required: true },
   description: { type: String, default: "" },
   icon: { type: String, default: "settings" },
+  hubTo: { type: String, default: "" },
   items: { type: Array, default: () => [] },
 });
 
@@ -43,7 +44,7 @@ const cardStyle = computed(() => ({
     </header>
 
     <ul class="flex flex-1 flex-col divide-y" :style="{ borderColor: palette.border }">
-      <li v-for="item in items" :key="item.to">
+      <li v-for="item in items.slice(0, 5)" :key="item.to">
         <router-link
           :to="item.to"
           class="settings-section-link group flex min-h-touch items-start justify-between gap-3 px-card py-4 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-brand-600"
@@ -65,6 +66,21 @@ const cardStyle = computed(() => ({
         </router-link>
       </li>
     </ul>
+
+    <footer
+      v-if="hubTo"
+      class="border-t px-card py-3"
+      :style="{ borderColor: palette.border }"
+    >
+      <router-link
+        :to="hubTo"
+        class="inline-flex min-h-touch items-center gap-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-600 focus-visible:ring-offset-2"
+        :style="{ color: palette.accent }"
+      >
+        Open section
+        <VIcon name="chevronRight" size="sm" />
+      </router-link>
+    </footer>
   </article>
 </template>
 

@@ -32,6 +32,7 @@ export const strongRoomIntegrityNav = [
   { label: "Chain of custody", to: "/dashboard/strongroom/integrity/custody" },
 ];
 
+/** Phase 63 — grouped settings sub-navigation (Super Admin). */
 export const settingsNav = [
   {
     label: "Overview",
@@ -45,14 +46,24 @@ export const settingsNav = [
     activePathPrefix: settingsRoutes.institution.hub,
   },
   {
+    label: "Security",
+    to: settingsRoutes.security.hub,
+    activePathPrefix: settingsRoutes.security.hub,
+  },
+  {
     label: "Integrations",
     to: settingsRoutes.integrations.hub,
     activePathPrefix: settingsRoutes.integrations.hub,
   },
   {
-    label: "Security",
-    to: settingsRoutes.security.hub,
-    activePathPrefix: settingsRoutes.security.hub,
+    label: "Election Governance",
+    to: settingsRoutes.governance.hub,
+    activePathPrefix: settingsRoutes.governance.hub,
+  },
+  {
+    label: "Operations",
+    to: settingsRoutes.operations.hub,
+    activePathPrefix: settingsRoutes.operations.hub,
   },
   {
     label: "Advanced",

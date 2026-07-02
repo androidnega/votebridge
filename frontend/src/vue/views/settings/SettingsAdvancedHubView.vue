@@ -8,12 +8,36 @@ import { getSettingsSectionPalette } from "@/config/systemControlHub";
 const router = useRouter();
 
 const links = [
-  { title: "Maintenance", description: "Schedule downtime and user messaging.", to: r.advanced.maintenance, paletteKey: "maintenance" },
-  { title: "Backup & recovery", description: "Create, verify, and restore platform backups.", to: r.advanced.backup, paletteKey: "operations" },
-  { title: "Platform defaults", description: "Timezone, OTP expiry, session timeout, retention.", to: r.advanced.platformDefaults, paletteKey: "platform-defaults" },
-  { title: "Feature flags", description: "Toggle phased platform capabilities.", to: r.advanced.featureFlags, paletteKey: "platform-defaults" },
-  { title: "System configuration", description: "Runtime, environment, and storage.", to: r.advanced.system, paletteKey: "operations" },
-  { title: "License & about", description: "Version, support, and release information.", to: r.advanced.license, paletteKey: "about" },
+  {
+    title: "Feature flags",
+    description: "Central place to enable or disable platform capabilities.",
+    to: r.advanced.featureFlags,
+    paletteKey: "advanced",
+  },
+  {
+    title: "Environment",
+    description: "Deployment context and service endpoints.",
+    to: r.advanced.environment,
+    paletteKey: "advanced",
+  },
+  {
+    title: "Runtime config",
+    description: "Live tunable worker and cache parameters.",
+    to: r.advanced.runtime,
+    paletteKey: "advanced",
+  },
+  {
+    title: "License",
+    description: "Edition and support entitlements.",
+    to: r.advanced.license,
+    paletteKey: "advanced",
+  },
+  {
+    title: "About VoteBridge",
+    description: "Version, release notes, and credits.",
+    to: r.advanced.about,
+    paletteKey: "advanced",
+  },
 ];
 
 function cardStyle(paletteKey) {
@@ -26,11 +50,10 @@ function cardStyle(paletteKey) {
   <div class="vb-page space-y-section">
     <PageHeader
       title="Advanced"
-      subtitle="Platform operations for technical administrators."
+      subtitle="Low-frequency technical settings for platform administrators."
       :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Advanced' }]"
     />
     <ModuleNav :items="settingsNav" />
-
     <div class="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <button
         v-for="item in links"

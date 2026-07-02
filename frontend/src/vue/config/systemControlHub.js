@@ -1,92 +1,84 @@
-/** System Control hub — grouped navigation and quick actions. */
+/** Phase 63 — Settings control center: six governance groups. */
 
 import { settingsRoutes as r } from "@/config/settingsRoutes";
 
 export const systemControlSections = [
   {
     id: "institution",
-    title: "Institution & branding",
-    description: "Identity, contact details, and portal appearance.",
+    title: "Institution",
+    description: "University identity, branding, and portal-facing defaults.",
     icon: "profile",
+    hubTo: r.institution.hub,
     items: [
       { label: "Institution profile", to: r.institution.profile, description: "Name, campus, and election office contacts" },
       { label: "Branding", to: r.institution.branding, description: "Logos, colours, and login panel assets" },
     ],
   },
   {
-    id: "platform-defaults",
-    title: "Platform defaults",
-    description: "System-wide defaults for new elections and platform behaviour.",
-    icon: "settings",
-    items: [
-      { label: "Platform defaults", to: r.advanced.platformDefaults, description: "Timezone, OTP expiry, session timeout, retention" },
-      { label: "Feature flags", to: r.advanced.featureFlags, description: "Toggle experimental or phased capabilities" },
-    ],
-  },
-  {
-    id: "election-administration",
-    title: "Election administration",
-    description: "Manage Election Administrators — not individual elections.",
-    icon: "profile",
-    items: [
-      { label: "Election administrators", to: r.security.electionAdministration, description: "List, create, and suspend platform election officers" },
-      { label: "Administrator activity", to: `${r.security.electionAdministration}#activity`, description: "Sign-in and governance actions for election officers" },
-    ],
-  },
-  {
-    id: "integrations",
-    title: "Integrations",
-    description: "Communication providers, cache, and realtime infrastructure.",
-    icon: "communications",
-    items: [
-      { label: "Integration health", to: r.integrations.hub, description: "SMS, USSD, email, Redis, and WebSockets" },
-      { label: "Notifications", to: r.integrations.notifications, description: "Templates and delivery rules" },
-    ],
-  },
-  {
-    id: "strongroom-config",
-    title: "Strong room configuration",
-    description: "Configure the secure vault before elections — vault access is separate.",
-    icon: "strongroom",
-    items: [
-      { label: "Vault policies", to: r.security.strongroom, description: "Committee, credentials, rotation, and audit policies" },
-    ],
-  },
-  {
     id: "security",
-    title: "Security & access",
-    description: "Authentication, identity assurance, and platform hardening.",
+    title: "Security",
+    description: "Authentication, identity assurance, and platform protection policies.",
     icon: "security",
+    hubTo: r.security.hub,
     items: [
       { label: "Authentication", to: r.security.authentication, description: "OTP, sessions, and login policies" },
       { label: "Identity assurance", to: r.security.identityAssurance, description: "Biometrics and step-up verification" },
-      { label: "Security settings", to: r.security.policies, description: "Rate limits, lockouts, and alerts" },
+      { label: "Security policies", to: r.security.policies, description: "Rate limits, lockouts, and alert thresholds" },
       { label: "API management", to: r.security.api, description: "Keys, webhooks, and integration limits" },
       { label: "Audit settings", to: r.security.audit, description: "Retention and audit log policies" },
     ],
   },
   {
-    id: "operations",
-    title: "Operations & reliability",
-    description: "Maintenance, backups, storage, and runtime.",
-    icon: "operations",
+    id: "integrations",
+    title: "Integrations",
+    description: "SMS, email, USSD, and delivery provider configuration.",
+    icon: "communications",
+    hubTo: r.integrations.hub,
     items: [
-      { label: "Maintenance mode", to: r.advanced.maintenance, description: "Schedule downtime and user messaging" },
-      { label: "Backup & recovery", to: r.advanced.backup, description: "Create and verify platform backups" },
-      { label: "Storage", to: r.advanced.storage, description: "Disk usage and cleanup" },
-      { label: "Operational data reset", to: r.advanced.dataReset, description: "Clear elections, votes, and results (Super Admin)" },
-      { label: "Environment", to: r.advanced.environment, description: "Deployment and runtime context" },
-      { label: "Runtime config", to: r.advanced.runtime, description: "Live tunable system parameters" },
+      { label: "Integration health", to: r.integrations.hub, description: "Connectivity status and validation" },
+      { label: "SMS providers", to: r.integrations.sms, description: "Arkesel and Moolre SMS credentials" },
+      { label: "Email providers", to: r.integrations.email, description: "SMTP delivery configuration" },
+      { label: "USSD gateway", to: r.integrations.ussd, description: "Callback URL and session limits" },
+      { label: "Notifications", to: r.integrations.notifications, description: "Templates and delivery rules" },
     ],
   },
   {
-    id: "about",
-    title: "License & about",
-    description: "Version information and support contacts.",
-    icon: "help",
+    id: "governance",
+    title: "Election Governance",
+    description: "Super-admin election governance — not day-to-day election operations.",
+    icon: "elections",
+    hubTo: r.governance.hub,
     items: [
+      { label: "Election administrators", to: r.governance.electionAdministration, description: "Create and manage election officers" },
+      { label: "Strong room policies", to: r.governance.strongroom, description: "Vault committee, access, and session rules" },
+      { label: "Platform defaults", to: r.governance.platformDefaults, description: "Defaults applied to new elections" },
+    ],
+  },
+  {
+    id: "operations",
+    title: "Operations",
+    description: "Reliability, maintenance, backups, and recoverability.",
+    icon: "operations",
+    hubTo: r.operations.hub,
+    items: [
+      { label: "Maintenance mode", to: r.operations.maintenance, description: "Schedule downtime and user messaging" },
+      { label: "Backup & recovery", to: r.operations.backup, description: "Create and verify platform backups" },
+      { label: "Storage", to: r.operations.storage, description: "Disk usage and cleanup" },
+      { label: "Operational data reset", to: r.operations.dataReset, description: "Clear elections, votes, and results" },
+    ],
+  },
+  {
+    id: "advanced",
+    title: "Advanced",
+    description: "Low-frequency technical and deployment settings.",
+    icon: "settings",
+    hubTo: r.advanced.hub,
+    items: [
+      { label: "Feature flags", to: r.advanced.featureFlags, description: "Enable or disable platform capabilities" },
+      { label: "Environment", to: r.advanced.environment, description: "Deployment context and service endpoints" },
+      { label: "Runtime config", to: r.advanced.runtime, description: "Live tunable system parameters" },
       { label: "License", to: r.advanced.license, description: "Edition and support entitlements" },
-      { label: "About VoteBridge", to: r.advanced.about, description: "Release notes and credits" },
+      { label: "About VoteBridge", to: r.advanced.about, description: "Version, release notes, and credits" },
     ],
   },
 ];
@@ -101,15 +93,7 @@ export const settingsSoftPalettes = {
     hoverBg: "#D1EAE0",
     accent: "#1E5F46",
   },
-  "platform-defaults": {
-    bg: "#EFF6FF",
-    border: "#BFDBFE",
-    iconBg: "#DBEAFE",
-    icon: "#2563EB",
-    hoverBg: "#DBEAFE",
-    accent: "#2563EB",
-  },
-  "election-administration": {
+  governance: {
     bg: "#EEF2FF",
     border: "#C7D2FE",
     iconBg: "#E0E7FF",
@@ -124,14 +108,6 @@ export const settingsSoftPalettes = {
     icon: "#0891B2",
     hoverBg: "#CFFAFE",
     accent: "#0891B2",
-  },
-  "strongroom-config": {
-    bg: "#FFF1F2",
-    border: "#FECDD3",
-    iconBg: "#FFE4E6",
-    icon: "#BE123C",
-    hoverBg: "#FFE4E6",
-    accent: "#BE123C",
   },
   security: {
     bg: "#FFFBEB",
@@ -149,21 +125,13 @@ export const settingsSoftPalettes = {
     hoverBg: "#DCFCE7",
     accent: "#15803D",
   },
-  about: {
+  advanced: {
     bg: "#F5F3FF",
     border: "#DDD6FE",
     iconBg: "#EDE9FE",
     icon: "#7C3AED",
     hoverBg: "#EDE9FE",
     accent: "#7C3AED",
-  },
-  "quick-actions": {
-    bg: "#F8FAFC",
-    border: "#E2E8F0",
-    iconBg: "#F1F5F9",
-    icon: "#475569",
-    hoverBg: "#F1F5F9",
-    accent: "#475569",
   },
   maintenance: {
     bg: "#FFFBEB",
@@ -173,14 +141,6 @@ export const settingsSoftPalettes = {
     hoverBg: "#FEF3C7",
     accent: "#D97706",
   },
-  activity: {
-    bg: "#EFF6FF",
-    border: "#BFDBFE",
-    iconBg: "#DBEAFE",
-    icon: "#2563EB",
-    hoverBg: "#DBEAFE",
-    accent: "#2563EB",
-  },
 };
 
 export const settingsQuickActionPaletteKeys = {
@@ -189,27 +149,23 @@ export const settingsQuickActionPaletteKeys = {
   validate_ussd: "integrations",
   create_backup: "operations",
   restore_backup: "operations",
-  export_audit: "activity",
-  open_operations: "operations",
 };
 
 export function getSettingsSectionPalette(sectionId) {
-  return settingsSoftPalettes[sectionId] || settingsSoftPalettes["platform-defaults"];
+  return settingsSoftPalettes[sectionId] || settingsSoftPalettes.advanced;
 }
 
 export function getSettingsQuickActionPalette(action) {
-  const key = settingsQuickActionPaletteKeys[action] || "quick-actions";
-  return settingsSoftPalettes[key] || settingsSoftPalettes["quick-actions"];
+  const key = settingsQuickActionPaletteKeys[action] || "advanced";
+  return settingsSoftPalettes[key] || settingsSoftPalettes.advanced;
 }
 
 export const quickActionRoutes = {
-  maintenance_enable: r.advanced.maintenance,
+  maintenance_enable: r.operations.maintenance,
   validate_sms: r.integrations.sms,
   validate_ussd: `${r.integrations.hub}?focus=ussd`,
-  create_backup: r.advanced.backup,
-  restore_backup: r.advanced.backup,
-  export_audit: "/dashboard/platform/logs",
-  open_operations: "/dashboard/operations",
+  create_backup: r.operations.backup,
+  restore_backup: r.operations.backup,
 };
 
 export const infrastructureServices = [
@@ -221,7 +177,6 @@ export const infrastructureServices = [
   { key: "ussd_provider", label: "USSD", icon: "ussd" },
 ];
 
-/** Map provider connection strings to health badge variants. */
 export function normalizeHealthStatus(status) {
   if (!status) return "unknown";
   const value = String(status).toLowerCase();

@@ -20,12 +20,6 @@ const links = [
     to: r.institution.branding,
     paletteKey: "institution",
   },
-  {
-    title: "Platform defaults",
-    description: "System-wide defaults for new elections.",
-    to: r.advanced.platformDefaults,
-    paletteKey: "platform-defaults",
-  },
 ];
 
 function cardStyle(paletteKey) {
@@ -38,7 +32,7 @@ function cardStyle(paletteKey) {
   <div class="vb-page space-y-section">
     <PageHeader
       title="Institution"
-      subtitle="Identity and branding for your university election portal."
+      subtitle="University identity and portal branding."
       :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Institution' }]"
     />
     <ModuleNav :items="settingsNav" />

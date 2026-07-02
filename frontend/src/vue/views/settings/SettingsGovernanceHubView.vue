@@ -9,34 +9,22 @@ const router = useRouter();
 
 const links = [
   {
-    title: "Authentication",
-    description: "OTP, sessions, and login policies.",
-    to: r.security.authentication,
-    paletteKey: "security",
+    title: "Election administrators",
+    description: "Create, suspend, and audit platform election officers.",
+    to: r.governance.electionAdministration,
+    paletteKey: "governance",
   },
   {
-    title: "Identity assurance",
-    description: "Biometrics and step-up verification.",
-    to: r.security.identityAssurance,
-    paletteKey: "security",
+    title: "Strong room policies",
+    description: "Vault committee rules, session duration, and access policies.",
+    to: r.governance.strongroom,
+    paletteKey: "governance",
   },
   {
-    title: "Security policies",
-    description: "Rate limits, lockouts, and alert thresholds.",
-    to: r.security.policies,
-    paletteKey: "security",
-  },
-  {
-    title: "API management",
-    description: "Keys, webhooks, and integration limits.",
-    to: r.security.api,
-    paletteKey: "security",
-  },
-  {
-    title: "Audit settings",
-    description: "Retention and audit log policies.",
-    to: r.security.audit,
-    paletteKey: "security",
+    title: "Platform defaults",
+    description: "System-wide defaults applied when new elections are created.",
+    to: r.governance.platformDefaults,
+    paletteKey: "governance",
   },
 ];
 
@@ -49,11 +37,14 @@ function cardStyle(paletteKey) {
 <template>
   <div class="vb-page space-y-section">
     <PageHeader
-      title="Security"
-      subtitle="Authentication, identity assurance, and platform protection."
-      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Security' }]"
+      title="Election Governance"
+      subtitle="Super-admin election governance — administrators, vault policy, and platform defaults."
+      :breadcrumbs="[{ label: 'Settings', to: r.overview }, { label: 'Election Governance' }]"
     />
     <ModuleNav :items="settingsNav" />
+    <p class="rounded-input border border-border bg-surface-muted px-4 py-3 text-sm text-slate-600">
+      Day-to-day election operations — candidates, positions, and ballots — belong in the Elections workspace, not here.
+    </p>
     <div class="grid auto-rows-fr grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       <button
         v-for="item in links"
