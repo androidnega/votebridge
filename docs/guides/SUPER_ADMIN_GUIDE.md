@@ -15,6 +15,14 @@ Super admins have full platform access:
 - **Results** — certification, publication, archive
 - **Operations** — system health (via dashboard deep link)
 
+### Logging in
+
+1. Open VoteBridge → tap **Staff access** on the sign-in page.
+2. Enter **email or username** → **password** → **OTP** (and biometric step-up when policy requires).
+3. Land on the **Election command center** dashboard.
+
+Students use the default form (**index number** only) — see [Student Guide](STUDENT_GUIDE.md).
+
 ---
 
 ## 2. Dashboard

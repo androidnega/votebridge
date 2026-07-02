@@ -38,7 +38,7 @@ VoteBridge is a **secure, real-time campus e-voting platform** for universities 
 
 ### Security & identity
 
-- Unified login (index or email)
+- Unified sign-in (index number for students; Staff access for staff)
 - OTP verification
 - JWT sessions with refresh
 - Trusted devices for administrators

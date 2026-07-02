@@ -2,7 +2,7 @@
 
 ## A. Phase Completion Report
 
-Phase UI-X delivers a unified enterprise design system for VoteBridge: forest-green institutional palette, Inter Variable typography, standardized spacing tokens, intelligent single-field authentication (no role selector), refactored shell navigation, enhanced table/form/button components, professional error pages, and comprehensive demo seed data. No business logic, API, auth backend, or database schema changes were made.
+Phase UI-X delivers a unified enterprise design system for VoteBridge: forest-green institutional palette, Inter Variable typography, standardized spacing tokens, role-aware unified sign-in (student index number + subtle Staff access; no role selector), refactored shell navigation, enhanced table/form/button components, professional error pages, and comprehensive demo seed data. No business logic, API, auth backend, or database schema changes were made.
 
 **Status:** Complete  
 **Frontend build:** Passes (`npm run build`)  

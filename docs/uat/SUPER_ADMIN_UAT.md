@@ -16,7 +16,7 @@ Verify super admin oversight: dashboard, strong room, certification, settings, a
 
 | # | Step | Expected result | Pass | Fail |
 |---|------|-----------------|------|------|
-| 1 | Login (OTP + biometric if required) | Command center dashboard | ☐ | ☐ |
+| 1 | Login (Staff access → email/username → password → OTP; biometric if required) | Command center dashboard | ☐ | ☐ |
 | 2 | Dashboard — 5 focus cards | All cards show data or zero | ☐ | ☐ |
 | 3 | Platform health link | Operations health loads | ☐ | ☐ |
 | 4 | Strong room overview | Dashboard loads | ☐ | ☐ |

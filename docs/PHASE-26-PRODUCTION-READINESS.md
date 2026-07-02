@@ -35,7 +35,7 @@ VoteBridge is **feature complete for v1.0** with a consolidated election workspa
 
 | Step | Status | Evidence |
 |------|--------|----------|
-| Login (index/email) | ✅ | Unified `auth/login/`; role resolved server-side |
+| Login (index number / Staff access) | ✅ | Unified `auth/login/`; role resolved server-side |
 | Trusted device registration | ✅ | `trusted_devices` tests; post-biometric registration in verification flow |
 | OTP verification | ✅ | `notifications` tests; OTP delivery mocked |
 | Biometric verification | ✅ | `apps/biometrics/tests` — enrollment, login verify, failure logging |
@@ -110,7 +110,7 @@ VoteBridge is **feature complete for v1.0** with a consolidated election workspa
 
 | Control | Status | Detail |
 |---------|--------|--------|
-| Unified login | ✅ | No role selector in UI |
+| Unified login | ✅ | Student-first index number form; **Staff access** for privileged accounts; no role selector |
 | OTP | ✅ | Rate-limited; expiry configurable |
 | JWT sessions | ✅ | Access + refresh; logout revokes |
 | Trusted devices | ✅ | Risk scoring, impossible travel tests |

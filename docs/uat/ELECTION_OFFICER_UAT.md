@@ -16,7 +16,7 @@ Verify an election officer can complete the full election lifecycle within the E
 
 | # | Step | Expected result | Pass | Fail |
 |---|------|-----------------|------|------|
-| 1 | Login as admin | Admin dashboard loads | ☐ | ☐ |
+| 1 | Login as admin | Tap **Staff access** → email/username → password → OTP; admin dashboard loads | ☐ | ☐ |
 | 2 | Election workspace → Create election | Form saves; redirect to workspace | ☐ | ☐ |
 | 3 | Positions tab — add 2 positions | Positions listed | ☐ | ☐ |
 | 4 | Candidates tab — add + approve candidates | Approved count updates | ☐ | ☐ |

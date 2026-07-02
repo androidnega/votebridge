@@ -50,8 +50,9 @@ Premium enterprise election platform. Mobile-first. Fully responsive.
 
 ## Authentication
 
-- **Single unified login** — no role selector
-- Index number OR email in one field; backend determines role
+- **Single unified sign-in page** — no role selector
+- **Student / candidate (default):** index number only → OTP (`Enter your index number`, placeholder e.g. `BC/ITS/24/047`)
+- **Staff:** subtle **Staff access** link → email or username → password → OTP
 - OTP screen must not expose role labels
 
 ## Required page states

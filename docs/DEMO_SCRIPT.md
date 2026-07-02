@@ -21,15 +21,15 @@ Use a **staging environment** with `seed_demo_data`. Demo credentials are in the
 
 ## 1. Login (5 min)
 
-**Show:** Unified login — no role selector.
+**Show:** Unified sign-in — student-first copy, no role selector.
 
 1. Open VoteBridge URL.
-2. Log in as **super admin** → OTP → biometric (if enabled).
+2. Log in as **super admin**: **Staff access** → email/username → password → OTP → biometric (if enabled).
 3. Highlight **Election command center** dashboard — 5 focus cards.
-4. Briefly log out; log in as **student** with index number → OTP.
+4. Briefly log out; log in as **student** with index number on the default form → OTP.
 5. Show student dashboard — elections and history.
 
-**Talking point:** One login for all roles; backend determines permissions.
+**Talking point:** One sign-in page for everyone; student-first copy (index number only). Staff use **Staff access** — backend determines permissions.
 
 ---
 

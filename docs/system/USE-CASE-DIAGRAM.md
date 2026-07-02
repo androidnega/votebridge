@@ -37,7 +37,7 @@ flowchart TB
     end
 
     subgraph Voting["Prototype — voting"]
-        UC1[Sign in index number or Staff access]
+        UC1[Sign in — index number or Staff access]
         UC2[Request voting code SVT]
         UC3[Verify SVT]
         UC4[Capture presence photo]

@@ -8,11 +8,11 @@
 ## 1. Logging in
 
 1. Open VoteBridge on your phone or computer.
-2. Enter your **index number** (e.g. `BC/ITS/24/047`) in the login field.
+2. Enter your **index number** (e.g. `BC/ITS/24/047`) — the field is labelled **Index number**.
 3. Tap **Continue** and enter the **OTP** sent to your registered phone or email.
 4. You arrive at your **Dashboard**.
 
-There is no role selector — the system recognises you as a student automatically.
+There is no role selector and no **Staff access** link for students — the system recognises you from your index number.
 
 ---
 

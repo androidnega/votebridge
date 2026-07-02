@@ -1,7 +1,7 @@
 # Phase 21 — Enterprise Biometric Identity Assurance
 
 **Date:** June 2025  
-**Scope:** Privileged-user liveness + face verification (Super Admin, Admin, Election Officer, Registrar). Students remain password + OTP only.
+**Scope:** Privileged-user liveness + face verification (Super Admin, Admin, Election Officer, Registrar). Students and candidates sign in with **index number + OTP** only (no password).
 
 ---
 

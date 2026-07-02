@@ -9,10 +9,14 @@ This guide walks through the complete election lifecycle inside the **Election w
 
 ## 1. Logging in
 
-1. Open VoteBridge and enter your **email or username** on the sign-in page (same unified login as students).
-2. Enter your **password** when prompted.
-3. Complete **OTP** verification.
-4. You land on the **Admin dashboard** showing open elections, turnout, and tasks.
+1. Open VoteBridge on the sign-in page.
+2. Tap **Staff access** (below the student index number form).
+3. Enter your **email or username**, then **Continue**.
+4. Enter your **password** when prompted.
+5. Complete **OTP** verification.
+6. You land on the **Admin dashboard** showing open elections, turnout, and tasks.
+
+> **Students and candidates** sign in with their **index number** on the default form — no Staff access link needed.
 
 ---
 
