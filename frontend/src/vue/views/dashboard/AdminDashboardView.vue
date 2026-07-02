@@ -1,21 +1,23 @@
 <script setup>
-import { onMounted } from "vue";
+import { defineAsyncComponent, onMounted } from "vue";
 import { useRouter } from "vue-router";
-import LineChart from "@/components/charts/LineChart.vue";
-import BarChart from "@/components/charts/BarChart.vue";
-import DonutChart from "@/components/charts/DonutChart.vue";
 import {
-  DashboardActivityTimeline,
+  AdminCommandHero,
+  AdminElectionPulseCard,
+  AdminElectionsTable,
+} from "@/components/dashboard/admin";
+import {
   DashboardChartToolbar,
   DashboardKpiCard,
   DashboardQuickActions,
   DashboardSectionCard,
-  DashboardUpcomingList,
-  DashboardWelcomeBanner,
 } from "@/components/dashboard/experience";
 import { EmptyState, LoadingSkeleton, VAlert, VButton } from "@/components/ui";
 import { useAdminCommandCenter } from "@/composables/useAdminCommandCenter";
 import { useDashboardRealtime } from "@/composables/useDashboardRealtime";
+
+const LineChart = defineAsyncComponent(() => import("@/components/charts/LineChart.vue"));
+const PieChart = defineAsyncComponent(() => import("@/components/charts/PieChart.vue"));
 
 const router = useRouter();
 useDashboardRealtime("admin");
@@ -25,18 +27,16 @@ const {
   isLive,
   chartRange,
   chartTimeRanges,
-  welcomeBanner,
+  heroConfig,
   kpiCards,
+  pulseElections,
+  electionTableRows,
+  electionStatusItems,
   votingActivityLabels,
   votingActivitySeries,
-  votingBarValues,
   isWaitingForVotes,
   hasVotingActivity,
-  electionStatusItems,
-  electionActivity,
-  upcomingElections,
   quickActions,
-  chartColors,
   loadCommandCenter,
 } = useAdminCommandCenter();
 
@@ -51,124 +51,120 @@ function refresh() {
 function navigate(route) {
   if (route) router.push(route);
 }
+
+function openElection(uuid) {
+  if (uuid) router.push(`/dashboard/elections/${uuid}`);
+}
 </script>
 
 <template>
-  <div class="min-h-full bg-surface-muted pb-10">
-    <div class="space-y-6 px-page pt-6">
+  <div class="min-h-full bg-surface-muted pb-12">
+    <div class="mx-auto max-w-[1440px] space-y-6 px-page pt-6">
       <VAlert v-if="dashboardStore.error" variant="error">{{ dashboardStore.error }}</VAlert>
-      <LoadingSkeleton v-if="dashboardStore.loading && !dashboardStore.adminOverview" variant="stats" :rows="8" />
+      <LoadingSkeleton v-if="dashboardStore.loading && !dashboardStore.adminOverview" variant="stats" :rows="6" />
 
       <template v-else>
-        <DashboardWelcomeBanner
-          v-bind="welcomeBanner"
-          :is-live="isLive"
-          subtitle="Here's the current status of the election platform."
-        >
-          <template #actions>
-            <div class="flex flex-wrap gap-2">
-              <VButton variant="secondary" size="sm" :loading="dashboardStore.loading" @click="refresh">
-                Refresh
-              </VButton>
-              <VButton size="sm" @click="navigate('/dashboard/elections/create')">Create Election</VButton>
-            </div>
-          </template>
-        </DashboardWelcomeBanner>
+        <div class="flex flex-wrap items-center justify-end gap-2">
+          <span
+            v-if="isLive"
+            class="inline-flex items-center gap-1.5 rounded-full bg-success-50 px-3 py-1 text-xs font-semibold text-success-700"
+          >
+            <span class="h-2 w-2 animate-pulse rounded-full bg-success-600" aria-hidden="true" />
+            Live feed connected
+          </span>
+          <VButton variant="secondary" size="sm" :loading="dashboardStore.loading" @click="refresh">
+            Refresh
+          </VButton>
+        </div>
 
-        <section aria-label="Election summary">
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
-            <DashboardKpiCard
-              v-for="card in kpiCards"
-              :key="card.id"
-              v-bind="card"
-              :clickable="Boolean(card.clickable && card.route)"
-              @click="card.route && navigate(card.route)"
+        <section class="grid grid-cols-1 gap-6 xl:grid-cols-12">
+          <div class="xl:col-span-8">
+            <AdminCommandHero
+              v-bind="heroConfig"
+              @primary="navigate(heroConfig.monitorRoute)"
+              @secondary="navigate('/dashboard/elections')"
+            />
+          </div>
+
+          <DashboardSectionCard
+            class="xl:col-span-4"
+            title="Election pipeline"
+            subtitle="Lifecycle distribution across your institution."
+            no-padding
+          >
+            <div class="p-6 pt-2">
+              <PieChart
+                v-if="electionStatusItems.length"
+                :items="electionStatusItems"
+                donut
+                height="300px"
+              />
+              <EmptyState
+                v-else
+                icon="elections"
+                title="No elections yet"
+                description="Create your first election to see pipeline distribution."
+              />
+            </div>
+          </DashboardSectionCard>
+        </section>
+
+        <section aria-label="Summary metrics" class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <DashboardKpiCard
+            v-for="card in kpiCards"
+            :key="card.id"
+            v-bind="card"
+            :clickable="Boolean(card.clickable && card.route)"
+            @click="card.route && navigate(card.route)"
+          />
+        </section>
+
+        <section v-if="pulseElections.length" aria-label="Election spotlight">
+          <div class="mb-4 flex items-end justify-between gap-3">
+            <div>
+              <h2 class="text-lg font-semibold text-ink-primary">Election spotlight</h2>
+              <p class="mt-1 text-sm text-ink-secondary">
+                Ballot readiness and live turnout — aggregate only, no candidate rankings.
+              </p>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <AdminElectionPulseCard
+              v-for="election in pulseElections"
+              :key="election.uuid"
+              :election="election"
+              :turnout-metric-label="election.turnoutMetricLabel"
+              @open="openElection"
             />
           </div>
         </section>
 
-        <section class="grid grid-cols-1 gap-6 xl:grid-cols-12">
-          <DashboardSectionCard
-            class="xl:col-span-8"
-            title="Voting Activity"
-            subtitle="Votes cast and turnout percentage — aggregate only, no candidate standings."
+        <DashboardSectionCard
+          title="Voting activity"
+          subtitle="Hourly ballots cast — sanitized live feed while elections are open."
+        >
+          <template #actions>
+            <DashboardChartToolbar v-model="chartRange" :ranges="chartTimeRanges" />
+          </template>
+          <p
+            v-if="isWaitingForVotes"
+            class="mb-4 rounded-input border border-border bg-brand-50/60 px-4 py-3 text-sm text-ink-secondary"
           >
-            <template #actions>
-              <DashboardChartToolbar v-model="chartRange" :ranges="chartTimeRanges" />
-            </template>
-            <p
-              v-if="isWaitingForVotes"
-              class="mb-4 rounded-input border border-border bg-surface-muted px-4 py-3 text-sm text-slate-700"
-            >
-              <span class="font-semibold text-brand-700">0%</span>
-              — Waiting for voting to begin.
-            </p>
-            <LineChart
-              v-if="hasVotingActivity"
-              :labels="votingActivityLabels"
-              :series="votingActivitySeries"
-              :animated="isLive"
-              height="280px"
-            />
-            <BarChart
-              v-if="hasVotingActivity"
-              class="mt-6"
-              title="Votes by hour"
-              :labels="votingActivityLabels"
-              :values="votingBarValues"
-              height="220px"
-            />
-          </DashboardSectionCard>
+            Voting is open but no ballots have been cast yet. This chart updates automatically as students vote.
+          </p>
+          <LineChart
+            v-if="hasVotingActivity"
+            :labels="votingActivityLabels"
+            :series="votingActivitySeries"
+            :smooth="0.42"
+            :animated="isLive"
+            height="320px"
+          />
+        </DashboardSectionCard>
 
-          <DashboardSectionCard
-            class="xl:col-span-4"
-            title="Election Status"
-            subtitle="Distribution across the election lifecycle."
-          >
-            <DonutChart
-              v-if="electionStatusItems.length"
-              :items="electionStatusItems"
-              :colors="chartColors"
-              donut
-              :animated="isLive"
-              height="320px"
-            />
-          </DashboardSectionCard>
-        </section>
+        <AdminElectionsTable :rows="electionTableRows" @select="openElection" />
 
-        <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <DashboardSectionCard title="Recent Election Activity" subtitle="Operational events as they happen.">
-            <DashboardActivityTimeline v-if="electionActivity.length" :items="electionActivity" />
-            <EmptyState
-              v-else
-              icon="notifications"
-              title="No election activity yet"
-              description="Openings, approvals, and ballot events will stream here."
-            />
-          </DashboardSectionCard>
-
-          <DashboardSectionCard title="Upcoming Elections" subtitle="Scheduled elections approaching their opening window.">
-            <DashboardUpcomingList
-              v-if="upcomingElections.length"
-              :items="upcomingElections"
-              @select="navigate"
-            />
-            <EmptyState
-              v-else
-              icon="elections"
-              title="No upcoming elections"
-              description="Scheduled elections will appear here before they open."
-            >
-              <template #action>
-                <VButton variant="secondary" size="sm" @click="navigate('/dashboard/elections')">
-                  View all elections
-                </VButton>
-              </template>
-            </EmptyState>
-          </DashboardSectionCard>
-        </section>
-
-        <DashboardSectionCard title="Quick Actions" subtitle="Common election officer workflows.">
+        <DashboardSectionCard title="Quick actions" subtitle="Jump to common election officer workflows.">
           <DashboardQuickActions :actions="quickActions" @select="navigate" />
         </DashboardSectionCard>
       </template>

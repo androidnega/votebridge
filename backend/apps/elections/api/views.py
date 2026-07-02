@@ -32,6 +32,7 @@ from apps.elections.services import (
     voting_channel_service,
 )
 from apps.elections.services.eligibility_import_service import parse_eligibility_upload
+from apps.security.models import AuditLog
 from apps.security.services.monitoring_service import monitoring_service
 from core.client_meta import get_client_context
 

@@ -54,10 +54,6 @@ CANDIDATE_NAMES = [
 
 OPEN_ELECTION_CANDIDATES = {
     "President": CANDIDATE_NAMES,
-    "Vice President": [
-        ("Yaw Mensah", "Mechanical Engineering", "BC/MEE/24/011"),
-        ("Abena Ofori", "Computer Technology", "BC/ICT/24/063"),
-    ],
     "General Secretary": [
         ("Efua Adjei", "Accounting", "BC/ACC/24/092"),
         ("Kwame Ansah", "Information Technology", "BC/ITD/24/044"),
@@ -109,7 +105,7 @@ class Command(BaseCommand):
                 "status": Election.Status.ARCHIVED,
                 "start": now - timedelta(days=90),
                 "end": now - timedelta(days=83),
-                "positions": ["President", "Vice President", "General Secretary"],
+                "positions": ["President", "General Secretary"],
             },
             {
                 "title": "Faculty of Applied Sciences Rep Election",

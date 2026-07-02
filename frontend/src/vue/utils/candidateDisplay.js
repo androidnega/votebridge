@@ -3,34 +3,57 @@
 /** Recommended uploads: 512×512 px (1:1), JPG/WebP, plain light background, head + shoulders centered. */
 
 const CANDIDATE_PHOTOS = {
+  // TTU SRC General Elections 2026
   "Kofi Boateng": "/candidates/male-1.png",
   "Kwame Ansah": "/candidates/male-2.png",
-  "Daniel Owusu": "/candidates/male-3.png",
-  "Isaac Tetteh": "/candidates/male-2.png",
-  "Prince Boakye": "/candidates/male-1.png",
-  "Samuel Osei": "/candidates/male-3.png",
-  "Michael Addo": "/candidates/male-2.png",
-  "Kojo Sarpong": "/candidates/male-1.png",
-  "Kwesi Appiah": "/candidates/male-3.png",
-  "Yaw Darko": "/candidates/male-2.png",
-  "Kofi Asante": "/candidates/male-1.png",
   "Ama Serwaa": "/candidates/female-1.png",
   "Efua Adjei": "/candidates/female-2.png",
+  "Daniel Owusu": "/candidates/male-3.png",
   "Selina Agyeman": "/candidates/female-3.png",
-  "Adwoa Mensah": "/candidates/female-1.png",
-  "Rebecca Antwi": "/candidates/female-2.png",
-  "Akosua Frimpong": "/candidates/female-3.png",
-  "Gifty Asare": "/candidates/female-1.png",
-  "Naana Dankwa": "/candidates/female-2.png",
-  "Abena Boateng": "/candidates/female-3.png",
-  "Ama Kwarteng": "/candidates/female-2.png",
+  "Adwoa Mensah": "/candidates/female-4.png",
+  "Isaac Tetteh": "/candidates/male-4.png",
+  "Rebecca Antwi": "/candidates/female-5.png",
+  "Akosua Frimpong": "/candidates/female-6.png",
+  "Gifty Asare": "/candidates/female-7.png",
+  "Naana Dankwa": "/candidates/female-1.png",
+  "Prince Boakye": "/candidates/male-1.png",
+  "Samuel Osei": "/candidates/male-2.png",
+  "Michael Addo": "/candidates/male-3.png",
+  "Abena Boateng": "/candidates/female-2.png",
+  "Kojo Sarpong": "/candidates/male-4.png",
+  "Ama Kwarteng": "/candidates/female-3.png",
+  "Kwesi Appiah": "/candidates/male-1.png",
+  "Yaw Darko": "/candidates/male-2.png",
+  "Richard Nyame": "/candidates/male-3.png",
+  // FASSA Elections 2025
+  "Nana Agyei": "/candidates/male-4.png",
+  "Abigail Ofori": "/candidates/female-4.png",
+  "Kweku Annan": "/candidates/male-1.png",
+  "Linda Akoto": "/candidates/female-5.png",
+  "George Mensah": "/candidates/male-2.png",
+  "Esi Mensah": "/candidates/female-6.png",
+  "Fiifi Amoah": "/candidates/male-3.png",
+  "Joel Ampofo": "/candidates/male-4.png",
+  "Ama Osei": "/candidates/female-7.png",
+  "Yaa Serwaa": "/candidates/female-1.png",
+  "Akosua Danso": "/candidates/female-2.png",
+  "Kwabena Owusu": "/candidates/male-1.png",
 };
 
 const META_LINE =
   /^(Faculty|Department|Index|Academic Level):/i;
 
 export function getCandidatePhotoUrl(candidate = {}) {
-  if (candidate.image_url) return candidate.image_url;
+  if (candidate.image_url) {
+    const url = candidate.image_url;
+    if (url.startsWith("http://localhost:8000")) {
+      return url.replace("http://localhost:8000", "");
+    }
+    if (url.startsWith("http://127.0.0.1:8000")) {
+      return url.replace("http://127.0.0.1:8000", "");
+    }
+    return url;
+  }
   return CANDIDATE_PHOTOS[candidate.full_name] || null;
 }
 

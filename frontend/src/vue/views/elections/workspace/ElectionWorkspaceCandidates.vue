@@ -2,7 +2,8 @@
 import { computed, onMounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { ElectionWorkspacePageShell } from "@/components/admin";
-import { CandidateCard } from "@/components/voting";
+import CandidateAvatar from "@/components/candidates/CandidateAvatar.vue";
+import CandidateProfileModal from "@/components/candidates/CandidateProfileModal.vue";
 import { ConfirmDialog, EmptyState, LoadingSkeleton, VAlert, VButton, VCard, VInput, VModal, VTable } from "@/components/ui";
 import { emptyStates } from "@/config/emptyStates";
 import { toastMessages } from "@/config/toastMessages";
@@ -56,7 +57,7 @@ const defaultForm = () => ({
 const form = ref(defaultForm());
 
 const columns = [
-  { key: "full_name", label: "Name" },
+  { key: "candidate", label: "Candidate" },
   { key: "position_title", label: "Position" },
   { key: "status_display", label: "Status" },
   { key: "actions", label: "" },
@@ -68,12 +69,9 @@ const positionOptions = computed(() =>
 
 const canAddCandidate = computed(() => positions.value.length > 0);
 
-const previewOpen = computed({
-  get: () => Boolean(previewCandidate.value),
-  set: (value) => {
-    if (!value) previewCandidate.value = null;
-  },
-});
+function closePreview() {
+  previewCandidate.value = null;
+}
 
 const editOpen = computed({
   get: () => Boolean(editCandidate.value),
@@ -318,6 +316,15 @@ onMounted(refreshPage);
         :range-label="rangeLabel"
         @update:page="goToPage"
       >
+        <template #cell-candidate="{ row }">
+          <div class="flex items-center gap-3 py-0.5">
+            <CandidateAvatar :candidate="row" size="sm" />
+            <div class="min-w-0">
+              <p class="font-medium text-slate-900">{{ row.full_name }}</p>
+              <p v-if="row.department" class="truncate text-xs text-slate-500">{{ row.department }}</p>
+            </div>
+          </div>
+        </template>
         <template #cell-actions="{ row }">
           <div class="flex flex-wrap gap-1">
             <VButton size="sm" variant="ghost" @click="previewCandidate = row">Preview</VButton>
@@ -419,9 +426,11 @@ onMounted(refreshPage);
       </template>
     </VModal>
 
-    <VModal v-model="previewOpen" title="Candidate profile" size="md">
-      <CandidateCard v-if="previewCandidate" :candidate="previewCandidate" disabled :tab-index="-1" />
-    </VModal>
+    <CandidateProfileModal
+      v-if="previewCandidate"
+      :candidate="previewCandidate"
+      @close="closePreview"
+    />
 
     <VModal v-model="editOpen" title="Edit candidate" size="md" @close="closeEditModal">
       <VAlert v-if="error && editOpen" variant="error" class="mb-4">{{ error }}</VAlert>

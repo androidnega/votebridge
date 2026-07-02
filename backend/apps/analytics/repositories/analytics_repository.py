@@ -20,6 +20,8 @@ PROGRAMME_LABELS = {
     "ITD": "Information Technology (Database)",
     "ITN": "Information Technology (Network)",
     "ICT": "Information and Communication Technology",
+    "ACC": "Accounting",
+    "MEE": "Mechanical Engineering",
 }
 
 FACULTY_BY_PROGRAMME = {
@@ -27,6 +29,8 @@ FACULTY_BY_PROGRAMME = {
     "ITD": "Faculty of Applied Sciences",
     "ITN": "Faculty of Applied Sciences",
     "ICT": "Faculty of Applied Sciences",
+    "ACC": "Faculty of Business Studies",
+    "MEE": "Faculty of Engineering",
 }
 
 INDEX_PATTERN = re.compile(r"^[A-Z]{2}/([A-Z]{3})/\d{2}/\d{3}$")
@@ -62,7 +66,7 @@ class AnalyticsRepository:
     def faculty_for_programme(self, code: str | None) -> str:
         if not code:
             return "Unknown"
-        return FACULTY_BY_PROGRAMME.get(code, "Other Faculties")
+        return FACULTY_BY_PROGRAMME.get(code, "Unassigned faculty")
 
     def total_students(self) -> int:
         return User.objects.filter(role__name=Role.Name.STUDENT, is_active=True).count()

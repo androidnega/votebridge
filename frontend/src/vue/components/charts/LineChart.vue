@@ -21,13 +21,31 @@ const option = computed(() => ({
   grid: { left: 40, right: 16, top: props.title ? 48 : 24, bottom: 32 },
   xAxis: { type: "category", data: props.labels, boundaryGap: false },
   yAxis: { type: "value", splitLine: { lineStyle: { color: "#E5E7EB" } } },
-  series: props.series.map((s) => ({
-    type: "line",
-    smooth: s.smooth ?? props.smooth,
-    showSymbol: false,
-    areaStyle: s.area ? { opacity: 0.12 } : undefined,
-    ...s,
-  })),
+  series: props.series.map((s) => {
+    const color = s.itemStyle?.color || CHART_COLORS[0];
+    return {
+      type: "line",
+      ...s,
+      smooth: s.smooth ?? props.smooth,
+      showSymbol: false,
+      areaStyle: s.area
+        ? {
+            opacity: 0.2,
+            color: {
+              type: "linear",
+              x: 0,
+              y: 0,
+              x2: 0,
+              y2: 1,
+              colorStops: [
+                { offset: 0, color },
+                { offset: 1, color: "rgba(37, 99, 235, 0.02)" },
+              ],
+            },
+          }
+        : undefined,
+    };
+  }),
 }));
 
 const { elRef } = useEChart(option);

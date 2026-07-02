@@ -236,10 +236,11 @@ class Command(BaseCommand):
                 )
                 created += 1
 
-        Position.objects.filter(election=election, title__iexact="Vice President").update(
-            is_votable=False,
-            is_active=False,
-        )
+        vp_positions = Position.objects.filter(election=election, title__iexact="Vice President")
+        for position in vp_positions:
+            Candidate.objects.filter(position=position).delete()
+            position.delete()
+
         return Position.objects.filter(election=election, is_active=True, is_votable=True).count()
 
     def _sync_candidates(self, election: Election) -> int:

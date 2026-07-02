@@ -257,12 +257,17 @@ onUnmounted(() => store.disconnectRealtime());
         </VCard>
       </section>
 
-      <VCard title="Faculty participation">
+      <VCard
+        title="Faculty participation"
+        subtitle="Turnout percentage by faculty for eligible voters in scope."
+      >
         <BarChart
           v-if="facultyChartLabels.length"
           :labels="facultyChartLabels"
           :values="facultyChartValues"
           horizontal
+          percent
+          :height="`${Math.max(280, facultyChartLabels.length * 56 + 48)}px`"
         />
         <EmptyState
           v-else

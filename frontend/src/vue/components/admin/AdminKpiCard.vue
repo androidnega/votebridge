@@ -11,6 +11,7 @@ const props = defineProps({
   hint: { type: String, default: "" },
   healthStatus: { type: String, default: "" },
   clickable: Boolean,
+  active: Boolean,
 });
 
 defineEmits(["click"]);
@@ -39,9 +40,21 @@ const footerStyle = computed(() => ({
 
 <template>
   <article
-    class="flex min-h-[148px] flex-col rounded-card border border-[#E5E7EB] bg-white p-4 shadow-[0_1px_3px_0_rgb(15_23_42_/_0.06)] transition-all sm:p-5"
-    :class="clickable ? 'cursor-pointer hover:-translate-y-0.5 hover:border-[#CBD5E1] hover:shadow-[0_8px_20px_-6px_rgb(15_23_42_/_0.12)]' : ''"
+    class="flex min-h-[148px] flex-col rounded-card border bg-white p-4 shadow-[0_1px_3px_0_rgb(15_23_42_/_0.06)] transition-all sm:p-5"
+    :class="[
+      active
+        ? 'border-brand-400 ring-2 ring-brand-200'
+        : 'border-[#E5E7EB]',
+      clickable
+        ? 'cursor-pointer hover:-translate-y-0.5 hover:border-[#CBD5E1] hover:shadow-[0_8px_20px_-6px_rgb(15_23_42_/_0.12)]'
+        : '',
+    ]"
+    :role="clickable ? 'button' : undefined"
+    :tabindex="clickable ? 0 : undefined"
+    :aria-pressed="clickable ? active : undefined"
     @click="clickable ? $emit('click') : undefined"
+    @keydown.enter.prevent="clickable ? $emit('click') : undefined"
+    @keydown.space.prevent="clickable ? $emit('click') : undefined"
   >
     <div class="flex items-center gap-3">
       <span
@@ -70,6 +83,8 @@ const footerStyle = computed(() => ({
       :style="footerStyle"
     >
       {{ hint }}
+      <span v-if="clickable && !active" class="mt-1 block font-medium opacity-80">Click to filter</span>
+      <span v-else-if="clickable && active" class="mt-1 block font-semibold">Filter active</span>
     </p>
   </article>
 </template>

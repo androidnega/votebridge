@@ -91,7 +91,6 @@ SRC_POSITIONS = [
 
 FASSA_POSITIONS = [
     "President",
-    "Vice President",
     "General Secretary",
     "Financial Secretary",
     "Women's Commissioner",
@@ -111,56 +110,52 @@ SRC_CANDIDATE_ROSTER = {
         ("Selina Agyeman", "Accounting", "BC/ACC/24/095", "female-3.png"),
     ],
     "Financial Secretary": [
-        ("Adwoa Mensah", "Accounting", "BC/ACC/24/088", "female-2.png"),
-        ("Isaac Tetteh", "Mechanical Engineering", "BC/MEE/24/029", "male-1.png"),
-        ("Rebecca Antwi", "Information Technology", "BC/ITD/24/036", "female-1.png"),
+        ("Adwoa Mensah", "Accounting", "BC/ACC/24/088", "female-4.png"),
+        ("Isaac Tetteh", "Mechanical Engineering", "BC/MEE/24/029", "male-4.png"),
+        ("Rebecca Antwi", "Information Technology", "BC/ITD/24/036", "female-5.png"),
     ],
     "Women's Commissioner": [
-        ("Akosua Frimpong", "Information Technology", "BC/ITD/24/048", "female-3.png"),
-        ("Gifty Asare", "Information Technology", "BC/ITD/24/039", "female-2.png"),
+        ("Akosua Frimpong", "Information Technology", "BC/ITD/24/048", "female-6.png"),
+        ("Gifty Asare", "Information Technology", "BC/ITD/24/039", "female-7.png"),
         ("Naana Dankwa", "Computer Technology", "BC/ICT/24/070", "female-1.png"),
     ],
     "Sports Secretary": [
-        ("Prince Boakye", "Information Technology", "BC/ITN/24/105", "male-2.png"),
-        ("Samuel Osei", "Computer Science", "BC/ITS/24/055", "male-3.png"),
-        ("Michael Addo", "Information Technology", "BC/ITN/24/121", "male-1.png"),
+        ("Prince Boakye", "Information Technology", "BC/ITN/24/105", "male-1.png"),
+        ("Samuel Osei", "Computer Science", "BC/ITS/24/055", "male-2.png"),
+        ("Michael Addo", "Information Technology", "BC/ITN/24/121", "male-3.png"),
     ],
     "Entertainment Secretary": [
         ("Abena Boateng", "Computer Technology", "BC/ICT/24/056", "female-2.png"),
-        ("Kojo Sarpong", "Information Technology", "BC/ITN/24/118", "male-2.png"),
+        ("Kojo Sarpong", "Information Technology", "BC/ITN/24/118", "male-4.png"),
         ("Ama Kwarteng", "Computer Technology", "BC/ICT/24/061", "female-3.png"),
     ],
     "Organising Secretary": [
-        ("Kwesi Appiah", "Computer Science", "BC/ITS/24/052", "male-3.png"),
-        ("Yaw Darko", "Mechanical Engineering", "BC/MEE/24/018", "male-1.png"),
-        ("Richard Nyame", "Information Technology", "BC/ITN/24/099", "male-2.png"),
+        ("Kwesi Appiah", "Computer Science", "BC/ITS/24/052", "male-1.png"),
+        ("Yaw Darko", "Mechanical Engineering", "BC/MEE/24/018", "male-2.png"),
+        ("Richard Nyame", "Information Technology", "BC/ITN/24/099", "male-3.png"),
     ],
 }
 
 FASSA_CANDIDATE_ROSTER = {
     "President": [
-        ("Nana Agyei", "Accounting", None, "male-3.png"),
-        ("Abigail Ofori", "Computer Science", "BC/ITS/24/049", "female-1.png"),
+        ("Nana Agyei", "Accounting", None, "male-4.png"),
+        ("Abigail Ofori", "Computer Science", "BC/ITS/24/049", "female-4.png"),
         ("Kweku Annan", "Mechanical Engineering", "BC/MEE/24/011", "male-1.png"),
     ],
-    "Vice President": [
-        ("Linda Akoto", "Information Technology", "BC/ITD/24/041", "female-2.png"),
-        ("George Mensah", "Mechanical Engineering", "BC/MEE/24/025", "male-2.png"),
-    ],
     "General Secretary": [
-        ("Esi Mensah", "Computer Technology", "BC/ICT/24/063", "female-3.png"),
+        ("Esi Mensah", "Computer Technology", "BC/ICT/24/063", "female-6.png"),
         ("Fiifi Amoah", "Mechanical Engineering", "BC/MEE/24/022", "male-3.png"),
     ],
     "Financial Secretary": [
-        ("Joel Ampofo", "Accounting", None, "male-1.png"),
-        ("Ama Osei", "Information Technology", "BC/ITD/24/031", "female-1.png"),
+        ("Joel Ampofo", "Accounting", None, "male-4.png"),
+        ("Ama Osei", "Information Technology", "BC/ITD/24/031", "female-7.png"),
     ],
     "Women's Commissioner": [
-        ("Yaa Serwaa", "Computer Science", None, "female-2.png"),
-        ("Akosua Danso", "Computer Technology", None, "female-3.png"),
+        ("Yaa Serwaa", "Computer Science", None, "female-1.png"),
+        ("Akosua Danso", "Computer Technology", None, "female-2.png"),
     ],
     "Organiser": [
-        ("Kwabena Owusu", "Mechanical Engineering", None, "male-2.png"),
+        ("Kwabena Owusu", "Mechanical Engineering", None, "male-1.png"),
         ("Richard Nyame", "Information Technology", "BC/ITN/24/099", "male-3.png"),
     ],
 }

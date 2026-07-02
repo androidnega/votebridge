@@ -299,6 +299,8 @@ export function useGovernanceDashboard() {
         return card;
       })
   );
+
+  const participationLabels = computed(
     () => analytics.value.trends?.votes_hourly?.map((point) => point.label) || []
   );
 

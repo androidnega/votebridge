@@ -180,10 +180,14 @@ export function useReportsWorkspace() {
   const turnoutTrendValues = computed(() => turnoutTrend.value.map((point) => point.value));
 
   const facultyChartLabels = computed(() =>
-    filteredFaculties.value.map((row) => row.faculty)
+    [...filteredFaculties.value]
+      .sort((a, b) => (b.turnout_percent || 0) - (a.turnout_percent || 0))
+      .map((row) => row.faculty)
   );
   const facultyChartValues = computed(() =>
-    filteredFaculties.value.map((row) => row.turnout_percent)
+    [...filteredFaculties.value]
+      .sort((a, b) => (b.turnout_percent || 0) - (a.turnout_percent || 0))
+      .map((row) => row.turnout_percent)
   );
 
   const electionDistribution = computed(() => {

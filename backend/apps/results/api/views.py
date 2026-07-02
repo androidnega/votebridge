@@ -28,6 +28,38 @@ from apps.results.services.results_service import (
 )
 
 
+def _attach_candidate_images(data: dict, request) -> dict:
+    standings = data.get("standings")
+    if not standings or not request:
+        return data
+
+    from apps.candidates.models import Candidate
+
+    candidate_uuids = []
+    for position in standings.get("positions", []):
+        for candidate in position.get("candidates", []):
+            if candidate.get("candidate_uuid"):
+                candidate_uuids.append(candidate["candidate_uuid"])
+
+    if not candidate_uuids:
+        return data
+
+    image_urls = {
+        str(candidate.uuid): request.build_absolute_uri(candidate.image.url)
+        for candidate in Candidate.objects.filter(uuid__in=candidate_uuids).exclude(image="")
+        if candidate.image
+    }
+
+    for position in standings.get("positions", []):
+        for candidate in position.get("candidates", []):
+            image_url = image_urls.get(candidate.get("candidate_uuid"))
+            if image_url:
+                candidate["image_url"] = image_url
+
+    data["standings"] = standings
+    return data
+
+
 def _serialize_summary(result: ElectionResult) -> dict:
     return {
         "uuid": result.uuid,
@@ -107,12 +139,14 @@ class ElectionResultDetailView(APIView):
                     {"success": False, "error": {"code": "not_published", "message": "Results not published."}},
                     status=status.HTTP_404_NOT_FOUND,
                 )
+            payload = _attach_candidate_images(_serialize_published(result), request)
             return Response(
-                {"success": True, "data": PublishedElectionResultSerializer(_serialize_published(result)).data}
+                {"success": True, "data": PublishedElectionResultSerializer(payload).data}
             )
 
+        payload = _attach_candidate_images(_serialize_detail(result), request)
         return Response(
-            {"success": True, "data": ElectionResultDetailSerializer(_serialize_detail(result)).data}
+            {"success": True, "data": ElectionResultDetailSerializer(payload).data}
         )
 
 
