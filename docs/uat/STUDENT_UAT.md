@@ -16,8 +16,8 @@ Verify a student can authenticate, view elections, vote once, receive confirmati
 
 | # | Step | Expected result | Pass | Fail |
 |---|------|-----------------|------|------|
-| 1 | Open login page | Single identifier field, no role selector | ☐ | ☐ |
-| 2 | Enter index number + password | OTP screen shown | ☐ | ☐ |
+| 1 | Open login page | **Student sign in** shown; index number field only | ☐ | ☐ |
+| 2 | Enter index number, continue | OTP screen shown (no password step) | ☐ | ☐ |
 | 3 | Enter valid OTP | Redirect to student dashboard | ☐ | ☐ |
 | 4 | Sidebar shows Elections, Notifications, Profile | Correct nav for student role | ☐ | ☐ |
 | 5 | Open Elections list | Open election visible | ☐ | ☐ |

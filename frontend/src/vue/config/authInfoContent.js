@@ -48,7 +48,7 @@ export function getAuthInfoContent(slug) {
         },
         {
           heading: "Before voting opens",
-          body: "Confirm your index number and password work on this portal. Contact the election office if you cannot sign in before election day.",
+          body: "Confirm you can sign in with your index number. Contact the election office if you cannot access the portal before election day.",
         },
         {
           heading: "After voting closes",
@@ -64,11 +64,11 @@ export function getAuthInfoContent(slug) {
       sections: [
         {
           heading: "1. Sign in",
-          body: "Enter your index number and password, then select Sign in.",
+          body: "Enter your index number, then continue. You will receive a one-time code on your registered phone or email.",
         },
         {
           heading: "2. Verify your identity",
-          body: "Enter the one-time code sent to your registered email or phone number.",
+          body: "Enter the one-time code sent to your registered phone or email.",
         },
         {
           heading: "3. Select candidates",
@@ -86,7 +86,7 @@ export function getAuthInfoContent(slug) {
       sections: [
         {
           heading: "Identity verification",
-          body: "You must sign in with your index number, password, and a one-time verification code before accessing a ballot.",
+          body: "You must sign in with your index number and a one-time verification code before accessing a ballot.",
         },
         {
           heading: "Ballot protection",
@@ -108,7 +108,7 @@ export function getAuthInfoContent(slug) {
       sections: [
         {
           heading: "I cannot sign in",
-          body: "Check your index number format (e.g. BC/ITS/24/047) and password. If the problem continues, contact the election office.",
+          body: "Check your index number format (e.g. BC/ITS/24/047). If the problem continues, contact the election office.",
         },
         {
           heading: "I did not receive an OTP code",

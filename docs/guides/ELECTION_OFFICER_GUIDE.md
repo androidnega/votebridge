@@ -9,9 +9,10 @@ This guide walks through the complete election lifecycle inside the **Election w
 
 ## 1. Logging in
 
-1. Open VoteBridge and sign in with your **email** (unified login).
-2. Complete **OTP** verification.
-3. You land on the **Admin dashboard** showing open elections, turnout, and tasks.
+1. Open VoteBridge and select **Election officer or administrator sign in**.
+2. Enter your **email or username**, then your **password**.
+3. Complete **OTP** verification.
+4. You land on the **Admin dashboard** showing open elections, turnout, and tasks.
 
 ---
 

@@ -16,8 +16,11 @@ Phase 55 delivers role-aware unified login (no role selector), passwordless stud
 
 ## 2. Login UI
 
-- `frontend/src/vue/views/auth/LoginView.vue` — single identity field, **Continue**, password step only when API returns `requires_password`
-- Placeholder: *Enter your Student Index Number or Administrator Username*
+- `frontend/src/vue/views/auth/LoginView.vue` — **Student** and **Administrator** sign-in modes
+- **Student / candidate:** index number only → Continue → OTP → Dashboard
+- **Administrator:** email or username → password → OTP → Dashboard (Super Admin may require biometric step-up)
+- Student mode label: *Index number* · placeholder `BC/ITS/24/047`
+- Staff mode label: *Email or username*
 
 ## 3. Backend services modified
 

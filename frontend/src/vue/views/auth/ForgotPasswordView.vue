@@ -11,7 +11,7 @@ const submitted = ref(false);
 
 function handleSubmit() {
   const { valid, errors: fieldErrors } = validateFields(form, {
-    identity: [required("Enter your index number or email.")],
+    identity: [required("Enter your email or username.")],
   });
   errors.identity = fieldErrors.identity || "";
   if (!valid) return;
@@ -23,8 +23,8 @@ function handleSubmit() {
   <form class="space-y-4" @submit.prevent="handleSubmit">
     <h2 class="text-base font-semibold text-slate-800">Forgot password</h2>
     <p class="text-sm text-slate-600">
-      Password resets are handled by the Electoral Commission. Submit your identifier and contact the
-      office if you need immediate assistance.
+      For election officers and administrators. Students and candidates sign in with their index
+      number only — contact the election office if you need help accessing your account.
     </p>
 
     <VAlert v-if="submitted" variant="info">
@@ -38,12 +38,13 @@ function handleSubmit() {
     <VInput
       id="forgot-identity"
       v-model="form.identity"
-      label="Index number or email"
+      label="Email or username"
       autocomplete="username"
+      placeholder="admin@ttu.edu.gh"
       :error="errors.identity"
     />
 
-    <VButton type="submit" block>Forgot password</VButton>
+    <VButton type="submit" block>Request password help</VButton>
 
     <p class="text-center text-sm text-slate-600">
       <RouterLink to="/auth/login" class="font-medium text-brand-700 hover:underline">Back to sign in</RouterLink>

@@ -686,6 +686,7 @@ class AuthService:
             "expires_at": otp_request.expires_at,
             "channel": otp_request.channel,
             "masked_destination": self._mask_recipient(recipient, otp_request.channel),
+            "account_type": user.role.name,
         }
 
         if mfa_required:

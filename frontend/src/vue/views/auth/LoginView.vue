@@ -1,17 +1,19 @@
 <script setup>
-import { onMounted, reactive, ref } from "vue";
+import { computed, onMounted, reactive, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
 import AuthSecurityTerminal from "@/components/auth/AuthSecurityTerminal.vue";
 import { VAlert, VButton, VCheckbox, VInput, VPasswordInput } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth";
+import { getRememberedIdentifier, looksLikeStaffIdentity, setRememberedIdentifier } from "@/utils/auth";
 import { navigateAfterLogin } from "@/utils/postLoginNavigation";
-import { getRememberedIdentifier, setRememberedIdentifier } from "@/utils/auth";
 import { minLength, required, validateFields } from "@/utils/validators";
 
 const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
+/** student | staff */
+const loginMode = ref("student");
 /** identity | password | auth-check (super admin only) */
 const step = ref("identity");
 const form = reactive({
@@ -29,15 +31,31 @@ const authLines = [
   "Opening secure OTP channel...",
 ];
 
+const isStudentMode = computed(() => loginMode.value === "student");
+
+const identityValidationMessage = computed(() =>
+  isStudentMode.value ? "Enter your index number." : "Enter your email or username."
+);
+
 onMounted(() => {
   form.identity = getRememberedIdentifier();
   form.remember = Boolean(form.identity);
+  if (form.identity && looksLikeStaffIdentity(form.identity)) {
+    loginMode.value = "staff";
+  }
 });
+
+function switchLoginMode(mode) {
+  loginMode.value = mode;
+  submitError.value = "";
+  errors.identity = "";
+  step.value = "identity";
+}
 
 async function continueIdentity() {
   submitError.value = "";
   const { valid, errors: fieldErrors } = validateFields(form, {
-    identity: [required("Enter your index number or administrator username.")],
+    identity: [required(identityValidationMessage.value)],
   });
   errors.identity = fieldErrors.identity || "";
   if (!valid) return;
@@ -59,11 +77,13 @@ async function continueIdentity() {
     }
 
     if (result?.requires_password) {
+      loginMode.value = "staff";
       step.value = "password";
       return;
     }
 
     if (result?.mfa_required) {
+      loginMode.value = "staff";
       step.value = "auth-check";
       return;
     }
@@ -131,29 +151,57 @@ function backFromPassword() {
 
     <form v-if="step === 'identity'" class="space-y-4" @submit.prevent="continueIdentity">
       <div>
-        <h2 class="text-base font-semibold text-slate-800">Sign in</h2>
+        <h2 class="text-base font-semibold text-slate-800">
+          {{ isStudentMode ? "Student sign in" : "Administrator sign in" }}
+        </h2>
         <p class="mt-1 text-sm text-slate-500">
-          Enter your student index number or administrator username.
+          <template v-if="isStudentMode">
+            Enter your index number. Candidates use the same sign-in — a one-time code will be sent to
+            your registered phone or email.
+          </template>
+          <template v-else>
+            Enter your email or username, then your password and verification code.
+          </template>
         </p>
       </div>
 
       <VInput
         id="identity"
         v-model="form.identity"
-        label="Index number or username"
+        :label="isStudentMode ? 'Index number' : 'Email or username'"
         autocomplete="username"
-        placeholder="BC/ITS/24/047 or admin@ttu.edu.gh"
+        :placeholder="isStudentMode ? 'BC/ITS/24/047' : 'admin@ttu.edu.gh'"
         :error="errors.identity"
         required
       />
 
       <VButton type="submit" block :loading="authStore.loading">Continue</VButton>
+
+      <p class="text-center text-sm text-slate-600">
+        <button
+          v-if="isStudentMode"
+          type="button"
+          class="font-medium text-brand-700 hover:underline"
+          @click="switchLoginMode('staff')"
+        >
+          Election officer or administrator sign in
+        </button>
+        <button
+          v-else
+          type="button"
+          class="font-medium text-brand-700 hover:underline"
+          @click="switchLoginMode('student')"
+        >
+          Student or candidate? Sign in with index number
+        </button>
+      </p>
     </form>
 
     <form v-else-if="step === 'password'" class="space-y-4" @submit.prevent="submitPassword">
       <div>
-        <h2 class="text-base font-semibold text-slate-800">Enter password</h2>
-        <p class="mt-1 truncate text-sm text-slate-500">{{ form.identity.trim() }}</p>
+        <h2 class="text-base font-semibold text-slate-800">Administrator sign in</h2>
+        <p class="mt-1 text-sm text-slate-500">Enter your password to continue.</p>
+        <p class="mt-1 truncate text-sm font-medium text-slate-700">{{ form.identity.trim() }}</p>
       </div>
 
       <VPasswordInput
