@@ -184,16 +184,20 @@ Monitoring is **split by scope** — Admin sees assigned elections; Super Admin 
 | **Privileges** | Election workspace monitor, `CanAccessElectionOperations`, `CanViewSecurityMonitoring`, `CanViewFraudCases` |
 
 **What admins see:**
-- Turnout trends for **their elections** (aggregate, not per-candidate rankings)
-- Per-election **monitor** and **per-election WebSocket**
+- Turnout trends for **their elections**
+- Per-election **monitor** tab with **Live Voting Trend** (internal candidate standings, charts, leader/runner-up while Open)
+- **Analytics** tab after close (bar/line/donut charts, margins, programme turnout)
 - Security alerts and fraud cases within operational scope
 - Communications delivery logs (read-only for election-related traffic)
 
-**What admins do NOT see while Open:**
-- Who is winning
-- Live candidate rankings
+**What admins do NOT expose to voters while Open:**
+- Live candidate rankings on student dashboards, public pages, or published-results views
 - Platform Operations Center (health, queues, sessions, infrastructure)
 - Strong Room, USSD, or Communications **realtime feeds**
+
+**API (admin / super-admin only):**
+- `GET /api/analytics/elections/<uuid>/live-trend/` — open or paused elections
+- `GET /api/analytics/elections/<uuid>/results-analytics/` — closed or archived elections
 
 ### Super Admin (platform + elections) — advanced
 
@@ -340,6 +344,7 @@ Runs alongside results for integrity — **not** part of the primary prototype n
 | Vote | ✓ | ✓ | — | — |
 | View candidacy | — | ✓ (own races) | — | — |
 | Monitor (election) | — | — | ✓ | ✓ |
+| Analytics (closed election) | — | — | ✓ | ✓ |
 | Monitor (platform ops) | — | — | — | ✓ |
 | Close | — | — | ✓ | ✓ |
 | Certify results | — | — | — | ✓ |

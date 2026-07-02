@@ -434,6 +434,16 @@ class VoteService:
                 admin_stats=admin_stats,
                 student_stats=student_stats,
             )
+            if election.status in {election.Status.OPEN, election.Status.PAUSED}:
+                from apps.analytics.services.election_live_trend_service import (
+                    election_live_trend_service,
+                )
+
+                live_trend = election_live_trend_service.build_snapshot(election)
+                realtime_broadcast_service.live_trend_updated(
+                    election=election,
+                    live_trend=live_trend,
+                )
         except Exception:
             logger.exception("Failed to broadcast ballot submission for election %s", election.uuid)
 

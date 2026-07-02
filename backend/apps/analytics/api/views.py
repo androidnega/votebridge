@@ -1,6 +1,7 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.analytics.api.helpers import attach_candidate_image_urls
 from apps.analytics.permissions import CanAccessAnalytics, CanAccessPersonalAnalytics
 from apps.analytics.services.analytics_service import (
     analytics_communication_service,
@@ -15,6 +16,10 @@ from apps.analytics.services.analytics_service import (
     analytics_strongroom_service,
     analytics_student_service,
     analytics_ussd_service,
+)
+from apps.analytics.services.election_live_trend_service import election_live_trend_service
+from apps.analytics.services.election_results_analytics_service import (
+    election_results_analytics_service,
 )
 from apps.analytics.validators import validate_export_format, validate_period, validate_report_type
 
@@ -38,6 +43,30 @@ class AnalyticsElectionDetailView(APIView):
 
     def get(self, request, election_uuid):
         return Response({"success": True, "data": analytics_election_service.get_election(election_uuid)})
+
+
+class AnalyticsElectionLiveTrendView(APIView):
+    """Internal live standings for open/paused elections — admin and super-admin only."""
+
+    permission_classes = [CanAccessAnalytics]
+
+    def get(self, request, election_uuid):
+        data = election_live_trend_service.get_live_trend(election_uuid)
+        return Response(
+            {"success": True, "data": attach_candidate_image_urls(data, request)},
+        )
+
+
+class AnalyticsElectionResultsAnalyticsView(APIView):
+    """Rich analytics for closed/archived elections — admin and super-admin only."""
+
+    permission_classes = [CanAccessAnalytics]
+
+    def get(self, request, election_uuid):
+        data = election_results_analytics_service.get_results_analytics(election_uuid)
+        return Response(
+            {"success": True, "data": attach_candidate_image_urls(data, request)},
+        )
 
 
 class AnalyticsParticipationView(APIView):

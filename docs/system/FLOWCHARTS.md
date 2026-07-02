@@ -120,7 +120,7 @@ flowchart TD
     subgraph Voting
         V1[Open election]
         V2[Students vote via Web/USSD]
-        V3[Monitor election]
+        V3[Monitor election + live trend]
     end
 
     subgraph Results

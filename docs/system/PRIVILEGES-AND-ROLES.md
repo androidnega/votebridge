@@ -207,6 +207,8 @@ Admin must not treat Strong Room as a normal always-open tool. Operational vault
 | Capability | Admin | Super Admin |
 |------------|-------|-------------|
 | Election workspace monitor | ✓ | ✓ |
+| Election workspace **live voting trend** (internal candidate standings while Open) | ✓ | ✓ |
+| Election workspace **results analytics** (closed/archived elections) | ✓ | ✓ |
 | Operations API `elections/` (election monitor) | ✓ | ✓ |
 | Operations API platform overview, health, infrastructure, queues, sessions, logs | ✗ | ✓ |
 | Communications delivery log **read** (election-related visibility) | ✓ | ✓ |
@@ -266,6 +268,7 @@ Django REST Framework permission classes applied to API endpoints.
 | Election live (if eligible / officer) | ✓ | ✓ | ✓ |
 | In-app notifications | ✓ | ✓ | ✓ |
 | Admin dashboard | — | ✓ | ✓ |
+| Admin dashboard `live_trend_updated` (internal open-election standings) | — | ✓ | ✓ |
 | Security / Fraud (investigation) | — | ✓ | ✓ |
 | Results queue | — | ✓ | ✓ |
 | Analytics (scoped) | personal only | election + security/fraud/results | full platform |
@@ -273,7 +276,9 @@ Django REST Framework permission classes applied to API endpoints.
 | Communications / USSD | — | — | ✓ |
 | Operations (platform) | — | — | ✓ |
 
-Admin election monitoring uses the **per-election** websocket and election workspace dashboards, not the platform Operations or Strong Room feeds.
+Admin election monitoring uses the **admin dashboard WebSocket** (`/ws/realtime/dashboard/`) and election workspace dashboards, not the platform Operations or Strong Room feeds.
+
+**Live trend privacy:** While an election is Open, candidate vote counts and rankings are broadcast only on the **admin dashboard** channel as `live_trend_updated`. Student, candidate, and public channels continue to receive **sanitized** payloads (no standings). Students only see results after publication.
 
 ---
 

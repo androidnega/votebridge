@@ -16,6 +16,10 @@ export function getElectionWorkspaceNav(electionUuid, status) {
     tabs.push({ label: "Monitor", to: `${base}/monitor` });
   }
 
+  if (["closed", "archived"].includes(status)) {
+    tabs.push({ label: "Analytics", to: `${base}/analytics` });
+  }
+
   return tabs;
 }
 
@@ -53,8 +57,14 @@ export function getElectionSidebarChildren(electionUuid, status, { isElectionOff
   }
 
   if (isSuperAdmin) {
-    const base = dashboardPath(`elections/${electionUuid}`);
-    return [{ name: "Overview", to: base, exact: true }];
+    return getElectionWorkspaceNav(electionUuid, status)
+      .filter((tab) => ["Overview", "Monitor", "Analytics"].includes(tab.label))
+      .map((tab) => ({
+        name: tab.label,
+        to: tab.to,
+        exact: tab.exact,
+        disabled: tab.disabled,
+      }));
   }
 
   return [];

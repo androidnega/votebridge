@@ -232,7 +232,13 @@ const router = createRouter({
               path: "monitor",
               name: "election-workspace-monitor",
               component: () => import("@/views/elections/workspace/ElectionWorkspaceMonitor.vue"),
-              meta: { title: "Monitor", roles: ["admin"] },
+              meta: { title: "Monitor", roles: ["admin", "super_admin"] },
+            },
+            {
+              path: "analytics",
+              name: "election-workspace-analytics",
+              component: () => import("@/views/elections/workspace/ElectionWorkspaceAnalytics.vue"),
+              meta: { title: "Analytics", roles: ["admin", "super_admin"] },
             },
             {
               path: "vote",

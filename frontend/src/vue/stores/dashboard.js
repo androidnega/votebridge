@@ -81,6 +81,7 @@ export const useDashboardStore = defineStore("dashboard", {
     activeUsersCount: 0,
     verificationResult: null,
     activityFeed: [],
+    liveTrendSnapshots: {},
     adminTrends: {
       votesHourly: [],
       turnoutHourly: [],
@@ -242,6 +243,16 @@ export const useDashboardStore = defineStore("dashboard", {
 
     handleAdminRealtimeEvent(event, data, timestamp) {
       const overview = this.adminOverview || {};
+
+      if (event === "live_trend_updated") {
+        if (data.election_uuid && data.live_trend) {
+          this.liveTrendSnapshots = {
+            ...this.liveTrendSnapshots,
+            [data.election_uuid]: data.live_trend,
+          };
+        }
+        return;
+      }
 
       if (event === "ballot_submitted") {
         if (data.total_votes_cast !== undefined) {

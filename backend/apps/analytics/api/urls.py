@@ -8,6 +8,16 @@ urlpatterns = [
     path("overview/", views.AnalyticsOverviewView.as_view(), name="overview"),
     path("elections/", views.AnalyticsElectionsView.as_view(), name="elections"),
     path("elections/<uuid:election_uuid>/", views.AnalyticsElectionDetailView.as_view(), name="election-detail"),
+    path(
+        "elections/<uuid:election_uuid>/live-trend/",
+        views.AnalyticsElectionLiveTrendView.as_view(),
+        name="election-live-trend",
+    ),
+    path(
+        "elections/<uuid:election_uuid>/results-analytics/",
+        views.AnalyticsElectionResultsAnalyticsView.as_view(),
+        name="election-results-analytics",
+    ),
     path("participation/", views.AnalyticsParticipationView.as_view(), name="participation"),
     path("departments/", views.AnalyticsDepartmentsView.as_view(), name="departments"),
     path("faculties/", views.AnalyticsFacultiesView.as_view(), name="faculties"),

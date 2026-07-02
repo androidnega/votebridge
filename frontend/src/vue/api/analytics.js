@@ -8,6 +8,14 @@ export const analyticsApi = {
   getElections() {
     return apiClient.get("/analytics/elections/").then(unwrapResponse);
   },
+  getElectionLiveTrend(electionUuid) {
+    return apiClient.get(`/analytics/elections/${electionUuid}/live-trend/`).then(unwrapResponse);
+  },
+  getElectionResultsAnalytics(electionUuid) {
+    return apiClient
+      .get(`/analytics/elections/${electionUuid}/results-analytics/`)
+      .then(unwrapResponse);
+  },
   getParticipation() {
     return apiClient.get("/analytics/participation/").then(unwrapResponse);
   },

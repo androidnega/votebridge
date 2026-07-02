@@ -108,16 +108,17 @@ The frontend contains **no business rules** — it displays data and calls the A
 | **Redis Channel Layer** | Message bus between workers and WebSocket clients |
 | **Consumers** | WebSocket handlers (dashboard, security, notifications) |
 
-When a student submits a ballot, the backend saves to PostgreSQL, then publishes a **sanitized** event to Redis. Admin dashboards update live without refreshing the page.
+When a student submits a ballot, the backend saves to PostgreSQL, then publishes events to Redis. Public and student feeds receive **sanitized** payloads; the admin dashboard also receives an unsanitized `live_trend_updated` event with internal standings while the election is Open.
 
 **Role-based feeds** (enforced in `realtime/consumers.py` and router guards):
 
 | Feed | Admin | Super Admin |
 |------|-------|-------------|
 | Per-election monitor, admin dashboard, security/fraud (election scope) | ✓ | ✓ |
+| `live_trend_updated` on admin dashboard WebSocket | ✓ | ✓ |
 | Strong Room, Communications, USSD, platform Operations | ✗ | ✓ |
 
-Open-election payloads are sanitized — no candidate rankings or winners leak over WebSocket.
+Open-election **student/public** payloads are sanitized — no candidate rankings or winners leak on shared election channels. Internal live standings are admin-dashboard only.
 
 ### 4. Data layer
 
@@ -253,7 +254,7 @@ Docker Compose (development) provides PostgreSQL 16 and Redis 7 locally.
 | `realtime` | WebSocket consumers |
 | `dashboard` | Dashboard aggregation services |
 | `operations` | Operations Center — **platform** metrics (Super Admin) and **election** monitor API (Admin) |
-| `analytics` | Reporting and analytics |
+| `analytics` | Reporting and analytics — includes `ElectionLiveTrendService`, `ElectionResultsAnalyticsService`, and election-scoped chart APIs |
 
 ---
 

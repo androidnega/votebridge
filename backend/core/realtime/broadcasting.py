@@ -20,6 +20,15 @@ class RealtimeBroadcastService:
 
         election_status = payload.get("election_status")
         safe_payload = sanitize_payload(payload, election_status=election_status)
+        self._dispatch(event_type, safe_payload, group_names)
+
+    def broadcast_admin_internal(self, event_type: str, payload: dict, group_names: list[str]) -> None:
+        """Send unsanitized payloads to admin-only groups (e.g. live standings while open)."""
+        if not group_names:
+            return
+        self._dispatch(event_type, payload, group_names)
+
+    def _dispatch(self, event_type: str, payload: dict, group_names: list[str]) -> None:
         timestamp = timezone.now().isoformat()
 
         def _send() -> None:
@@ -31,7 +40,7 @@ class RealtimeBroadcastService:
             message = {
                 "type": "realtime.event",
                 "event_type": event_type,
-                "payload": safe_payload,
+                "payload": payload,
                 "timestamp": timestamp,
             }
             for group_name in group_names:
@@ -121,6 +130,20 @@ class RealtimeBroadcastService:
                 {"role": "admin", **admin_stats},
                 [groups.dashboard_admin()],
             )
+
+    def live_trend_updated(self, *, election, live_trend: dict) -> None:
+        payload = {
+            "election_uuid": str(election.uuid),
+            "election_title": election.title,
+            "election_status": election.status,
+            "live_trend": live_trend,
+            "last_updated": live_trend.get("last_updated"),
+        }
+        self.broadcast_admin_internal(
+            events.LIVE_TREND_UPDATED,
+            payload,
+            [groups.dashboard_admin()],
+        )
 
     def svt_issued(self, *, svt, user, admin_stats: dict | None = None) -> None:
         payload = {

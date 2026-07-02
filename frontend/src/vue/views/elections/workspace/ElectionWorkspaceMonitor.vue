@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import ElectionStatusBadge from "@/components/voting/ElectionStatusBadge.vue";
+import LiveTrendPanel from "@/components/elections/analytics/LiveTrendPanel.vue";
 import { ConfirmDialog, FaIcon, VButton } from "@/components/ui";
 import { toastMessages } from "@/config/toastMessages";
 import { useToast } from "@/composables/useToast";
@@ -44,6 +45,7 @@ const feedItems = computed(() =>
 );
 
 const canControl = computed(() => ["open", "paused"].includes(election.value?.status));
+const showLiveTrend = computed(() => ["open", "paused"].includes(election.value?.status));
 
 const linkStatus = computed(() => {
   if (realtime.status.value === "connected") {
@@ -185,7 +187,7 @@ onUnmounted(() => {
           <ElectionStatusBadge :status="election.status" size="sm" />
         </div>
         <p class="mt-2 max-w-2xl text-sm text-ink-secondary">
-          Aggregate turnout and channel activity only. Candidate rankings stay sealed until close.
+          Live turnout, channel health, and private candidate performance for election officers.
         </p>
       </div>
 
@@ -270,6 +272,12 @@ onUnmounted(() => {
         </div>
       </article>
     </section>
+
+    <LiveTrendPanel
+      v-if="showLiveTrend"
+      :election-uuid="electionUuid"
+      class="mt-6"
+    />
 
     <section v-if="canControl" class="vb-control-room-actions">
       <VButton

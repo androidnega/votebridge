@@ -1087,3 +1087,55 @@
 .vb-control-room-actions {
   @apply flex flex-wrap gap-3 rounded-2xl border border-border bg-white p-4 shadow-sm;
 }
+
+.vb-live-trend,
+.vb-election-analytics {
+  @apply flex flex-col gap-5;
+}
+
+.vb-live-trend-header,
+.vb-election-analytics-header {
+  @apply flex flex-col gap-3 rounded-2xl border border-border bg-white p-5 shadow-sm sm:flex-row sm:items-start sm:justify-between;
+}
+
+.vb-live-trend-summary,
+.vb-election-analytics-summary {
+  @apply grid grid-cols-2 gap-3 lg:grid-cols-4;
+}
+
+.vb-live-trend-summary-card {
+  @apply rounded-xl border border-border bg-white p-4 shadow-sm;
+}
+
+.vb-live-trend-toolbar {
+  @apply flex flex-col gap-3 rounded-xl border border-border bg-surface-muted/40 p-4 sm:flex-row sm:items-center sm:justify-between;
+}
+
+.vb-live-trend-filter {
+  @apply rounded-full border border-border bg-white px-3 py-1.5 text-xs font-semibold text-ink-secondary transition hover:bg-surface-muted;
+}
+
+.vb-live-trend-filter--active {
+  @apply border-brand-200 bg-brand-50 text-brand-700;
+}
+
+.vb-live-trend-cards {
+  @apply grid gap-3 sm:grid-cols-2 xl:grid-cols-4;
+}
+
+.vb-live-trend-card {
+  @apply flex items-start gap-3 rounded-xl border border-border bg-white p-3 shadow-sm;
+}
+
+.vb-live-trend-card--compact {
+  @apply p-2.5;
+}
+
+.vb-live-trend-grid,
+.vb-election-analytics-grid {
+  @apply grid grid-cols-1 gap-4 xl:grid-cols-2;
+}
+
+.vb-live-trend-empty {
+  @apply flex flex-col items-center rounded-2xl border border-dashed border-border bg-surface-muted/50 px-6 py-12 text-center;
+}
