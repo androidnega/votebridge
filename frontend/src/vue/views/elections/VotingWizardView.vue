@@ -49,16 +49,12 @@ function goToMyElections() {
   router.push({ name: "student-my-elections" });
 }
 
-function hasActiveBallotSession() {
-  return (
-    votingStore.ballotSessionActive ||
-    votingStore.svtStatus === "validated" ||
-    votingStore.svtSession?.status === "validated"
-  );
+function isSvtAlreadyActiveError(message = "") {
+  return String(message).toLowerCase().includes("already active");
 }
 
 async function ensureBallotAuthorized() {
-  votingStore.restoreSvtSession(electionUuid.value);
+  votingStore.resetSvtMemory();
   await votingStore.fetchVotingAccess(electionUuid.value);
 
   if (votingStore.svtAccess?.has_submitted_ballot) {
@@ -66,11 +62,43 @@ async function ensureBallotAuthorized() {
     return false;
   }
 
-  if (!hasActiveBallotSession() || !votingStore.tokenCode) {
+  votingStore.restoreSvtSession(electionUuid.value);
+
+  if (votingStore.hasValidatedBallotSession) {
+    await votingStore.fetchPresenceStatus(electionUuid.value);
+    if (votingStore.needsPresenceCapture) {
+      router.replace(`/dashboard/vote/presence/${electionUuid.value}`);
+      return false;
+    }
+    return true;
+  }
+
+  if (!votingStore.tokenCode) {
     router.replace(`/dashboard/vote/verify/${electionUuid.value}`);
     return false;
   }
 
+  try {
+    await votingStore.validateSvt(electionUuid.value, votingStore.tokenCode);
+  } catch {
+    if (isSvtAlreadyActiveError(votingStore.error)) {
+      await votingStore.fetchPresenceStatus(electionUuid.value);
+      if (votingStore.needsPresenceCapture) {
+        router.replace(`/dashboard/vote/presence/${electionUuid.value}`);
+        return false;
+      }
+      return true;
+    }
+    votingStore.clearElectionSvtState(electionUuid.value);
+    router.replace(`/dashboard/vote/verify/${electionUuid.value}`);
+    return false;
+  }
+
+  await votingStore.fetchPresenceStatus(electionUuid.value);
+  if (votingStore.needsPresenceCapture) {
+    router.replace(`/dashboard/vote/presence/${electionUuid.value}`);
+    return false;
+  }
   return true;
 }
 
@@ -140,7 +168,7 @@ watch(
 </script>
 
 <template>
-  <div class="w-full">
+  <div class="w-full vb-vote-phase">
     <header v-if="phase === 'ballot'" class="mb-4 flex flex-wrap items-start justify-between gap-3">
       <div>
         <p class="text-xs font-semibold uppercase tracking-wide text-brand-700">{{ electionTitle }}</p>
@@ -162,11 +190,14 @@ watch(
 
     <LoadingSkeleton v-if="phase === 'loading' || votingStore.loading" variant="list" :rows="4" />
 
-    <VoteValidationSequence
-      v-else-if="phase === 'submitting'"
-      :active="true"
-      :steps="SUBMIT_STEPS"
-    />
+    <Transition v-else-if="phase === 'submitting'" name="vb-vote-phase" mode="out-in">
+      <VoteValidationSequence
+        key="submitting"
+        :active="true"
+        :steps="SUBMIT_STEPS"
+        hint="Securing your vote"
+      />
+    </Transition>
 
     <template v-else-if="phase === 'ballot'">
       <BallotProgressBar
@@ -176,27 +207,31 @@ watch(
         :percent="votingStore.progressPercent"
       />
 
-      <VoteCandidatePicker
-        v-if="activePosition && !votingStore.isReviewStep"
-        :position="activePosition"
-        v-model:selected-uuids="selectedUuids"
-        :submitting="false"
-        :show-back="!votingStore.isFirstBallotStep"
-        :is-last-step="votingStore.isLastPositionStep"
-        @back="handleBack"
-        @confirm="handleNext"
-        @skip="handleSkip"
-      />
+      <Transition name="vb-ballot-step" mode="out-in">
+        <VoteCandidatePicker
+          v-if="activePosition && !votingStore.isReviewStep"
+          :key="activePosition.uuid"
+          :position="activePosition"
+          v-model:selected-uuids="selectedUuids"
+          :submitting="false"
+          :show-back="!votingStore.isFirstBallotStep"
+          :is-last-step="votingStore.isLastPositionStep"
+          @back="handleBack"
+          @confirm="handleNext"
+          @skip="handleSkip"
+        />
 
-      <BallotReviewStep
-        v-else-if="votingStore.isReviewStep"
-        :review-items="votingStore.reviewSelections"
-        :skipped-count="votingStore.skippedCount"
-        :submitting="votingStore.submitting"
-        @back="handleBack"
-        @edit="handleEditPosition"
-        @submit="handleSubmitBallot"
-      />
+        <BallotReviewStep
+          v-else-if="votingStore.isReviewStep"
+          key="review"
+          :review-items="votingStore.reviewSelections"
+          :skipped-count="votingStore.skippedCount"
+          :submitting="votingStore.submitting"
+          @back="handleBack"
+          @edit="handleEditPosition"
+          @submit="handleSubmitBallot"
+        />
+      </Transition>
     </template>
 
     <VAlert v-else variant="error" title="Ballot unavailable">

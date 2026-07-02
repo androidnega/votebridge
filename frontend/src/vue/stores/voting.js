@@ -51,6 +51,8 @@ export const useVotingStore = defineStore("voting", {
     electionRealtimeUuid: null,
     loading: false,
     submitting: false,
+    presenceStatus: null,
+    presenceSubmitting: false,
     error: null,
   }),
 
@@ -103,6 +105,18 @@ export const useVotingStore = defineStore("voting", {
     },
     ballotSessionActive(state) {
       return state.ballot?.ballot_session_active || state.svtSession?.status === "validated";
+    },
+    hasValidatedBallotSession(state) {
+      return (
+        state.svtStatus === "validated" ||
+        state.svtSession?.status === "validated" ||
+        state.svtAccess?.svt_status === "validated" ||
+        state.ballot?.ballot_session_active === true
+      );
+    },
+    needsPresenceCapture(state) {
+      if (!state.presenceStatus?.presence_required) return false;
+      return !state.presenceStatus?.presence_captured;
     },
   },
 
@@ -323,26 +337,58 @@ export const useVotingStore = defineStore("voting", {
       }
     },
 
-    persistSvtSession(electionUuid) {
-      sessionStorage.setItem(`${SVT_TOKEN_PREFIX}${electionUuid}`, this.tokenCode);
-      sessionStorage.setItem(
-        `${SVT_SESSION_PREFIX}${electionUuid}`,
-        JSON.stringify(this.svtSession || {})
-      );
+    clearElectionSvtState(electionUuid) {
+      this.tokenCode = "";
+      this.svtSession = null;
+      this.svtIssued = null;
+      if (electionUuid) {
+        sessionStorage.removeItem(`${SVT_TOKEN_PREFIX}${electionUuid}`);
+        sessionStorage.removeItem(`${SVT_SESSION_PREFIX}${electionUuid}`);
+      }
+    },
+
+    resetSvtMemory() {
+      this.tokenCode = "";
+      this.svtSession = null;
+      this.svtIssued = null;
     },
 
     restoreSvtSession(electionUuid) {
+      this.tokenCode = "";
+      this.svtSession = null;
       const token = sessionStorage.getItem(`${SVT_TOKEN_PREFIX}${electionUuid}`);
       const raw = sessionStorage.getItem(`${SVT_SESSION_PREFIX}${electionUuid}`);
       if (token) this.tokenCode = token;
       if (raw) {
         try {
           this.svtSession = JSON.parse(raw);
-          this.svtStatus = this.svtSession?.status || this.svtStatus;
+          if (this.svtSession?.status) {
+            this.svtStatus = this.svtSession.status;
+          }
         } catch {
           /* ignore */
         }
       }
+    },
+
+    async ensureSvtReadyForBallot(electionUuid) {
+      this.restoreSvtSession(electionUuid);
+      if (this.hasValidatedBallotSession) {
+        return true;
+      }
+      if (!this.tokenCode) {
+        return false;
+      }
+      await this.validateSvt(electionUuid, this.tokenCode);
+      return true;
+    },
+
+    persistSvtSession(electionUuid) {
+      sessionStorage.setItem(`${SVT_TOKEN_PREFIX}${electionUuid}`, this.tokenCode);
+      sessionStorage.setItem(
+        `${SVT_SESSION_PREFIX}${electionUuid}`,
+        JSON.stringify(this.svtSession || {})
+      );
     },
 
     persistBallotState(electionUuid) {
@@ -376,6 +422,45 @@ export const useVotingStore = defineStore("voting", {
       sessionStorage.removeItem(`${BALLOT_SELECTIONS_PREFIX}${electionUuid}`);
       sessionStorage.removeItem(`${BALLOT_STEP_PREFIX}${electionUuid}`);
       this.clearWizardSelections();
+    },
+
+    async fetchPresenceStatus(electionUuid) {
+      this.error = null;
+      try {
+        this.presenceStatus = await votingApi.getPresenceStatus(electionUuid);
+        return this.presenceStatus;
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw error;
+      }
+    },
+
+    async submitPresenceCapture(electionUuid, imageBlob) {
+      this.presenceSubmitting = true;
+      this.error = null;
+      try {
+        this.restoreSvtSession(electionUuid);
+        if (!this.tokenCode) {
+          throw new Error("Your voting session has expired. Verify your code again.");
+        }
+        const formData = new FormData();
+        formData.append("token_code", this.tokenCode);
+        formData.append("channel", "web");
+        formData.append("image", imageBlob, "presence.jpg");
+        const result = await votingApi.submitPresenceCapture(electionUuid, formData);
+        this.presenceStatus = {
+          ...(this.presenceStatus || {}),
+          presence_required: true,
+          presence_captured: true,
+          captured_at: result.captured_at,
+        };
+        return result;
+      } catch (error) {
+        this.error = extractApiError(error);
+        throw error;
+      } finally {
+        this.presenceSubmitting = false;
+      }
     },
 
     async fetchMyVotes(electionUuid) {

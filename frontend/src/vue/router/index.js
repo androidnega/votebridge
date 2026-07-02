@@ -122,7 +122,15 @@ const router = createRouter({
           meta: {
             title: "Secure Voting Verification",
             roles: ["student", "candidate"],
-            svtVerify: true,
+          },
+        },
+        {
+          path: "vote/presence/:uuid",
+          name: "vote-presence",
+          component: () => import("@/views/elections/VotePresenceCaptureView.vue"),
+          meta: {
+            title: "Confirm Your Presence",
+            roles: ["student", "candidate"],
           },
         },
         {

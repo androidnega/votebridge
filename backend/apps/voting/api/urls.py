@@ -3,6 +3,8 @@ from django.urls import path
 from apps.voting.api.views import (
     BallotView,
     MyVotesView,
+    PreVotePresenceCaptureView,
+    PreVotePresenceStatusView,
     SubmitBallotView,
     VerifyVoteView,
 )
@@ -24,6 +26,16 @@ urlpatterns = [
         "elections/<uuid:election_uuid>/my-votes/",
         MyVotesView.as_view(),
         name="my-votes",
+    ),
+    path(
+        "elections/<uuid:election_uuid>/presence/status/",
+        PreVotePresenceStatusView.as_view(),
+        name="presence-status",
+    ),
+    path(
+        "elections/<uuid:election_uuid>/presence/",
+        PreVotePresenceCaptureView.as_view(),
+        name="presence-capture",
     ),
     path(
         "votes/<uuid:vote_id>/verify/",

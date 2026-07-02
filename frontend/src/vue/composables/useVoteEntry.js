@@ -2,39 +2,63 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useVotingStore } from "@/stores/voting";
 
+function isSvtAlreadyActiveError(message = "") {
+  return String(message).toLowerCase().includes("already active");
+}
+
 export function useVoteEntry() {
   const router = useRouter();
   const votingStore = useVotingStore();
-  const entering = ref(false);
+  const enteringElectionUuid = ref(null);
   const entryError = ref(null);
 
-  function hasActiveBallotSession(electionUuid) {
-    votingStore.restoreSvtSession(electionUuid);
-    return (
-      votingStore.svtStatus === "validated" ||
-      votingStore.svtSession?.status === "validated"
-    );
+  async function goToPresenceOrBallot(electionUuid) {
+    await votingStore.fetchPresenceStatus(electionUuid);
+    if (votingStore.needsPresenceCapture) {
+      router.push(`/dashboard/vote/presence/${electionUuid}`);
+      return;
+    }
+    router.push(`/dashboard/elections/${electionUuid}/vote`);
   }
 
   async function enterVoteFlow(electionUuid) {
-    if (!electionUuid || entering.value) return;
-    entering.value = true;
+    if (!electionUuid || enteringElectionUuid.value) return;
+    enteringElectionUuid.value = electionUuid;
     entryError.value = null;
 
     try {
+      votingStore.resetSvtMemory();
       await votingStore.fetchVotingAccess(electionUuid);
+      votingStore.restoreSvtSession(electionUuid);
 
       if (votingStore.svtAccess?.has_submitted_ballot) {
         router.push(`/dashboard/elections/${electionUuid}/confirmation`);
         return;
       }
 
-      if (hasActiveBallotSession(electionUuid) && votingStore.tokenCode) {
-        router.push(`/dashboard/elections/${electionUuid}/vote`);
+      if (votingStore.hasValidatedBallotSession) {
+        await goToPresenceOrBallot(electionUuid);
         return;
       }
 
-      if (votingStore.svtStatus === "issued") {
+      if (votingStore.tokenCode) {
+        try {
+          await votingStore.ensureSvtReadyForBallot(electionUuid);
+          await goToPresenceOrBallot(electionUuid);
+          return;
+        } catch {
+          if (isSvtAlreadyActiveError(votingStore.error)) {
+            await goToPresenceOrBallot(electionUuid);
+            return;
+          }
+          votingStore.clearElectionSvtState(electionUuid);
+          entryError.value =
+            votingStore.error ||
+            "This voting token does not belong to this election. Enter the correct code.";
+        }
+      }
+
+      if (votingStore.svtStatus === "issued" && votingStore.canRequestSvt === false) {
         router.push(`/dashboard/vote/verify/${electionUuid}`);
         return;
       }
@@ -47,13 +71,14 @@ export function useVoteEntry() {
     } catch (error) {
       entryError.value = votingStore.error || error.message || "Unable to start voting.";
     } finally {
-      entering.value = false;
+      enteringElectionUuid.value = null;
     }
   }
 
   return {
-    entering,
+    enteringElectionUuid,
     entryError,
     enterVoteFlow,
+    goToPresenceOrBallot,
   };
 }

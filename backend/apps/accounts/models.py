@@ -198,6 +198,7 @@ class MFALog(models.Model):
         SVT_REVOKED = "svt_revoked", "SVT Revoked"
         SVT_REISSUED = "svt_reissued", "SVT Reissued"
         SVT_VOTE_VERIFIED = "svt_vote_verified", "SVT Vote Verified"
+        PRE_VOTE_PRESENCE_CAPTURED = "pre_vote_presence_captured", "Pre-Vote Presence Captured"
         BIO_ENROLLMENT = "bio_enrollment", "Biometric Enrollment"
         BIO_VERIFY_PASS = "bio_verify_pass", "Biometric Verification Passed"
         BIO_VERIFY_FAIL = "bio_verify_fail", "Biometric Verification Failed"

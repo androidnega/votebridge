@@ -86,3 +86,58 @@ class Vote(models.Model):
     ) -> str:
         payload = f"{election_id}:{position_id}:{candidate_id}:{user_id}:{channel_id}:{timestamp_iso}"
         return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+class PreVotePresenceCapture(models.Model):
+    """Web pre-vote human presence evidence (not identity verification)."""
+
+    class Channel(models.TextChoices):
+        WEB = "web", "Web"
+
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        db_column="uuid",
+    )
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name="pre_vote_presence_captures",
+        db_column="user_id",
+    )
+    election = models.ForeignKey(
+        "elections.Election",
+        on_delete=models.PROTECT,
+        related_name="pre_vote_presence_captures",
+        db_column="election_id",
+    )
+    svt_id = models.UUIDField(db_column="svt_id")
+    channel = models.CharField(
+        max_length=16,
+        choices=Channel.choices,
+        default=Channel.WEB,
+        db_column="channel",
+    )
+    image = models.ImageField(upload_to="pre_vote_presence/%Y/%m/", db_column="image")
+    captured_at = models.DateTimeField(default=timezone.now, db_column="captured_at")
+
+    class Meta:
+        db_table = "voting_pre_vote_presence_capture"
+        ordering = ["-captured_at"]
+        verbose_name = "pre-vote presence capture"
+        verbose_name_plural = "pre-vote presence captures"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "election", "svt_id"],
+                name="voting_unique_presence_per_ballot_session",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["election", "user"]),
+            models.Index(fields=["svt_id"]),
+            models.Index(fields=["captured_at"]),
+        ]
+
+    def __str__(self):
+        return f"Presence {self.uuid} ({self.channel})"

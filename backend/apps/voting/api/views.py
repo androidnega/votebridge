@@ -5,12 +5,15 @@ from rest_framework.views import APIView
 
 from apps.voting.api.serializers import (
     BallotConfirmationSerializer,
+    PreVotePresenceCaptureSerializer,
+    PreVotePresenceStatusSerializer,
+    PreVotePresenceSubmitSerializer,
     SubmitBallotSerializer,
     VoteSummarySerializer,
     VoteVerificationSerializer,
 )
 from apps.voting.permissions import CanVote
-from apps.voting.services import ballot_service, vote_service
+from apps.voting.services import ballot_service, pre_vote_presence_service, vote_service
 
 
 class VoteCastRateThrottle(UserRateThrottle):
@@ -93,4 +96,38 @@ class MyVotesView(APIView):
         ]
         return Response(
             {"success": True, "data": VoteSummarySerializer(data, many=True).data}
+        )
+
+
+class PreVotePresenceStatusView(APIView):
+    permission_classes = [CanVote]
+
+    def get(self, request, election_uuid):
+        status_data = pre_vote_presence_service.get_status(election_uuid, request.user)
+        return Response(
+            {"success": True, "data": PreVotePresenceStatusSerializer(status_data).data}
+        )
+
+
+class PreVotePresenceCaptureView(APIView):
+    permission_classes = [CanVote]
+    throttle_classes = [VoteCastRateThrottle]
+
+    def post(self, request, election_uuid):
+        serializer = PreVotePresenceSubmitSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        ip_address, user_agent = _client_meta(request)
+        data = serializer.validated_data
+        result = pre_vote_presence_service.submit_capture(
+            election_uuid=election_uuid,
+            user=request.user,
+            token_code=data["token_code"],
+            image=data["image"],
+            channel=data["channel"],
+            ip_address=ip_address,
+            user_agent=user_agent,
+        )
+        return Response(
+            {"success": True, "data": PreVotePresenceCaptureSerializer(result).data},
+            status=status.HTTP_201_CREATED,
         )

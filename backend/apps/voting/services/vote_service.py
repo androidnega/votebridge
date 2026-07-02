@@ -169,7 +169,11 @@ class BallotService:
 
         active_svt = self.svt_repository.get_active_svt_for_user_election(user, election)
         from apps.security.models import SVTToken
+        from apps.voting.services.presence_service import pre_vote_presence_service
         from core.utils.phone import mask_phone_number
+
+        if active_svt and active_svt.status == SVTToken.Status.VALIDATED:
+            pre_vote_presence_service.ensure_presence_for_web_ballot(user, election, active_svt)
 
         return {
             "election_uuid": str(election.uuid),
@@ -233,6 +237,11 @@ class VoteService:
 
         svt = self.svt_service.get_svt_for_submit(token_code, user, election_uuid)
 
+        if channel_name == "web":
+            from apps.voting.services.presence_service import pre_vote_presence_service
+
+            pre_vote_presence_service.ensure_presence_for_web_ballot(user, election, svt)
+
         channel = self.channel_repository.get_by_name(channel_name)
         if not channel:
             raise NotFoundError(message="Voting channel not found.", code="channel_not_found")
@@ -284,13 +293,12 @@ class VoteService:
                 )
 
             existing_count = self.vote_repository.count_for_user_position(user, position)
-            if existing_count + len(candidate_uuids) > position.max_votes_allowed:
-                raise ConflictError(
-                    message=f"Maximum votes reached for {position.title}.",
-                    code="max_votes_reached",
-                )
+            if existing_count >= position.max_votes_allowed:
+                if position.title not in positions_completed:
+                    positions_completed.append(position.title)
+                continue
 
-            position_voted = False
+            pending_uuids = []
             for candidate_uuid in candidate_uuids:
                 candidate = self.candidate_repository.get_by_uuid(candidate_uuid)
                 if not candidate:
@@ -304,10 +312,24 @@ class VoteService:
                 if self.vote_repository.has_vote_for_user_position_candidate(
                     user, position, candidate
                 ):
-                    raise ConflictError(
-                        message=f"You have already voted for {candidate.full_name}.",
-                        code="already_voted_candidate",
-                    )
+                    continue
+
+                pending_uuids.append(candidate_uuid)
+
+            if not pending_uuids:
+                if position.title not in positions_completed and existing_count > 0:
+                    positions_completed.append(position.title)
+                continue
+
+            if existing_count + len(pending_uuids) > position.max_votes_allowed:
+                raise ConflictError(
+                    message=f"Maximum votes reached for {position.title}.",
+                    code="max_votes_reached",
+                )
+
+            position_voted = False
+            for candidate_uuid in pending_uuids:
+                candidate = self.candidate_repository.get_by_uuid(candidate_uuid)
 
                 timestamp = timezone.now()
                 vote_hash = Vote.compute_vote_hash(
@@ -338,21 +360,27 @@ class VoteService:
                 positions_completed.append(position.title)
 
         if not created_votes:
-            raise ValidationError(
-                message="Select at least one candidate before submitting your ballot.",
-                code="empty_ballot",
-            )
+            if not positions_completed:
+                raise ValidationError(
+                    message="Select at least one candidate before submitting your ballot.",
+                    code="empty_ballot",
+                )
+
+        total_votes = self.vote_repository.get_queryset().filter(
+            user=user,
+            election=election,
+        ).count()
 
         self.svt_service.consume_svt(
             svt,
             user,
-            vote_count=len(created_votes),
+            vote_count=len(created_votes) or total_votes,
             ip_address=ip_address,
             user_agent=user_agent,
         )
 
         confirmation_reference = self._build_confirmation_reference(svt)
-        positions_skipped = max(0, len(eligible_positions) - positions_with_selection)
+        positions_skipped = max(0, len(eligible_positions) - len(positions_completed))
 
         result = {
             "election_uuid": str(election.uuid),
@@ -361,8 +389,8 @@ class VoteService:
             "positions_completed": positions_completed,
             "positions_count": len(positions_completed),
             "positions_skipped": positions_skipped,
-            "votes_count": len(created_votes),
-            "timestamp": created_votes[-1].timestamp,
+            "votes_count": len(created_votes) or total_votes,
+            "timestamp": created_votes[-1].timestamp if created_votes else timezone.now(),
             "message": "Your vote has been recorded successfully.",
         }
         self._broadcast_ballot_submitted(

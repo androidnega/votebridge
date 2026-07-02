@@ -8,6 +8,20 @@ export const votingApi = {
       .then(unwrapResponse);
   },
 
+  getPresenceStatus(electionUuid) {
+    return apiClient
+      .get(`/voting/elections/${electionUuid}/presence/status/`)
+      .then(unwrapResponse);
+  },
+
+  submitPresenceCapture(electionUuid, formData) {
+    return apiClient
+      .post(`/voting/elections/${electionUuid}/presence/`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      })
+      .then(unwrapResponse);
+  },
+
   submitBallot(electionUuid, payload) {
     return apiClient
       .post(`/voting/elections/${electionUuid}/submit/`, payload)

@@ -13,9 +13,21 @@ from apps.candidates.models import Candidate
 from apps.elections.models import Election, Position, VoterEligibility
 from apps.security.models import SVTToken
 from apps.security.services.svt_service import svt_service
+from apps.voting.services.presence_service import pre_vote_presence_service
 from apps.voting.services.vote_service import BallotService, VoteService
 from core.utils.phone import mask_phone_number
 from tests.integration.fixtures import ensure_voting_channels
+
+
+def _capture_presence(election_uuid, student, token_code):
+    from django.core.files.uploadedfile import SimpleUploadedFile
+
+    image = SimpleUploadedFile(
+        "presence.jpg",
+        b"\xff\xd8\xff\xe0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00\xff\xd9",
+        content_type="image/jpeg",
+    )
+    pre_vote_presence_service.submit_capture(election_uuid, student, token_code, image)
 
 
 class Phase56SVTTests(TestCase):
@@ -83,6 +95,22 @@ class Phase56SVTTests(TestCase):
         self.assertIsNotNone(session["validated_at"])
 
     @patch("apps.security.services.svt_service.SVTService._send_svt_sms")
+    def test_validate_is_idempotent_for_active_ballot_session(self, mock_sms):
+        issued = svt_service.request_svt(self.election.uuid, self.student)
+        svt_service.validate_and_start_ballot(
+            issued["token_code"],
+            self.student,
+            self.election.uuid,
+        )
+        resumed = svt_service.validate_and_start_ballot(
+            issued["token_code"],
+            self.student,
+            self.election.uuid,
+        )
+        self.assertEqual(resumed["status"], SVTToken.Status.VALIDATED)
+        self.assertIn("active", resumed["message"].lower())
+
+    @patch("apps.security.services.svt_service.SVTService._send_svt_sms")
     def test_single_transaction_submit_with_skipped_positions(self, mock_sms):
         issued = svt_service.request_svt(self.election.uuid, self.student)
         svt_service.validate_and_start_ballot(
@@ -90,6 +118,7 @@ class Phase56SVTTests(TestCase):
             self.student,
             self.election.uuid,
         )
+        _capture_presence(self.election.uuid, self.student, issued["token_code"])
         vote_service = VoteService()
         confirmation = vote_service.submit_ballot(
             self.election.uuid,
@@ -113,6 +142,7 @@ class Phase56SVTTests(TestCase):
             self.student,
             self.election.uuid,
         )
+        _capture_presence(self.election.uuid, self.student, issued["token_code"])
         VoteService().submit_ballot(
             self.election.uuid,
             self.student,
