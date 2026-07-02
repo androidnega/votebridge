@@ -220,11 +220,11 @@ class ResultsConsumer(BaseRealtimeConsumer):
 
 
 class StrongroomConsumer(BaseRealtimeConsumer):
-    """Realtime strongroom integrity feed for admin dashboards."""
+    """Realtime strongroom integrity feed — Super Admin platform oversight only."""
 
     async def resolve_groups(self) -> list[str]:
         role = _user_role_name(self.user)
-        if role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}:
+        if role == Role.Name.SUPER_ADMIN:
             return [groups.strongroom()]
         return []
 
@@ -251,11 +251,11 @@ class StrongroomConsumer(BaseRealtimeConsumer):
 
 
 class CommunicationsConsumer(BaseRealtimeConsumer):
-    """Realtime communication delivery feed for admin dashboards."""
+    """Realtime communication delivery feed — platform operations (Super Admin)."""
 
     async def resolve_groups(self) -> list[str]:
         role = _user_role_name(self.user)
-        if role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}:
+        if role == Role.Name.SUPER_ADMIN:
             return [groups.communications()]
         return []
 
@@ -296,11 +296,11 @@ class NotificationConsumer(BaseRealtimeConsumer):
 
 
 class UssdConsumer(BaseRealtimeConsumer):
-    """Realtime USSD session monitor for admin dashboards."""
+    """Realtime USSD session monitor — platform operations (Super Admin)."""
 
     async def resolve_groups(self) -> list[str]:
         role = _user_role_name(self.user)
-        if role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}:
+        if role == Role.Name.SUPER_ADMIN:
             return [groups.ussd()]
         return []
 
@@ -312,11 +312,11 @@ class UssdConsumer(BaseRealtimeConsumer):
 
 
 class OperationsConsumer(BaseRealtimeConsumer):
-    """Enterprise Operations Center — aggregates live operational feeds."""
+    """Enterprise Operations Center — platform-wide operational feeds (Super Admin)."""
 
     async def resolve_groups(self) -> list[str]:
         role = _user_role_name(self.user)
-        if role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}:
+        if role == Role.Name.SUPER_ADMIN:
             return [
                 groups.operations(),
                 groups.security(),
@@ -339,7 +339,7 @@ class AnalyticsConsumer(BaseRealtimeConsumer):
 
     async def resolve_groups(self) -> list[str]:
         role = _user_role_name(self.user)
-        if role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}:
+        if role == Role.Name.SUPER_ADMIN:
             return [
                 groups.analytics(),
                 groups.security(),
@@ -348,6 +348,13 @@ class AnalyticsConsumer(BaseRealtimeConsumer):
                 groups.communications(),
                 groups.ussd(),
                 groups.operations(),
+            ]
+        if role == Role.Name.ADMIN:
+            return [
+                groups.analytics(),
+                groups.security(),
+                groups.fraud(),
+                groups.results(),
             ]
         if role in {Role.Name.STUDENT, Role.Name.CANDIDATE}:
             return [groups.dashboard_student(self.user.uuid)]
@@ -358,7 +365,9 @@ class AnalyticsConsumer(BaseRealtimeConsumer):
         from apps.analytics.services.analytics_service import analytics_dashboard_service
 
         role = _user_role_name(self.user)
-        if role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}:
+        if role == Role.Name.SUPER_ADMIN:
+            return analytics_dashboard_service.get_overview()
+        if role == Role.Name.ADMIN:
             return analytics_dashboard_service.get_overview()
         from apps.analytics.services.analytics_service import analytics_student_service
 

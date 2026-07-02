@@ -12,8 +12,8 @@ class CanManageCommunications(IsSuperAdmin):
     message = "Super Admin access required to manage communications."
 
 
-class CanManageCommunicationSettings(IsAdminOrSuperAdmin):
-    message = "Admin access required to manage communication settings."
+class CanManageCommunicationSettings(IsSuperAdmin):
+    message = "Super Admin access required to manage communication settings."
 
 
 class CanViewOwnNotifications(BasePermission):

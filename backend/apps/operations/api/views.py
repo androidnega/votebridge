@@ -1,7 +1,10 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.operations.permissions import CanAccessOperationsCenter
+from apps.operations.permissions import (
+    CanAccessElectionOperations,
+    CanAccessPlatformOperationsCenter,
+)
 from apps.operations.services.operations_service import (
     operations_activity_service,
     operations_dashboard_service,
@@ -13,7 +16,7 @@ from apps.security.services.monitoring_service import monitoring_service
 
 
 class OperationsOverviewView(APIView):
-    permission_classes = [CanAccessOperationsCenter]
+    permission_classes = [CanAccessPlatformOperationsCenter]
 
     def get(self, request):
         data = operations_dashboard_service.get_overview()
@@ -21,7 +24,7 @@ class OperationsOverviewView(APIView):
 
 
 class OperationsActivityView(APIView):
-    permission_classes = [CanAccessOperationsCenter]
+    permission_classes = [CanAccessPlatformOperationsCenter]
 
     def get(self, request):
         category = validate_activity_category(request.query_params.get("category"))
@@ -40,7 +43,7 @@ class OperationsActivityView(APIView):
 
 
 class OperationsHealthView(APIView):
-    permission_classes = [CanAccessOperationsCenter]
+    permission_classes = [CanAccessPlatformOperationsCenter]
 
     def get(self, request):
         data = operations_health_service.check_all()
@@ -48,7 +51,7 @@ class OperationsHealthView(APIView):
 
 
 class OperationsInfrastructureView(APIView):
-    permission_classes = [CanAccessOperationsCenter]
+    permission_classes = [CanAccessPlatformOperationsCenter]
 
     def get(self, request):
         data = operations_dashboard_service.get_infrastructure()
@@ -56,7 +59,7 @@ class OperationsInfrastructureView(APIView):
 
 
 class OperationsElectionMonitorView(APIView):
-    permission_classes = [CanAccessOperationsCenter]
+    permission_classes = [CanAccessElectionOperations]
 
     def get(self, request):
         data = operations_dashboard_service.get_election_monitor()
@@ -64,7 +67,7 @@ class OperationsElectionMonitorView(APIView):
 
 
 class OperationsSessionsView(APIView):
-    permission_classes = [CanAccessOperationsCenter]
+    permission_classes = [CanAccessPlatformOperationsCenter]
 
     def get(self, request):
         data = operations_dashboard_service.get_sessions_detail()
@@ -72,7 +75,7 @@ class OperationsSessionsView(APIView):
 
 
 class OperationsCommunicationsView(APIView):
-    permission_classes = [CanAccessOperationsCenter]
+    permission_classes = [CanAccessPlatformOperationsCenter]
 
     def get(self, request):
         data = operations_dashboard_service.get_communications_detail()
@@ -80,7 +83,7 @@ class OperationsCommunicationsView(APIView):
 
 
 class OperationsQueuesView(APIView):
-    permission_classes = [CanAccessOperationsCenter]
+    permission_classes = [CanAccessPlatformOperationsCenter]
 
     def get(self, request):
         data = operations_dashboard_service.get_queues()
@@ -88,7 +91,7 @@ class OperationsQueuesView(APIView):
 
 
 class OperationsPerformanceView(APIView):
-    permission_classes = [CanAccessOperationsCenter]
+    permission_classes = [CanAccessPlatformOperationsCenter]
 
     def get(self, request):
         data = operations_performance_service.get_metrics()
@@ -96,7 +99,7 @@ class OperationsPerformanceView(APIView):
 
 
 class OperationsLogsView(APIView):
-    permission_classes = [CanAccessOperationsCenter]
+    permission_classes = [CanAccessPlatformOperationsCenter]
 
     def get(self, request):
         event_type = request.query_params.get("event_type")

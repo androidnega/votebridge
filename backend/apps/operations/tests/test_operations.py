@@ -17,6 +17,10 @@ class OperationsAccessTests(TestCase):
             name=Role.Name.ADMIN,
             defaults={"description": "Admin"},
         )
+        self.super_admin_role, _ = Role.objects.get_or_create(
+            name=Role.Name.SUPER_ADMIN,
+            defaults={"description": "Super Admin"},
+        )
         self.student_role, _ = Role.objects.get_or_create(
             name=Role.Name.STUDENT,
             defaults={"description": "Student"},
@@ -29,6 +33,14 @@ class OperationsAccessTests(TestCase):
             last_name="Admin",
             role=self.admin_role,
         )
+        self.super_admin = User.objects.create_user(
+            email="ops-sa@test.local",
+            username="ops-sa",
+            password="TestPass123!",
+            first_name="Ops",
+            last_name="Super",
+            role=self.super_admin_role,
+        )
         self.student = User.objects.create_user(
             email="ops-student@test.local",
             username="ops-student",
@@ -39,14 +51,20 @@ class OperationsAccessTests(TestCase):
         )
         self.overview_url = reverse("operations:overview")
         self.activity_url = reverse("operations:activity")
+        self.election_monitor_url = reverse("operations:election-monitor")
 
     def test_student_cannot_access_overview(self):
         self.client.force_authenticate(user=self.student)
         response = self.client.get(self.overview_url)
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    def test_admin_can_access_overview(self):
+    def test_admin_cannot_access_platform_overview(self):
         self.client.force_authenticate(user=self.admin)
+        response = self.client.get(self.overview_url)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+    def test_super_admin_can_access_overview(self):
+        self.client.force_authenticate(user=self.super_admin)
         response = self.client.get(self.overview_url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         body = response.json()
@@ -57,8 +75,13 @@ class OperationsAccessTests(TestCase):
         self.assertIn("realtime", data)
         self.assertIn("pending_workloads", data)
 
-    def test_invalid_activity_category_rejected(self):
+    def test_admin_can_access_election_monitor(self):
         self.client.force_authenticate(user=self.admin)
+        response = self.client.get(self.election_monitor_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_invalid_activity_category_rejected(self):
+        self.client.force_authenticate(user=self.super_admin)
         response = self.client.get(self.activity_url, {"category": "invalid"})
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 

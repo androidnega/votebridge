@@ -506,7 +506,7 @@ const router = createRouter({
           path: "operations/elections",
           name: "operations-elections",
           component: () => import("@/views/operations/OperationsElectionMonitorView.vue"),
-          meta: { title: "Election Monitor", roles: ["super_admin"] },
+          meta: { title: "Election Monitor", roles: ["admin", "super_admin"] },
         },
         {
           path: "operations/communications",

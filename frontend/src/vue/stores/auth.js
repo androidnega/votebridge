@@ -43,6 +43,7 @@ export const useAuthStore = defineStore("auth", {
     isElectionOfficer: (state) => state.user?.role?.name === "admin",
     isStaff: (state) => ["admin", "super_admin"].includes(state.user?.role?.name),
     isAdmin: (state) => state.user?.role?.name === "admin",
+    isCandidate: (state) => state.user?.role?.name === "candidate",
     isSuperAdmin: (state) => state.user?.role?.name === "super_admin",
     isStudent: (state) => ["student", "candidate"].includes(state.user?.role?.name),
     hasPendingOtp: (state) => Boolean(state.otpChallenge?.otp_request_uuid),

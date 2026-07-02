@@ -7,6 +7,8 @@ from core.exceptions import ConflictError, NotFoundError, ValidationError
 
 logger = logging.getLogger("votebridge")
 
+SELF_PROFILE_FIELDS = frozenset({"first_name", "last_name", "phone_number"})
+
 
 class UserService:
     """Business logic for user management."""
@@ -78,6 +80,15 @@ class UserService:
         user = self.user_repository.create(role=role, password=password, **data)
         logger.info("User created: %s", user.uuid)
         return user
+
+    def update_self_profile(self, user: User, data: dict) -> User:
+        disallowed = set(data) - SELF_PROFILE_FIELDS
+        if disallowed:
+            raise ValidationError(
+                message="You may only update your name and phone number.",
+                code="profile_field_forbidden",
+            )
+        return self.update_user(user.uuid, data)
 
     def update_user(self, uuid, data: dict) -> User:
         user = self.get_user(uuid)

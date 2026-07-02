@@ -235,19 +235,11 @@ class CurrentUserView(APIView):
         from apps.accounts.api.serializers import UserSerializer, UserUpdateSerializer
         from apps.accounts.services import user_service
 
-        allowed_fields = {
-            "first_name",
-            "last_name",
-            "email",
-            "phone_number",
-            "password",
-            "index_number",
-            "student_id",
-        }
+        allowed_fields = {"first_name", "last_name", "phone_number"}
         payload = {key: value for key, value in request.data.items() if key in allowed_fields}
         serializer = UserUpdateSerializer(data=payload, partial=True)
         serializer.is_valid(raise_exception=True)
-        user = user_service.update_user(request.user.uuid, serializer.validated_data)
+        user = user_service.update_self_profile(request.user, serializer.validated_data)
         return Response({"success": True, "data": UserSerializer(user).data})
 
 

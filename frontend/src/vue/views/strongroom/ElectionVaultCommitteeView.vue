@@ -26,7 +26,12 @@ onMounted(async () => {
     duration.value = store.committee.session_duration_hours;
     selectedMembers.value = store.committee.members?.map((m) => m.user_uuid) || [];
   }
-  const users = await usersApi.list({ role: "admin,super_admin", page_size: 50 }).catch(() => ({ items: [] }));
+  const users = await usersApi
+    .list({
+      role: authStore.isSuperAdmin ? "admin,super_admin" : "admin",
+      page_size: 50,
+    })
+    .catch(() => ({ items: [] }));
   staffOptions.value = users.items || users.results || [];
 });
 

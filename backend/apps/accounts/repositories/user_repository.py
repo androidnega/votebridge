@@ -52,7 +52,11 @@ class UserRepository:
         queryset = self.get_queryset()
 
         if role_name:
-            queryset = queryset.filter(role__name=role_name)
+            role_names = [name.strip() for name in role_name.split(",") if name.strip()]
+            if len(role_names) == 1:
+                queryset = queryset.filter(role__name=role_names[0])
+            else:
+                queryset = queryset.filter(role__name__in=role_names)
 
         if is_active is not None:
             queryset = queryset.filter(is_active=is_active)

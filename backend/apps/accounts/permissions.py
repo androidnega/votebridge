@@ -35,8 +35,14 @@ class IsElectionAdministrator(BasePermission):
         return _user_role_name(request.user) == Role.Name.ADMIN
 
 
+# Roles an election officer may look up when managing voters or nominating custodians.
+ADMIN_USER_LOOKUP_ROLES = frozenset(
+    {Role.Name.STUDENT, Role.Name.CANDIDATE, Role.Name.ADMIN}
+)
+
+
 class CanManageUsers(BasePermission):
-    """Admin and Super Admin can manage users; others can only read their own profile."""
+    """Super Admin manages platform users. Admin may look up voters/custodians only."""
 
     message = "You do not have permission to manage users."
 
@@ -45,8 +51,11 @@ class CanManageUsers(BasePermission):
             return False
 
         role = _user_role_name(request.user)
-        if role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}:
+        if role == Role.Name.SUPER_ADMIN:
             return True
+
+        if role == Role.Name.ADMIN:
+            return request.method in SAFE_METHODS and view.action in ("list", "retrieve")
 
         if view.action in ("retrieve", "list") and role in {
             Role.Name.STUDENT,
@@ -58,8 +67,12 @@ class CanManageUsers(BasePermission):
 
     def has_object_permission(self, request, view, obj):
         role = _user_role_name(request.user)
-        if role in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}:
+        if role == Role.Name.SUPER_ADMIN:
             return True
+
+        if role == Role.Name.ADMIN:
+            target_role = getattr(getattr(obj, "role", None), "name", None)
+            return target_role in ADMIN_USER_LOOKUP_ROLES
 
         if hasattr(obj, "uuid") and hasattr(request.user, "uuid"):
             return obj.uuid == request.user.uuid
@@ -68,16 +81,11 @@ class CanManageUsers(BasePermission):
 
 
 class CanManageRoles(BasePermission):
-    message = "Super Admin access required to manage roles."
+    """Predefined roles only — Super Admin assigns privileged access."""
+
+    message = "Super Admin access required to manage role assignments."
 
     def has_permission(self, request, view):
         if not request.user.is_authenticated:
             return False
-
-        role = _user_role_name(request.user)
-        if request.method in SAFE_METHODS:
-            return role in {
-                Role.Name.ADMIN,
-                Role.Name.SUPER_ADMIN,
-            }
-        return role == Role.Name.SUPER_ADMIN
+        return _user_role_name(request.user) == Role.Name.SUPER_ADMIN

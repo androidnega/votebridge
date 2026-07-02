@@ -11,7 +11,7 @@ from apps.accounts.api.serializers import (
     UserStatusSerializer,
     UserUpdateSerializer,
 )
-from apps.accounts.permissions import CanManageRoles, CanManageUsers
+from apps.accounts.permissions import ADMIN_USER_LOOKUP_ROLES, CanManageRoles, CanManageUsers
 from apps.accounts.services import role_service, user_service
 
 
@@ -74,10 +74,25 @@ class UserViewSet(viewsets.ViewSet):
     permission_classes = [CanManageUsers]
 
     def list(self, request):
+        from apps.accounts.models import Role as RoleModel
+        from rest_framework.exceptions import PermissionDenied
+
         query = request.query_params.get("search")
         role_name = request.query_params.get("role")
         is_active = request.query_params.get("is_active")
         is_verified = request.query_params.get("is_verified")
+
+        actor_role = getattr(getattr(request.user, "role", None), "name", None)
+        if actor_role == RoleModel.Name.ADMIN:
+            requested_roles = {
+                name.strip()
+                for name in (role_name or "").split(",")
+                if name.strip()
+            }
+            if requested_roles and not requested_roles.issubset(ADMIN_USER_LOOKUP_ROLES):
+                raise PermissionDenied(
+                    "Election officers may only look up students, candidates, or election administrators."
+                )
 
         is_active_bool = _parse_bool(is_active)
         is_verified_bool = _parse_bool(is_verified)
@@ -88,8 +103,6 @@ class UserViewSet(viewsets.ViewSet):
             is_active=is_active_bool,
             is_verified=is_verified_bool,
         )
-
-        from apps.accounts.models import Role as RoleModel
 
         role = getattr(request.user, "role", None)
         if role and role.name in {RoleModel.Name.STUDENT, RoleModel.Name.CANDIDATE}:
@@ -179,12 +192,18 @@ class UserViewSet(viewsets.ViewSet):
 
     def _check_object_access(self, request, user):
         from apps.accounts.models import Role as RoleModel
+        from rest_framework.exceptions import PermissionDenied
 
         role = getattr(request.user, "role", None)
+        if role and role.name == RoleModel.Name.ADMIN:
+            target_role = getattr(getattr(user, "role", None), "name", None)
+            if target_role not in ADMIN_USER_LOOKUP_ROLES:
+                raise PermissionDenied(
+                    "Election officers may only access student, candidate, or election administrator records."
+                )
+
         if role and role.name in {RoleModel.Name.STUDENT, RoleModel.Name.CANDIDATE}:
             if user.uuid != request.user.uuid:
-                from rest_framework.exceptions import PermissionDenied
-
                 raise PermissionDenied("You can only access your own profile.")
 
     def _check_role_assignment(self, request, data):
