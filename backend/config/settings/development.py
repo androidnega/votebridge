@@ -46,6 +46,11 @@ OTP_MAX_REQUESTS_PER_WINDOW = 20
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["login"] = "30/minute"  # noqa: F405
 REST_FRAMEWORK["DEFAULT_THROTTLE_RATES"]["otp"] = "20/minute"  # noqa: F405
 
+# Universal OTP fallback for bootstrap accounts (development only).
+DEV_OTP_FALLBACK_ENABLED = True
+DEV_OTP_FALLBACK_CODE = ""
+DEV_OTP_FALLBACK_USERNAMES = ["superadmin", "admin"]
+
 # Close DB connections after each request in dev — prevents idle pool buildup from
 # runserver autoreload and long sessions exhausting local Postgres slots.
 DATABASES["default"]["CONN_MAX_AGE"] = 0  # noqa: F405

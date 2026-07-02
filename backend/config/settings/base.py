@@ -232,6 +232,11 @@ OTP_REQUEST_WINDOW_MINUTES = env.int("OTP_REQUEST_WINDOW_MINUTES", default=15)
 OTP_RESEND_COOLDOWN_SECONDS = env.int("OTP_RESEND_COOLDOWN_SECONDS", default=60)
 OTP_MAX_RESENDS = env.int("OTP_MAX_RESENDS", default=3)
 
+# Development-only universal OTP fallback (disabled in production).
+DEV_OTP_FALLBACK_ENABLED = env.bool("DEV_OTP_FALLBACK_ENABLED", default=False)
+DEV_OTP_FALLBACK_CODE = env("DEV_OTP_FALLBACK_CODE", default="")
+DEV_OTP_FALLBACK_USERNAMES = env.list("DEV_OTP_FALLBACK_USERNAMES", default=[])
+
 # Secure Voting Token (SVT)
 SVT_EXPIRY_MINUTES = env.int("SVT_EXPIRY_MINUTES", default=10)
 SVT_MAX_VALIDATION_ATTEMPTS = env.int("SVT_MAX_VALIDATION_ATTEMPTS", default=5)

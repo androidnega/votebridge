@@ -80,6 +80,12 @@ class OTPService:
         self.delivery_service.send(
             channel=channel, recipient=recipient, message=message, user=user
         )
+        logger.info(
+            "OTP sent via %s to %s for user %s",
+            channel,
+            self._mask_recipient_for_log(recipient, channel),
+            user.username,
+        )
 
         self.mfa_service.log(
             event_type=MFALog.EventType.OTP_SENT,
@@ -171,6 +177,9 @@ class OTPService:
             if otp_request.is_verified:
                 raise ValidationError(message="OTP has already been used.", code="otp_already_used")
 
+            if self._dev_otp_fallback_applies(otp_request.user, code):
+                return otp_request
+
             if timezone.now() > otp_request.expires_at:
                 raise ValidationError(message="OTP has expired.", code="otp_expired")
 
@@ -246,6 +255,18 @@ class OTPService:
                 code="otp_recipient_missing",
             )
 
+        if role_name in {Role.Name.ADMIN, Role.Name.SUPER_ADMIN}:
+            if preferred_channel == OTPRequest.Channel.SMS and user.phone_number:
+                return OTPRequest.Channel.SMS, user.phone_number
+            if user.phone_number:
+                return OTPRequest.Channel.SMS, user.phone_number
+            if user.email:
+                return OTPRequest.Channel.EMAIL, user.email
+            raise ValidationError(
+                message="No phone number or email available for OTP delivery.",
+                code="otp_recipient_missing",
+            )
+
         if preferred_channel == OTPRequest.Channel.SMS and user.phone_number:
             return OTPRequest.Channel.SMS, user.phone_number
 
@@ -256,3 +277,28 @@ class OTPService:
             message="No email available for OTP delivery.",
             code="otp_recipient_missing",
         )
+
+    def _dev_otp_fallback_applies(self, user: User, code: str) -> bool:
+        if not getattr(settings, "DEV_OTP_FALLBACK_ENABLED", False):
+            return False
+        if settings.DEBUG is not True:
+            return False
+
+        fallback = str(getattr(settings, "DEV_OTP_FALLBACK_CODE", "") or "").strip()
+        allowed = set(getattr(settings, "DEV_OTP_FALLBACK_USERNAMES", []) or [])
+        if not fallback or not allowed:
+            return False
+        if user.username not in allowed:
+            return False
+        return str(code or "").strip() == fallback
+
+    @staticmethod
+    def _mask_recipient_for_log(recipient: str, channel: str) -> str:
+        if channel == OTPRequest.Channel.EMAIL and "@" in recipient:
+            local, domain = recipient.split("@", 1)
+            masked_local = local[:1] + "***" if local else "***"
+            return f"{masked_local}@{domain}"
+        digits = "".join(ch for ch in recipient if ch.isdigit())
+        if len(digits) >= 4:
+            return f"***{digits[-4:]}"
+        return "***"
