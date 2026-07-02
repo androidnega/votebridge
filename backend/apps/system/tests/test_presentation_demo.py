@@ -7,7 +7,7 @@ from apps.elections.models import Election, Position
 from apps.system.services.presentation_demo_service import presentation_demo_service
 
 
-@override_settings(DEBUG=True)
+@override_settings(DEBUG=True, DEV_BOOTSTRAP_PASSWORD="local-test-bootstrap-pass")
 class PresentationDemoSeedTests(TestCase):
     def test_seed_creates_src_and_fassa_elections(self):
         summary = presentation_demo_service.seed()
@@ -28,7 +28,7 @@ class CandidateUserLinkTests(TestCase):
         self.student_role = Role.objects.get(name=Role.Name.STUDENT)
         self.admin = User.objects.create_user(
             email="officer@ttu.edu.gh",
-            password="[REDACTED]",
+            password="local-test-officer-pass",
             username="officer",
             first_name="Demo",
             last_name="Officer",

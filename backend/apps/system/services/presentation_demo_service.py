@@ -25,9 +25,6 @@ from apps.security.models import AuditLog, SVTToken
 from apps.strongroom.models import CustodyRecord, ElectionSeal
 from apps.strongroom.services.vault_committee_service import vault_committee_service
 from apps.system.data.presentation_demo_data import (
-    DEMO_OTP_FALLBACK,
-    DEMO_SVT_FALLBACK,
-    DEMO_STAFF_PASSWORD,
     FASSA_CANDIDATE_ROSTER,
     FASSA_ELECTION_TITLE,
     FASSA_HOURLY_VOTE_WEIGHTS,
@@ -38,6 +35,11 @@ from apps.system.data.presentation_demo_data import (
     STAFF_ACCOUNTS,
     STRONGROOM_CUSTODIAN_USERNAMES,
     TTU_DEMO_STUDENTS,
+)
+from apps.system.dev_credentials import (
+    dev_otp_fallback_code,
+    dev_svt_fallback_code,
+    require_dev_bootstrap_password,
 )
 from apps.system.services.dev_reset_service import dev_reset_service
 from apps.system.services.feature_flag_service import feature_flag_service
@@ -57,14 +59,16 @@ class PresentationSeedSummary:
     src_election: dict = field(default_factory=dict)
     fassa_election: dict = field(default_factory=dict)
     strongroom: dict = field(default_factory=dict)
-    demo_otp_fallback: str = DEMO_OTP_FALLBACK
-    demo_svt_fallback: str = DEMO_SVT_FALLBACK
+    demo_otp_fallback: str = ""
+    demo_svt_fallback: str = ""
 
 
 class PresentationDemoService:
     @transaction.atomic
     def seed(self) -> PresentationSeedSummary:
         summary = PresentationSeedSummary()
+        summary.demo_otp_fallback = dev_otp_fallback_code()
+        summary.demo_svt_fallback = dev_svt_fallback_code()
         reset_summary = dev_reset_service.clear_operational_data()
         summary.cleared = reset_summary.cleared
 
@@ -73,8 +77,10 @@ class PresentationDemoService:
         users_by_index = {}
         users_by_username = {}
 
+        bootstrap_password = require_dev_bootstrap_password()
+
         for account in STAFF_ACCOUNTS:
-            user = self._create_staff(account)
+            user = self._create_staff(account, bootstrap_password)
             users_by_username[user.username] = user
             summary.staff_accounts.append(
                 {
@@ -82,8 +88,7 @@ class PresentationDemoService:
                     "email": user.email,
                     "role": user.role.name,
                     "phone_number": user.phone_number,
-                    "password": account["password"],
-                    "otp_fallback": DEMO_OTP_FALLBACK,
+                    "otp_fallback": summary.demo_otp_fallback or "configured in DEV_OTP_FALLBACK_CODE",
                 }
             )
 
@@ -120,7 +125,7 @@ class PresentationDemoService:
                 defaults={"is_active": True},
             )
 
-    def _create_staff(self, spec: dict) -> User:
+    def _create_staff(self, spec: dict, password: str) -> User:
         role = Role.objects.get(name=spec["role"])
         phone = normalize_phone(spec.get("phone_number", "")) or spec.get("phone_number", "")
         user, _ = User.objects.update_or_create(
@@ -138,7 +143,7 @@ class PresentationDemoService:
                 "demo_seed": True,
             },
         )
-        user.set_password(spec["password"])
+        user.set_password(password)
         user.save()
         return user
 
@@ -478,8 +483,7 @@ class PresentationDemoService:
                 {
                     "username": u.username,
                     "email": u.email,
-                    "password": DEMO_STAFF_PASSWORD,
-                    "otp_fallback": DEMO_OTP_FALLBACK,
+                    "otp_fallback": dev_otp_fallback_code() or "configured in DEV_OTP_FALLBACK_CODE",
                 }
                 for u in custodians
             ],

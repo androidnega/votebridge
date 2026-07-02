@@ -158,7 +158,7 @@ cd backend
 python manage.py seed_demo_data
 ```
 
-Password (all users): `[REDACTED]`
+Password (all users): set `DEV_BOOTSTRAP_PASSWORD` in your local `.env` file.
 
 | Role | Login |
 |------|-------|

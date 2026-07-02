@@ -20,9 +20,16 @@ media/
 staticfiles/
 backend/logs/*.log
 
-# Environment
+# Environment — never commit real secrets; use .env (gitignored)
 .env
-.env.local
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# Local archives
+VoteBridge-documentation.zip
 
 # Node
 node_modules/

@@ -217,7 +217,7 @@ Actions audited: settings update, rollback, institution update, feature flag tog
 
 **Manual QA:**
 
-1. Login as `superadmin` / `[REDACTED]`
+1. Login as `superadmin` using `DEV_BOOTSTRAP_PASSWORD` from your local `.env`
 2. Open **System Control** → Overview
 3. Toggle a feature flag → complete step-up OTP
 4. Enable maintenance → verify non-admin API returns 503

@@ -76,8 +76,9 @@ class Command(BaseCommand):
 
         self.stdout.write("")
         self.stdout.write(self.style.WARNING("Credentials (development only)"))
-        self.stdout.write(f"  Super Admin: {BOOTSTRAP_SUPER_ADMIN['username']} / {BOOTSTRAP_SUPER_ADMIN['password']}")
-        self.stdout.write(f"  Election Admin: {BOOTSTRAP_ELECTION_ADMIN['username']} / {BOOTSTRAP_ELECTION_ADMIN['password']}")
+        self.stdout.write("  Staff password: DEV_BOOTSTRAP_PASSWORD in your local .env file")
+        self.stdout.write(f"  Super Admin username: {BOOTSTRAP_SUPER_ADMIN['username']}")
+        self.stdout.write(f"  Election Admin username: {BOOTSTRAP_ELECTION_ADMIN['username']}")
         self.stdout.write("")
         self.stdout.write("  OTP delivery: SMS to the phone on each account.")
         if summary.dev_otp_fallback_enabled:

@@ -14,6 +14,7 @@ from django.core.management.base import BaseCommand
 from django.utils import timezone
 
 from apps.accounts.models import Role, User
+from apps.system.dev_credentials import require_dev_bootstrap_password
 from apps.candidates.models import Candidate
 from apps.elections.models import Election, Position, VoterEligibility, VotingChannel
 from apps.fraud.models import FraudCase, SecurityAlert
@@ -21,8 +22,6 @@ from apps.results.models import ElectionResult
 from apps.security.models import AuditLog
 from apps.strongroom.models import BallotSeal, CustodyRecord, ElectionSeal
 from apps.voting.models import Vote
-
-
 
 EXTRA_STUDENTS = [
     ("Abena", "Boateng", "BC/ICT/24/056", "abena.boateng@ttu.edu.gh"),
@@ -71,6 +70,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         call_command("seed_demo_users")
+        demo_password = require_dev_bootstrap_password()
 
         student_role = Role.objects.get(name=Role.Name.STUDENT)
         for first, last, index, email in EXTRA_STUDENTS:
@@ -86,7 +86,7 @@ class Command(BaseCommand):
                     "is_active": True,
                 },
             )
-            user.set_password(DEMO_PASSWORD)
+            user.set_password(demo_password)
             user.save()
             if created:
                 self.stdout.write(f"  + student {index}")

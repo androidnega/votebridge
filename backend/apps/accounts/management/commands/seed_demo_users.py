@@ -9,9 +9,7 @@ DEV ONLY — passwords below must never be used in production.
 from django.core.management.base import BaseCommand
 
 from apps.accounts.models import Role, User
-
-# Dev-only credentials (documented in command output)
-
+from apps.system.dev_credentials import require_dev_bootstrap_password
 
 DEMO_USERS = [
     {
@@ -89,6 +87,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         created = updated = 0
+        demo_password = require_dev_bootstrap_password()
 
         for spec in DEMO_USERS:
             role = Role.objects.filter(name=spec["role"]).first()
@@ -112,7 +111,7 @@ class Command(BaseCommand):
                     "is_active": True,
                 },
             )
-            user.set_password(DEMO_PASSWORD)
+            user.set_password(demo_password)
             user.save()
             if was_created:
                 created += 1
@@ -121,7 +120,7 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f"Demo users ready ({created} created, {updated} updated)."))
         self.stdout.write("")
-        self.stdout.write(self.style.WARNING("DEV PASSWORD (all accounts): " + DEMO_PASSWORD))
+        self.stdout.write(self.style.WARNING("DEV PASSWORD (all accounts): DEV_BOOTSTRAP_PASSWORD in your local .env"))
         self.stdout.write("")
         self.stdout.write("Universal login at http://localhost:5173/auth/login")
         self.stdout.write("")

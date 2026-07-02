@@ -459,7 +459,7 @@ class SVTService:
             svt = self._resolve_dev_fallback_svt(user, election)
             if not svt:
                 raise ValidationError(
-                    message="Request a voting code first, then enter the demo code 111111.",
+                    message="Request a voting code first, then enter your configured development SVT fallback.",
                     code="svt_not_found",
                 )
         else:

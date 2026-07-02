@@ -29,6 +29,7 @@ from apps.trusted_devices.models import (
     TrustedDeviceLoginHistory,
 )
 from apps.ussd.models import USSDRequestLog, USSDSession
+from apps.system.dev_credentials import require_dev_bootstrap_password
 from core.exceptions import ValidationError
 
 logger = logging.getLogger("votebridge")
@@ -40,7 +41,6 @@ DEV_RESET_CONFIRMATION = "RESET VOTEBRIDGE DEV"
 BOOTSTRAP_SUPER_ADMIN = {
     "username": "superadmin",
     "email": "superadmin@ttu.edu.gh",
-    "password": "[REDACTED]",
     "phone_number": "0257940791",
     "first_name": "Akua",
     "last_name": "Mensah",
@@ -52,7 +52,6 @@ BOOTSTRAP_SUPER_ADMIN = {
 BOOTSTRAP_ELECTION_ADMIN = {
     "username": "admin",
     "email": "admin@ttu.edu.gh",
-    "password": "[REDACTED]",
     "phone_number": "0257940792",
     "first_name": "Kofi",
     "last_name": "Asante",
@@ -173,6 +172,7 @@ class DevResetService:
 
     def _bootstrap_users(self) -> list[dict]:
         created = []
+        bootstrap_password = require_dev_bootstrap_password()
         for spec in (BOOTSTRAP_SUPER_ADMIN, BOOTSTRAP_ELECTION_ADMIN):
             role = Role.objects.filter(name=spec["role"]).first()
             if not role:
@@ -184,7 +184,7 @@ class DevResetService:
             phone = normalize_phone(spec.get("phone_number", ""))
             user = User.objects.create_user(
                 email=spec["email"],
-                password=spec["password"],
+                password=bootstrap_password,
                 username=spec["username"],
                 first_name=spec["first_name"],
                 last_name=spec["last_name"],

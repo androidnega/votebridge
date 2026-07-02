@@ -17,7 +17,7 @@ from core.exceptions import AuthenticationError, ValidationError
 User = get_user_model()
 
 
-@override_settings(DEBUG=True)
+@override_settings(DEBUG=True, DEV_BOOTSTRAP_PASSWORD="local-test-bootstrap-pass")
 class DevResetServiceTests(TestCase):
     def setUp(self):
         self.admin_role, _ = Role.objects.get_or_create(
@@ -78,10 +78,13 @@ class DevResetServiceTests(TestCase):
 @override_settings(
     DEBUG=True,
     DEV_OTP_FALLBACK_ENABLED=True,
-    DEV_OTP_FALLBACK_CODE="111111",
+    DEV_OTP_FALLBACK_CODE="654321",
     DEV_OTP_FALLBACK_USERNAMES=["superadmin"],
 )
 class DevOtpFallbackTests(TestCase):
+    TEST_OTP_FALLBACK = "654321"
+    TEST_BOOTSTRAP_PASSWORD = "local-test-bootstrap-pass"
+
     def setUp(self):
         role, _ = Role.objects.get_or_create(
             name=Role.Name.SUPER_ADMIN,
@@ -89,7 +92,7 @@ class DevOtpFallbackTests(TestCase):
         )
         self.user = User.objects.create_user(
             email="superadmin@votebridge.local",
-            password="[REDACTED]",
+            password=self.TEST_BOOTSTRAP_PASSWORD,
             username="superadmin",
             role=role,
             phone_number="233257940791",
@@ -105,7 +108,7 @@ class DevOtpFallbackTests(TestCase):
             expires_at=timezone.now() - timedelta(minutes=5),
             max_attempts=5,
         )
-        validated = self.service.validate_code(otp_request.uuid, "111111")
+        validated = self.service.validate_code(otp_request.uuid, self.TEST_OTP_FALLBACK)
         self.assertEqual(validated.uuid, otp_request.uuid)
 
     @override_settings(DEBUG=False)
@@ -119,7 +122,7 @@ class DevOtpFallbackTests(TestCase):
             max_attempts=5,
         )
         with self.assertRaises(AuthenticationError):
-            self.service.validate_code(otp_request.uuid, "111111")
+            self.service.validate_code(otp_request.uuid, self.TEST_OTP_FALLBACK)
 
     def test_admin_prefers_sms_when_phone_present(self):
         admin_role, _ = Role.objects.get_or_create(
@@ -128,7 +131,7 @@ class DevOtpFallbackTests(TestCase):
         )
         admin = User.objects.create_user(
             email="admin@votebridge.local",
-            password="[REDACTED]",
+            password=self.TEST_BOOTSTRAP_PASSWORD,
             username="admin",
             role=admin_role,
             phone_number="233257940792",

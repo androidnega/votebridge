@@ -232,6 +232,9 @@ OTP_REQUEST_WINDOW_MINUTES = env.int("OTP_REQUEST_WINDOW_MINUTES", default=15)
 OTP_RESEND_COOLDOWN_SECONDS = env.int("OTP_RESEND_COOLDOWN_SECONDS", default=60)
 OTP_MAX_RESENDS = env.int("OTP_MAX_RESENDS", default=3)
 
+# Development-only bootstrap password for seed/reset commands (never set in production).
+DEV_BOOTSTRAP_PASSWORD = env("DEV_BOOTSTRAP_PASSWORD", default="")
+
 # Development-only universal OTP fallback (disabled in production).
 DEV_OTP_FALLBACK_ENABLED = env.bool("DEV_OTP_FALLBACK_ENABLED", default=False)
 DEV_OTP_FALLBACK_CODE = env("DEV_OTP_FALLBACK_CODE", default="")

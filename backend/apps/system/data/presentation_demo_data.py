@@ -5,16 +5,11 @@ from apps.accounts.models import Role
 SRC_ELECTION_TITLE = "TTU SRC General Elections 2026"
 FASSA_ELECTION_TITLE = "FASSA Elections 2025"
 
-
-
-
-
 STAFF_ACCOUNTS = [
     {
         "role": Role.Name.SUPER_ADMIN,
         "username": "superadmin",
         "email": "superadmin@ttu.edu.gh",
-        "password": DEMO_STAFF_PASSWORD,
         "phone_number": "0257940791",
         "first_name": "Akua",
         "last_name": "Mensah",
@@ -25,7 +20,6 @@ STAFF_ACCOUNTS = [
         "role": Role.Name.ADMIN,
         "username": "admin",
         "email": "admin@ttu.edu.gh",
-        "password": DEMO_STAFF_PASSWORD,
         "phone_number": "0257940792",
         "first_name": "Kofi",
         "last_name": "Asante",
@@ -36,7 +30,6 @@ STAFF_ACCOUNTS = [
         "role": Role.Name.ADMIN,
         "username": "registrar",
         "email": "registrar@ttu.edu.gh",
-        "password": DEMO_STAFF_PASSWORD,
         "phone_number": "0257940793",
         "first_name": "Abena",
         "last_name": "Owusu",

@@ -41,7 +41,7 @@ class Command(BaseCommand):
         for account in summary.staff_accounts:
             self.stdout.write(
                 f"  {account['username']} ({account['role']}) — {account['email']} "
-                f"password={account['password']} OTP fallback={account['otp_fallback']}"
+                f"password=DEV_BOOTSTRAP_PASSWORD OTP fallback={account['otp_fallback'] or 'DEV_OTP_FALLBACK_CODE'}"
             )
 
         self.stdout.write("")
@@ -65,8 +65,8 @@ class Command(BaseCommand):
             self.stdout.write(self.style.MIGRATE_HEADING("Strongroom committee"))
             for custodian in summary.strongroom.get("custodians", []):
                 self.stdout.write(
-                    f"  {custodian['username']} — password={custodian['password']} "
-                    f"OTP fallback={custodian['otp_fallback']}"
+                    f"  {custodian['username']} — password=DEV_BOOTSTRAP_PASSWORD "
+                    f"OTP fallback={custodian['otp_fallback'] or 'DEV_OTP_FALLBACK_CODE'}"
                 )
 
         self.stdout.write("")

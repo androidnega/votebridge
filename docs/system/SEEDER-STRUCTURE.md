@@ -320,15 +320,9 @@ Check what to include:
 | `seed_active_election` | Legacy — single OPEN election only |
 | `reset_votebridge_dev --force` | Wipe + bootstrap superadmin/admin only (preserves platform config) |
 
-**Dev passwords (existing commands):**
+**Dev passwords:** set `DEV_BOOTSTRAP_PASSWORD` in your local `.env` file (never commit it). All development seed commands use that value for staff accounts. Students sign in with index number + OTP.
 
-| Command | Password |
-|---------|----------|
-| `seed_presentation_demo --force` | `[REDACTED]` (staff); students use index login |
-| `seed_demo_users` / `seed_demo_data` | `[REDACTED]` |
-| `reset_votebridge_dev --force` | `[REDACTED]` (superadmin + admin only) |
-
-**Demo OTP / SVT fallbacks (development only):** `111111` for staff (`superadmin`, `admin`) and all `demo_seed` students when SMS is delayed. Students also accept SVT fallback `111111` after requesting a voting code.
+**Demo OTP / SVT fallbacks (development only):** configure `DEV_OTP_FALLBACK_CODE` and `DEV_SVT_FALLBACK_CODE` in `.env` when SMS is delayed during local testing.
 
 **Wipe before re-seed:** `seed_presentation_demo --force` or `reset_votebridge_dev --force` clears users + operational data but keeps roles, settings, templates.
 
