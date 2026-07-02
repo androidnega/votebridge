@@ -250,8 +250,10 @@ These features exist for **development and staging** only. They are not part of 
 
 | Tool | Purpose |
 |------|---------|
-| `DEV_OTP_FALLBACK_*` settings | Named dev accounts can use a fixed OTP instead of SMS when `DEV_OTP_FALLBACK_ENABLED` is true |
-| `python manage.py reset_votebridge_dev --force` | Rebuilds demo election data locally |
+| `DEV_OTP_FALLBACK_*` settings | Staff usernames + all `User.demo_seed` accounts accept fixed OTP `111111` when enabled |
+| `DEV_SVT_FALLBACK_*` settings | Seeded students can enter `111111` after requesting SVT if SMS is delayed |
+| `python manage.py seed_presentation_demo --force` | Full TTU presentation dataset (SRC open + FASSA published) |
+| `python manage.py reset_votebridge_dev --force` | Minimal wipe + staff bootstrap only |
 
 **OTP fallback:** Speeds up local testing. Never enable in production.
 

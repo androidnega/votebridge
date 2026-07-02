@@ -88,6 +88,11 @@ class User(AbstractUser):
     student_id = models.CharField(max_length=50, blank=True, db_index=True)
     phone_number = models.CharField(max_length=20, blank=True)
     is_verified = models.BooleanField(default=False)
+    demo_seed = models.BooleanField(
+        default=False,
+        db_index=True,
+        help_text="Seeded demo account — enables dev OTP/SVT fallbacks in DEBUG.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

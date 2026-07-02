@@ -455,18 +455,26 @@ class SVTService:
         normalized = str(token_code or "").strip()
         from core.utils.svt_token_format import is_valid_svt_format, normalize_svt_token
 
-        if not is_valid_svt_format(normalized):
-            self._record_failed_validation_attempt(user, election)
-            raise ValidationError(
-                message="Invalid Secure Voting Token. Please check the code sent to your phone.",
-                code="svt_invalid",
-            )
+        if self._dev_svt_fallback_applies(user, normalized):
+            svt = self._resolve_dev_fallback_svt(user, election)
+            if not svt:
+                raise ValidationError(
+                    message="Request a voting code first, then enter the demo code 111111.",
+                    code="svt_not_found",
+                )
+        else:
+            if not is_valid_svt_format(normalized):
+                self._record_failed_validation_attempt(user, election)
+                raise ValidationError(
+                    message="Invalid Secure Voting Token. Please check the code sent to your phone.",
+                    code="svt_invalid",
+                )
 
-        canonical = normalize_svt_token(normalized)
-        svt = self.svt_repository.get_by_token_code(canonical)
-        if not svt:
-            self._record_failed_validation_attempt(user, election)
-            raise NotFoundError(message="Invalid voting token.", code="svt_not_found")
+            canonical = normalize_svt_token(normalized)
+            svt = self.svt_repository.get_by_token_code(canonical)
+            if not svt:
+                self._record_failed_validation_attempt(user, election)
+                raise NotFoundError(message="Invalid voting token.", code="svt_not_found")
 
         if svt.status == SVTToken.Status.VALIDATED:
             try:
@@ -528,6 +536,28 @@ class SVTService:
             "session_expires_at": now + timedelta(minutes=session_minutes),
             "message": "Ballot session started. Complete your selections and submit your ballot.",
         }
+
+    def _dev_svt_fallback_applies(self, user, code: str) -> bool:
+        if not getattr(settings, "DEV_SVT_FALLBACK_ENABLED", False):
+            return False
+        if settings.DEBUG is not True:
+            return False
+        if not getattr(user, "demo_seed", False):
+            return False
+        fallback = str(getattr(settings, "DEV_SVT_FALLBACK_CODE", "") or "").strip()
+        return bool(fallback) and str(code or "").strip() == fallback
+
+    def _resolve_dev_fallback_svt(self, user, election) -> SVTToken | None:
+        return (
+            self.svt_repository.get_queryset()
+            .filter(
+                user=user,
+                election=election,
+                status__in=[SVTToken.Status.ISSUED, SVTToken.Status.VALIDATED],
+            )
+            .order_by("-issued_at")
+            .first()
+        )
 
     def _record_failed_validation_attempt(self, user, election, svt: SVTToken | None = None) -> None:
         max_attempts = int(getattr(settings, "SVT_MAX_VALIDATION_ATTEMPTS", 5))

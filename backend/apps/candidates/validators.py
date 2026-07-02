@@ -22,6 +22,18 @@ def validate_unique_candidate_name(election: Election, full_name: str, exclude_u
         )
 
 
+def validate_unique_candidate_user(election: Election, user, exclude_uuid=None):
+    if user is None:
+        return
+    queryset = Candidate.objects.filter(election=election, user=user)
+    if exclude_uuid:
+        queryset = queryset.exclude(uuid=exclude_uuid)
+    if queryset.exists():
+        raise DjangoValidationError(
+            "This student is already registered as a candidate in this election."
+        )
+
+
 def validate_candidate_position(position: Position, election: Election):
     if position is None:
         raise DjangoValidationError("Every candidate must belong to a position.")

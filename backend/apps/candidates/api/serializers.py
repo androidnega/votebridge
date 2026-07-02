@@ -15,6 +15,8 @@ class CandidateSerializer(serializers.ModelSerializer):
     election_title = serializers.CharField(source="election.title", read_only=True)
     position_uuid = serializers.UUIDField(source="position.uuid", read_only=True)
     position_title = serializers.CharField(source="position.title", read_only=True)
+    user_uuid = serializers.UUIDField(source="user.uuid", read_only=True, allow_null=True)
+    index_number = serializers.CharField(source="user.index_number", read_only=True, allow_null=True)
     image_url = serializers.SerializerMethodField()
 
     class Meta:
@@ -25,6 +27,8 @@ class CandidateSerializer(serializers.ModelSerializer):
             "election_title",
             "position_uuid",
             "position_title",
+            "user_uuid",
+            "index_number",
             "full_name",
             "department",
             "manifesto",
@@ -47,14 +51,23 @@ class CandidateSerializer(serializers.ModelSerializer):
 
 class CandidateCreateSerializer(serializers.Serializer):
     position_uuid = serializers.UUIDField()
-    full_name = serializers.CharField(max_length=255)
+    user_uuid = serializers.UUIDField(required=False, allow_null=True)
+    full_name = serializers.CharField(max_length=255, required=False, allow_blank=True)
     department = serializers.CharField(required=False, allow_blank=True, max_length=150)
     manifesto = serializers.CharField(required=False, allow_blank=True)
     image = serializers.ImageField(required=False)
 
+    def validate(self, attrs):
+        if not attrs.get("user_uuid") and not (attrs.get("full_name") or "").strip():
+            raise serializers.ValidationError(
+                {"full_name": "Provide a student or enter a full name."}
+            )
+        return attrs
+
 
 class CandidateUpdateSerializer(serializers.Serializer):
     position_uuid = serializers.UUIDField(required=False)
+    user_uuid = serializers.UUIDField(required=False, allow_null=True)
     full_name = serializers.CharField(required=False, max_length=255)
     department = serializers.CharField(required=False, allow_blank=True, max_length=150)
     manifesto = serializers.CharField(required=False, allow_blank=True)

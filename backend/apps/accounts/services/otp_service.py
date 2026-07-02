@@ -288,7 +288,7 @@ class OTPService:
         allowed = set(getattr(settings, "DEV_OTP_FALLBACK_USERNAMES", []) or [])
         if not fallback or not allowed:
             return False
-        if user.username not in allowed:
+        if user.username not in allowed and not getattr(user, "demo_seed", False):
             return False
         return str(code or "").strip() == fallback
 

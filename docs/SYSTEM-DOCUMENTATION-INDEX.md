@@ -89,6 +89,8 @@ Real capabilities that exist in code but are **demoted from primary navigation**
 
 | Capability | Where documented | Notes |
 |------------|------------------|-------|
+| Presentation demo seed (`seed_presentation_demo`) | [SEEDER-STRUCTURE.md](./system/SEEDER-STRUCTURE.md) | TTU SRC open + FASSA published |
+| Candidate ↔ student user linkage | [ERD](./system/ERD.md), [PRIVILEGES](./system/PRIVILEGES-AND-ROLES.md) | Optional `Candidate.user` FK |
 | Strong Room vault sessions | Flowcharts §8, ERD, Privileges | Super Admin governance; not in primary sidebar |
 | Platform Operations Center | Privileges, Architecture | Super Admin only; demoted from prototype nav |
 | Operational data reset | Election lifecycle appendix, Architecture | Settings → Operations; staging/dev recovery |

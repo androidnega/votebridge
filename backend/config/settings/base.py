@@ -237,6 +237,10 @@ DEV_OTP_FALLBACK_ENABLED = env.bool("DEV_OTP_FALLBACK_ENABLED", default=False)
 DEV_OTP_FALLBACK_CODE = env("DEV_OTP_FALLBACK_CODE", default="")
 DEV_OTP_FALLBACK_USERNAMES = env.list("DEV_OTP_FALLBACK_USERNAMES", default=[])
 
+# Development-only SVT fallback for demo-seeded students (disabled in production).
+DEV_SVT_FALLBACK_ENABLED = env.bool("DEV_SVT_FALLBACK_ENABLED", default=False)
+DEV_SVT_FALLBACK_CODE = env("DEV_SVT_FALLBACK_CODE", default="")
+
 # Secure Voting Token (SVT)
 SVT_EXPIRY_MINUTES = env.int("SVT_EXPIRY_MINUTES", default=10)
 SVT_MAX_VALIDATION_ATTEMPTS = env.int("SVT_MAX_VALIDATION_ATTEMPTS", default=5)

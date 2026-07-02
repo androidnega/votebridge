@@ -25,8 +25,10 @@ Staff access → password → OTP → Dashboard → Elections → workspace (pos
 
 ### Super Admin (governance)
 ```
-Staff access → password → OTP → Dashboard → Certify / publish results → Settings (institution, integrations, governance)
+Staff access → password → OTP → Dashboard → Certify / publish results → Settings
 ```
+
+**Presentation demo data:** Run `python manage.py seed_presentation_demo --force` for **TTU SRC General Elections 2026** (open, zero votes) and **FASSA Elections 2025** (published results/charts). See [SEEDER-STRUCTURE.md](./SEEDER-STRUCTURE.md).
 
 **Login:** One page at `/auth/login`. Public copy says **Enter your index number** only. A subtle **Staff access** link reveals email/username sign-in for privileged accounts.
 

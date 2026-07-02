@@ -9,6 +9,7 @@ import { toastMessages } from "@/config/toastMessages";
 import { useServerListPagination } from "@/composables/useServerListPagination";
 import { useToast } from "@/composables/useToast";
 import { electionsApi } from "@/api/elections";
+import { usersApi } from "@/api/users";
 import { extractApiError } from "@/api/helpers";
 
 const route = useRoute();
@@ -25,6 +26,10 @@ const editCandidate = ref(null);
 const addImageFile = ref(null);
 const editImageFile = ref(null);
 const pendingAction = ref(null);
+const studentSearch = ref("");
+const studentResults = ref([]);
+const studentSearchLoading = ref(false);
+const selectedStudent = ref(null);
 
 const {
   page,
@@ -42,6 +47,7 @@ const {
 
 const defaultForm = () => ({
   position_uuid: positions.value[0]?.uuid || "",
+  user_uuid: "",
   full_name: "",
   department: "",
   manifesto: "",
@@ -109,6 +115,9 @@ function openAddModal() {
   error.value = null;
   form.value = defaultForm();
   addImageFile.value = null;
+  studentSearch.value = "";
+  studentResults.value = [];
+  selectedStudent.value = null;
   addOpen.value = true;
 }
 
@@ -116,11 +125,53 @@ function closeAddModal() {
   addOpen.value = false;
   form.value = defaultForm();
   addImageFile.value = null;
+  studentSearch.value = "";
+  studentResults.value = [];
+  selectedStudent.value = null;
   error.value = null;
 }
 
+async function searchStudents() {
+  const query = studentSearch.value.trim();
+  if (query.length < 2) {
+    studentResults.value = [];
+    return;
+  }
+  studentSearchLoading.value = true;
+  try {
+    const result = await usersApi.list({
+      search: query,
+      role: "student,candidate",
+      is_active: true,
+      page_size: 8,
+    });
+    studentResults.value = result.items || [];
+  } catch (err) {
+    studentResults.value = [];
+    toast.error(extractApiError(err));
+  } finally {
+    studentSearchLoading.value = false;
+  }
+}
+
+function selectStudent(student) {
+  selectedStudent.value = student;
+  form.value.user_uuid = student.uuid;
+  form.value.full_name = `${student.first_name || ""} ${student.last_name || ""}`.trim();
+  studentSearch.value = student.index_number
+    ? `${student.index_number} — ${form.value.full_name}`
+    : form.value.full_name;
+  studentResults.value = [];
+}
+
+function clearSelectedStudent() {
+  selectedStudent.value = null;
+  form.value.user_uuid = "";
+  studentSearch.value = "";
+}
+
 async function addCandidate() {
-  if (!form.value.position_uuid || !form.value.full_name?.trim()) return;
+  if (!form.value.position_uuid || (!form.value.user_uuid && !form.value.full_name?.trim())) return;
   saving.value = true;
   error.value = null;
   try {
@@ -296,7 +347,42 @@ onMounted(refreshPage);
             </option>
           </select>
         </div>
-        <VInput v-model="form.full_name" label="Full name" required />
+
+        <div class="space-y-1.5">
+          <label class="vb-label" for="student-search">Link existing student (recommended)</label>
+          <div class="flex gap-2">
+            <VInput
+              id="student-search"
+              v-model="studentSearch"
+              placeholder="Search by index number or name"
+              @keyup.enter.prevent="searchStudents"
+            />
+            <VButton type="button" variant="secondary" :loading="studentSearchLoading" @click="searchStudents">
+              Search
+            </VButton>
+          </div>
+          <p class="text-xs text-ink-secondary">
+            Select a seeded TTU student account to keep candidacy linked to their voter identity.
+          </p>
+          <div v-if="selectedStudent" class="flex items-center justify-between rounded-md border border-brand-100 bg-brand-50 px-3 py-2 text-sm">
+            <span>{{ selectedStudent.index_number }} — {{ form.full_name }}</span>
+            <VButton type="button" size="sm" variant="ghost" @click="clearSelectedStudent">Clear</VButton>
+          </div>
+          <ul v-if="studentResults.length" class="max-h-40 overflow-y-auto rounded-md border border-surface-border">
+            <li v-for="student in studentResults" :key="student.uuid">
+              <button
+                type="button"
+                class="flex w-full flex-col px-3 py-2 text-left text-sm hover:bg-surface-muted"
+                @click="selectStudent(student)"
+              >
+                <span class="font-medium">{{ student.index_number || student.email }}</span>
+                <span class="text-ink-secondary">{{ student.first_name }} {{ student.last_name }}</span>
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <VInput v-model="form.full_name" label="Full name" :required="!form.user_uuid" />
         <VInput v-model="form.department" label="Department" placeholder="Optional" />
         <div class="space-y-1.5">
           <label class="vb-label" for="manifesto">Manifesto</label>

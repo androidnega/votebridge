@@ -39,11 +39,11 @@ DEV_RESET_CONFIRMATION = "RESET VOTEBRIDGE DEV"
 
 BOOTSTRAP_SUPER_ADMIN = {
     "username": "superadmin",
-    "email": "superadmin@votebridge.local",
+    "email": "superadmin@ttu.edu.gh",
     "password": "[REDACTED]",
     "phone_number": "0257940791",
-    "first_name": "Super",
-    "last_name": "Admin",
+    "first_name": "Akua",
+    "last_name": "Mensah",
     "role": Role.Name.SUPER_ADMIN,
     "is_staff": True,
     "is_superuser": True,
@@ -51,11 +51,11 @@ BOOTSTRAP_SUPER_ADMIN = {
 
 BOOTSTRAP_ELECTION_ADMIN = {
     "username": "admin",
-    "email": "admin@votebridge.local",
+    "email": "admin@ttu.edu.gh",
     "password": "[REDACTED]",
     "phone_number": "0257940792",
-    "first_name": "Election",
-    "last_name": "Admin",
+    "first_name": "Kofi",
+    "last_name": "Asante",
     "role": Role.Name.ADMIN,
     "is_staff": True,
     "is_superuser": False,
@@ -101,40 +101,22 @@ class DevResetService:
             )
 
     @transaction.atomic
+    def clear_operational_data(self) -> DevResetSummary:
+        """Remove demo users and operational records; preserve platform configuration."""
+        self.assert_dev_environment()
+        summary = DevResetSummary()
+        summary.cleared = self._clear_operational_records()
+        cache.delete("analytics:overview")
+        cache.delete("operations:overview")
+        self._record_preserved_counts(summary)
+        return summary
+
+    @transaction.atomic
     def reset_and_bootstrap(self) -> DevResetSummary:
         self.assert_dev_environment()
         summary = DevResetSummary()
 
-        operational = election_purge_service.reset_all_operational_data()
-        summary.cleared["elections"] = operational.elections_removed
-        summary.cleared["votes"] = operational.votes_removed
-        summary.cleared["results"] = operational.results_removed
-
-        summary.cleared["in_app_notifications"] = self._delete_count(InAppNotification.objects.all())
-        summary.cleared["delivery_logs"] = self._delete_count(DeliveryLog.objects.all())
-        summary.cleared["ussd_sessions"] = self._delete_count(USSDSession.objects.all())
-        summary.cleared["ussd_request_logs"] = self._delete_count(USSDRequestLog.objects.all())
-
-        summary.cleared["trusted_device_login_history"] = self._delete_count(
-            TrustedDeviceLoginHistory.objects.all()
-        )
-        summary.cleared["trusted_device_events"] = self._delete_count(TrustedDeviceEvent.objects.all())
-        summary.cleared["trusted_devices"] = self._delete_count(TrustedDevice.objects.all())
-
-        summary.cleared["biometric_verification_logs"] = self._delete_count(
-            BiometricVerificationLog.objects.all()
-        )
-        summary.cleared["biometric_profiles"] = self._delete_count(BiometricProfile.objects.all())
-
-        summary.cleared["otp_requests"] = self._delete_count(OTPRequest.objects.all())
-        summary.cleared["auth_sessions"] = self._delete_count(Session.objects.all())
-        summary.cleared["mfa_logs"] = self._delete_count(MFALog.objects.all())
-
-        summary.cleared["device_logs"] = self._delete_count(DeviceLog.objects.all())
-        summary.cleared["location_logs"] = self._delete_count(LocationLog.objects.all())
-        summary.cleared["audit_logs"] = self._delete_count(AuditLog.objects.all())
-
-        summary.cleared["users"] = self._delete_count(User.objects.all())
+        summary.cleared = self._clear_operational_records()
 
         cache.delete("analytics:overview")
         cache.delete("operations:overview")
@@ -150,6 +132,40 @@ class DevResetService:
             len(summary.users_created),
         )
         return summary
+
+    def _clear_operational_records(self) -> dict[str, int]:
+        cleared: dict[str, int] = {}
+        operational = election_purge_service.reset_all_operational_data()
+        cleared["elections"] = operational.elections_removed
+        cleared["votes"] = operational.votes_removed
+        cleared["results"] = operational.results_removed
+
+        cleared["in_app_notifications"] = self._delete_count(InAppNotification.objects.all())
+        cleared["delivery_logs"] = self._delete_count(DeliveryLog.objects.all())
+        cleared["ussd_sessions"] = self._delete_count(USSDSession.objects.all())
+        cleared["ussd_request_logs"] = self._delete_count(USSDRequestLog.objects.all())
+
+        cleared["trusted_device_login_history"] = self._delete_count(
+            TrustedDeviceLoginHistory.objects.all()
+        )
+        cleared["trusted_device_events"] = self._delete_count(TrustedDeviceEvent.objects.all())
+        cleared["trusted_devices"] = self._delete_count(TrustedDevice.objects.all())
+
+        cleared["biometric_verification_logs"] = self._delete_count(
+            BiometricVerificationLog.objects.all()
+        )
+        cleared["biometric_profiles"] = self._delete_count(BiometricProfile.objects.all())
+
+        cleared["otp_requests"] = self._delete_count(OTPRequest.objects.all())
+        cleared["auth_sessions"] = self._delete_count(Session.objects.all())
+        cleared["mfa_logs"] = self._delete_count(MFALog.objects.all())
+
+        cleared["device_logs"] = self._delete_count(DeviceLog.objects.all())
+        cleared["location_logs"] = self._delete_count(LocationLog.objects.all())
+        cleared["audit_logs"] = self._delete_count(AuditLog.objects.all())
+
+        cleared["users"] = self._delete_count(User.objects.all())
+        return cleared
 
     def _delete_count(self, queryset) -> int:
         count, _ = queryset.delete()

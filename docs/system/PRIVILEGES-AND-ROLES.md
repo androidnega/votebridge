@@ -31,6 +31,8 @@ VoteBridge uses **four predefined database roles**. There is no dynamic custom-r
 
 Candidate-specific data is exposed through **election and candidate APIs**, not through elevated global permissions.
 
+**Candidacy linkage:** Admins may register a candidate by selecting an existing **student user** (`Candidate.user` FK). The contestant remains a student for login and privileges; the candidacy record holds election-specific profile data (photo, manifesto, position).
+
 ### Auditor — governed workflow, not a database role
 
 VoteBridge does **not** define a standalone `auditor` role in the database (`Role.Name` has only `student`, `candidate`, `admin`, `super_admin`).

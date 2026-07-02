@@ -27,6 +27,13 @@ class Candidate(models.Model):
         on_delete=models.PROTECT,
         related_name="candidates",
     )
+    user = models.ForeignKey(
+        "accounts.User",
+        on_delete=models.SET_NULL,
+        related_name="candidacies",
+        null=True,
+        blank=True,
+    )
     full_name = models.CharField(max_length=255)
     department = models.CharField(max_length=150, blank=True)
     manifesto = models.TextField(blank=True)
@@ -48,6 +55,11 @@ class Candidate(models.Model):
             models.UniqueConstraint(
                 fields=["election", "full_name"],
                 name="candidates_unique_name_per_election",
+            ),
+            models.UniqueConstraint(
+                fields=["election", "user"],
+                condition=models.Q(user__isnull=False),
+                name="candidates_unique_user_per_election",
             ),
         ]
         indexes = [

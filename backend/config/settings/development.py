@@ -51,6 +51,10 @@ DEV_OTP_FALLBACK_ENABLED = True
 DEV_OTP_FALLBACK_CODE = ""
 DEV_OTP_FALLBACK_USERNAMES = ["superadmin", "admin"]
 
+# Demo SVT fallback for seeded students (development only).
+DEV_SVT_FALLBACK_ENABLED = True
+DEV_SVT_FALLBACK_CODE = ""
+
 # Close DB connections after each request in dev — prevents idle pool buildup from
 # runserver autoreload and long sessions exhausting local Postgres slots.
 DATABASES["default"]["CONN_MAX_AGE"] = 0  # noqa: F405

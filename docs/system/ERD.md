@@ -23,7 +23,7 @@ An **ERD** shows how data is stored in PostgreSQL and how tables relate. This do
 | `USSDSession` | Phone voting path |
 | `ElectionVoterPin` | USSD election PIN |
 
-**Candidate role note:** `Role.candidate` is a **student voter account** with candidacy visibility — not a governance tier. The `candidates_candidate` table stores **election contestant records** (name, manifesto, position) managed by admins; it is not the same as the user role flag.
+**Candidate role note:** `Role.candidate` is a **student voter account** with candidacy visibility — not a governance tier. The `candidates_candidate` table stores **election contestant records** (name, manifesto, position) and may optionally link to a `User` via `user_id` when the contestant is an existing seeded student.
 
 ---
 
@@ -92,6 +92,7 @@ erDiagram
         string status
         fk election_id
         fk position_id
+        fk user_id "optional — linked student account"
     }
 
     VoterEligibility {
