@@ -21,9 +21,6 @@ const verifying = ref(false);
 let cooldownTimer = null;
 
 const challenge = computed(() => authStore.otpChallenge);
-const isStaffOtp = computed(() =>
-  ["admin", "super_admin"].includes(challenge.value?.account_type)
-);
 const channelLabel = computed(() => {
   const channel = challenge.value?.channel || "sms";
   return channel === "email" ? "Email" : "SMS";
@@ -121,17 +118,10 @@ function backToLogin() {
 <template>
   <form class="space-y-4" @submit.prevent="handleVerify">
     <div class="vb-auth-channel">
-      <h2 class="text-base font-semibold text-slate-800">
-        {{ isStaffOtp ? "Verify administrator sign-in" : "Verify your identity" }}
-      </h2>
+      <h2 class="text-base font-semibold text-slate-800">Verify your identity</h2>
       <p class="vb-auth-channel-label mt-2">Secure verification channel</p>
       <p class="mt-1 text-sm text-slate-600">
-        <template v-if="isStaffOtp">
-          Enter the 6-digit verification code sent via {{ channelLabel.toLowerCase() }} to
-        </template>
-        <template v-else>
-          A 6-digit code was sent via {{ channelLabel.toLowerCase() }} to
-        </template>
+        A 6-digit code was sent via {{ channelLabel.toLowerCase() }} to
         <span class="font-medium text-slate-800">{{ maskedDestination }}</span>.
       </p>
     </div>

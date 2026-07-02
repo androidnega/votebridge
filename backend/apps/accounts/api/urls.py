@@ -1,7 +1,6 @@
 from django.urls import path
 
 from apps.accounts.api.auth_views import (
-    AdminLoginView,
     CurrentUserView,
     LogoutView,
     MFALogListView,
@@ -9,8 +8,6 @@ from apps.accounts.api.auth_views import (
     OTPVerifyView,
     SessionListView,
     SessionRevokeView,
-    StudentLoginView,
-    SuperAdminLoginView,
     TokenRefreshView,
     UniversalLoginView,
 )
@@ -45,9 +42,6 @@ role_detail = RoleViewSet.as_view(
 
 urlpatterns = [
     path("auth/login/", UniversalLoginView.as_view(), name="auth-login"),
-    path("auth/student/login/", StudentLoginView.as_view(), name="auth-student-login"),
-    path("auth/admin/login/", AdminLoginView.as_view(), name="auth-admin-login"),
-    path("auth/super-admin/login/", SuperAdminLoginView.as_view(), name="auth-super-admin-login"),
     path("auth/otp/verify/", OTPVerifyView.as_view(), name="auth-otp-verify"),
     path("auth/otp/resend/", OTPResendView.as_view(), name="auth-otp-resend"),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="auth-token-refresh"),

@@ -11,13 +11,12 @@ flowchart TD
     A[User opens VoteBridge] --> B{Already logged in?}
     B -->|Yes| C[Go to dashboard]
     B -->|No| D[Enter your index number]
-    D --> E{Account type?}
+    D --> E{Account type resolved by API}
     E -->|Student/Candidate| F[Send OTP to phone/email]
-    E -->|Admin/Super Admin| G[Enter email or username]
-    G --> H[Enter password]
-    H --> I[Send OTP]
+    E -->|Privileged account| G[Enter password on same login flow]
+    G --> H[Send OTP]
     F --> K[Enter OTP]
-    I --> K
+    H --> K
     K --> L{OTP valid?}
     L -->|No| D
     L -->|Yes| M{Biometric required?}
@@ -26,7 +25,7 @@ flowchart TD
     N --> C
 ```
 
-**Layman summary:** Students and candidates enter their **index number** and receive a code on their phone or email. Election officers and administrators use **email or username**, then **password**, then a verification code. Super admins may have an additional security step.
+**Layman summary:** Everyone uses the **same sign-in page**. Students enter their **index number** and receive a code. The system recognises privileged accounts on the same page and adds a password step before the code.
 
 ---
 

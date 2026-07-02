@@ -11,11 +11,3 @@ export function setRememberedIdentifier(identity) {
     localStorage.removeItem(REMEMBER_KEY);
   }
 }
-
-/** Email or username — not a student index number. */
-export function looksLikeStaffIdentity(identity) {
-  const value = (identity || "").trim();
-  if (!value) return false;
-  if (value.includes("@")) return true;
-  return !value.includes("/");
-}

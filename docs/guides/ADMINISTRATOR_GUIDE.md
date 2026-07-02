@@ -10,14 +10,14 @@ This guide covers platform oversight: users, settings, reports, and election sup
 ## 1. Logging in
 
 1. Open the VoteBridge URL provided by your IT team.
-2. Select **Administrator sign in** (or use the staff link on the login screen).
-3. Enter your **email or username**, then your **password**.
+2. On the unified sign-in page, enter your **email or username** (the public field is labelled for students; privileged accounts use the same page).
+3. Enter your **password** when prompted.
 4. Complete **OTP** verification sent to your registered contact.
 5. After OTP, you are taken to the dashboard. **Biometric verification** may be required when enabled by policy.
 
 After login you land on the **Election command center** dashboard.
 
-> **Students and candidates** use **Student sign in** with their index number only (no password). See the [Student Guide](STUDENT_GUIDE.md).
+> **Students and candidates** enter their **index number** on the same page and receive OTP without a password step. See the [Student Guide](STUDENT_GUIDE.md).
 
 ---
 

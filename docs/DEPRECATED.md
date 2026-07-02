@@ -25,9 +25,9 @@ Routes under `/dashboard/*` and `/auth/login/` (HTML) are **deprecated**. The Vu
 
 Block or redirect these in production Nginx if not needed.
 
-## Legacy API login endpoints
+## Removed legacy API login endpoints
 
-`auth/student/login/`, `auth/admin/login/`, `auth/super-admin/login/` are superseded by unified `POST /api/v1/accounts/auth/login/`. Endpoints remain for compatibility.
+`auth/student/login/`, `auth/admin/login/`, and `auth/super-admin/login/` were removed. Use unified `POST /api/v1/accounts/auth/login/` only.
 
 ## Legacy frontend redirects (kept)
 

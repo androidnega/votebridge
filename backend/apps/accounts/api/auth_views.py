@@ -4,7 +4,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.api.auth_serializers import (
-    AdminLoginSerializer,
     AuthOTPChallengeSerializer,
     AuthSuccessSerializer,
     LogoutSerializer,
@@ -12,8 +11,6 @@ from apps.accounts.api.auth_serializers import (
     OTPResendSerializer,
     OTPVerifySerializer,
     SessionSerializer,
-    StudentLoginSerializer,
-    SuperAdminLoginSerializer,
     TokenRefreshSerializer,
     UniversalLoginSerializer,
 )
@@ -54,63 +51,6 @@ class UniversalLoginView(APIView):
         result = auth_service.login(
             identity=serializer.validated_data["identity"],
             password=serializer.validated_data.get("password") or None,
-            ip_address=ip_address,
-            user_agent=user_agent,
-        )
-        return Response(
-            {"success": True, "data": _serialize_auth_result(result)},
-            status=status.HTTP_200_OK,
-        )
-
-
-class StudentLoginView(APIView):
-    permission_classes = [AllowAny]
-    throttle_classes = [LoginRateThrottle]
-
-    def post(self, request):
-        serializer = StudentLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        ip_address, user_agent = _client_meta(request)
-        result = auth_service.student_login(
-            **serializer.validated_data,
-            ip_address=ip_address,
-            user_agent=user_agent,
-        )
-        return Response(
-            {"success": True, "data": _serialize_auth_result(result)},
-            status=status.HTTP_200_OK,
-        )
-
-
-class AdminLoginView(APIView):
-    permission_classes = [AllowAny]
-    throttle_classes = [LoginRateThrottle]
-
-    def post(self, request):
-        serializer = AdminLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        ip_address, user_agent = _client_meta(request)
-        result = auth_service.admin_login(
-            **serializer.validated_data,
-            ip_address=ip_address,
-            user_agent=user_agent,
-        )
-        return Response(
-            {"success": True, "data": _serialize_auth_result(result)},
-            status=status.HTTP_200_OK,
-        )
-
-
-class SuperAdminLoginView(APIView):
-    permission_classes = [AllowAny]
-    throttle_classes = [LoginRateThrottle]
-
-    def post(self, request):
-        serializer = SuperAdminLoginSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        ip_address, user_agent = _client_meta(request)
-        result = auth_service.super_admin_login(
-            **serializer.validated_data,
             ip_address=ip_address,
             user_agent=user_agent,
         )
