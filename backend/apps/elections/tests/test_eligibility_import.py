@@ -168,3 +168,56 @@ class EligibilityImportApiTests(TestCase):
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["data"]["processed"], 2)
+
+
+class EligibilityCreateByIndexTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin_role, _ = Role.objects.get_or_create(name=Role.Name.ADMIN, defaults={"description": "Admin"})
+        self.student_role, _ = Role.objects.get_or_create(name=Role.Name.STUDENT, defaults={"description": "Student"})
+        self.admin = User.objects.create_user(
+            email="eligibility-admin@test.local",
+            username="eligibility-admin",
+            password="TestPass123!",
+            role=self.admin_role,
+        )
+        self.student = User.objects.create_user(
+            email="eligibility-student@test.local",
+            username="eligibility-student",
+            password="1234",
+            index_number="BC/ITS/24/047",
+            role=self.student_role,
+        )
+        now = timezone.now()
+        self.election = Election.objects.create(
+            title="Eligibility Create Test",
+            election_type=Election.ElectionType.STUDENT_UNION,
+            start_date=now,
+            end_date=now + timedelta(days=1),
+            status=Election.Status.DRAFT,
+            allow_web_voting=True,
+            created_by=self.admin,
+        )
+        self.url = reverse(
+            "elections:election-eligibility-list",
+            kwargs={"election_uuid": self.election.uuid},
+        )
+
+    def test_create_by_index_number_updates_phone(self):
+        self.client.force_authenticate(self.admin)
+        response = self.client.post(
+            self.url,
+            {
+                "index_number": "bc/its/24/047",
+                "phone_number": "0247940801",
+                "is_eligible": True,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.student.refresh_from_db()
+        self.assertEqual(self.student.phone_number, "233247940801")
+        self.assertEqual(response.data["data"]["user_phone_number"], "233247940801")
+        self.assertTrue(
+            VoterEligibility.objects.filter(election=self.election, user=self.student).exists()
+        )

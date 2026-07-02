@@ -18,6 +18,12 @@ describe("svtToken", () => {
 
   it("validates complete formatted tokens", () => {
     expect(isValidSvtToken("VB-7F4K-92XM")).toBe(true);
+    expect(isValidSvtToken("VB-DEMO-0001")).toBe(true);
     expect(isValidSvtToken("123456")).toBe(false);
+  });
+
+  it("preserves demo pool formatting", () => {
+    expect(formatSvtTokenInput("vb-demo-0007")).toBe("VB-DEMO-0007");
+    expect(normalizeSvtToken("VB-DEMO-0010")).toBe("VB-DEMO-0010");
   });
 });

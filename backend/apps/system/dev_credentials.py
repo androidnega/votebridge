@@ -26,3 +26,9 @@ def dev_otp_fallback_code() -> str:
 
 def dev_svt_fallback_code() -> str:
     return str(getattr(settings, "DEV_SVT_FALLBACK_CODE", "") or "").strip()
+
+
+def dev_demo_svt_codes() -> list[str]:
+    from apps.security.demo_svt_codes import get_dev_demo_svt_codes
+
+    return get_dev_demo_svt_codes()

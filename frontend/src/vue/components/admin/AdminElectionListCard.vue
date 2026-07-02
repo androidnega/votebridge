@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { useRouter } from "vue-router";
 import { ElectionStatusBadge } from "@/components/voting";
-import VIcon from "@/components/ui/VIcon.vue";
+import { FaIcon } from "@/components/ui";
 import { getAdminSoftPalette } from "@/config/adminWorkspace";
 
 const props = defineProps({
@@ -39,23 +39,38 @@ function open() {
     :style="{ backgroundColor: palette.bg, borderColor: palette.border }"
     @click="open"
   >
-    <div class="flex items-start justify-between gap-3">
-      <div class="min-w-0 flex-1">
-        <h3 class="truncate text-sm font-semibold text-slate-900">{{ title }}</h3>
-        <p v-if="election.start_date" class="mt-1 text-xs text-slate-600">
-          {{ formatDate(election.start_date) }}
-          <span v-if="election.end_date"> — {{ formatDate(election.end_date) }}</span>
-        </p>
-        <p v-if="election.election_type_display" class="mt-1 text-xs capitalize text-slate-500">
-          {{ election.election_type_display }}
-        </p>
+    <div class="flex items-start gap-3">
+      <div
+        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-sm"
+        :style="{ backgroundColor: palette.iconBg, color: palette.icon }"
+        aria-hidden="true"
+      >
+        <FaIcon icon="fa-check-to-slot" :fixed-width="false" class="text-lg" />
       </div>
-      <ElectionStatusBadge :status="status" size="sm" />
+
+      <div class="min-w-0 flex-1">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0 flex-1">
+            <h3 class="truncate text-sm font-semibold text-slate-900">{{ title }}</h3>
+            <p v-if="election.start_date" class="mt-1 text-xs text-slate-600">
+              {{ formatDate(election.start_date) }}
+              <span v-if="election.end_date"> — {{ formatDate(election.end_date) }}</span>
+            </p>
+            <p v-if="election.election_type_display" class="mt-1 text-xs capitalize text-slate-500">
+              {{ election.election_type_display }}
+            </p>
+          </div>
+          <ElectionStatusBadge :status="status" size="sm" />
+        </div>
+      </div>
     </div>
 
     <div class="mt-4 flex items-center justify-between gap-2 border-t pt-3" :style="{ borderColor: palette.border }">
-      <span class="text-xs text-slate-600">Open workspace</span>
-      <VIcon name="chevronRight" size="sm" class="text-slate-400" />
+      <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600">
+        <FaIcon icon="fa-check-to-slot" class="text-[11px] opacity-75" />
+        Open workspace
+      </span>
+      <FaIcon icon="fa-chevron-right" class="text-xs text-slate-400" />
     </div>
   </button>
 </template>

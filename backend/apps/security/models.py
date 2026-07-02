@@ -235,6 +235,13 @@ class SVTToken(models.Model):
         db_column="status",
         db_index=True,
     )
+    source_demo_code = models.CharField(
+        max_length=32,
+        blank=True,
+        default="",
+        db_column="source_demo_code",
+        db_index=True,
+    )
 
     class Meta:
         db_table = "svt_tokens"
@@ -261,6 +268,14 @@ class SVTToken(models.Model):
 
         normalized = normalize_svt_token(token_code) or str(token_code or "").strip().upper()
         return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def hash_demo_token_code(demo_code: str, user_id: int, election_id: int) -> str:
+        from apps.security.demo_svt_codes import normalize_demo_svt_code
+
+        normalized = normalize_demo_svt_code(demo_code) or str(demo_code or "").strip()
+        payload = f"DEMO:{normalized}:{user_id}:{election_id}"
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
     @property
     def is_expired(self) -> bool:

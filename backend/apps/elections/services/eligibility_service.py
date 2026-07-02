@@ -4,6 +4,7 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils import timezone
 
 from apps.accounts.repositories.user_repository import UserRepository
+from apps.accounts.utils.phone import normalize_phone
 from apps.elections.eligibility_validators import (
     validate_eligibility_election_editable,
     validate_eligibility_unique,
@@ -53,17 +54,20 @@ class VoterEligibilityService:
     def create_eligibility(
         self,
         election_uuid,
-        user_uuid,
         data: dict,
+        *,
+        user_uuid=None,
+        index_number: str | None = None,
         verified_by=None,
     ) -> VoterEligibility:
         election = self.election_repository.get_by_uuid(election_uuid)
         if not election:
             raise NotFoundError(message="Election not found.", code="election_not_found")
 
-        user = self.user_repository.get_by_uuid(user_uuid)
-        if not user:
-            raise NotFoundError(message="User not found.", code="user_not_found")
+        user = self._resolve_voter_user(user_uuid=user_uuid, index_number=index_number)
+        phone_number = (data.pop("phone_number", None) or "").strip()
+        if phone_number:
+            self.user_repository.update(user, phone_number=normalize_phone(phone_number))
 
         try:
             validate_eligibility_election_editable(election)
@@ -81,6 +85,28 @@ class VoterEligibilityService:
         )
         logger.info("Voter eligibility created: %s", record.uuid)
         return record
+
+    def _resolve_voter_user(self, *, user_uuid=None, index_number: str | None = None):
+        if user_uuid:
+            user = self.user_repository.get_by_uuid(user_uuid)
+            if not user:
+                raise NotFoundError(message="User not found.", code="user_not_found")
+            return user
+
+        normalized = (index_number or "").strip().upper()
+        if not normalized:
+            raise ValidationError(
+                message="Index number is required when user_uuid is not provided.",
+                code="index_number_required",
+            )
+
+        user = self.user_repository.get_by_index_number(normalized)
+        if not user:
+            raise NotFoundError(
+                message=f"No student found with index number {normalized}.",
+                code="user_not_found",
+            )
+        return user
 
     def update_eligibility(
         self,

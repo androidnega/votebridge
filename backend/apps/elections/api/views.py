@@ -329,10 +329,11 @@ class VoterEligibilityViewSet(viewsets.ViewSet):
     def create(self, request, election_uuid=None):
         serializer = VoterEligibilityCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
+        data = dict(serializer.validated_data)
         record = eligibility_service.create_eligibility(
             election_uuid=election_uuid,
-            user_uuid=data["user_uuid"],
+            user_uuid=data.pop("user_uuid", None),
+            index_number=data.pop("index_number", None),
             data=data,
             verified_by=request.user,
         )

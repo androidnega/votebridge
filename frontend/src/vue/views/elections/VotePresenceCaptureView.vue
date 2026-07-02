@@ -17,11 +17,11 @@ const photoCaptured = ref(false);
 
 const {
   videoRef,
-  faceDetected,
-  statusText,
-  statusKey,
+  isActive,
   cameraError,
   engineError,
+  statusText,
+  statusKey,
   takePhoto,
 } = useFacePresence();
 
@@ -35,7 +35,7 @@ const electionTitle = computed(
 
 const statusClass = computed(() => {
   if (photoCaptured.value) return "text-success-700";
-  if (statusKey.value === "face_detected") return "text-brand-700";
+  if (statusKey.value === "ready") return "text-brand-700";
   if (statusKey.value === "camera_error" || statusKey.value === "engine_error") {
     return "text-danger-700";
   }
@@ -47,7 +47,7 @@ const displayStatus = computed(() =>
 );
 
 const canTakePhoto = computed(
-  () => faceDetected.value && !photoCaptured.value && !submitting.value
+  () => isActive.value && !cameraError.value && !photoCaptured.value && !submitting.value
 );
 
 function handleTakePhoto() {
@@ -118,10 +118,10 @@ onMounted(async () => {
         <p v-if="electionTitle" class="mt-2 text-sm font-medium text-brand-700">{{ electionTitle }}</p>
       </header>
 
-      <div class="mx-auto w-full max-w-xl space-y-4">
+      <div class="mx-auto w-full max-w-sm space-y-4">
         <div
-          class="relative overflow-hidden rounded-card border border-border bg-surface-muted"
-          :class="photoCaptured ? 'aspect-[4/3]' : 'aspect-[3/4] sm:aspect-[4/3]'"
+          class="relative mx-auto w-full max-w-[260px] overflow-hidden rounded-xl border border-border bg-surface-muted shadow-sm sm:max-w-[280px]"
+          :class="photoCaptured ? 'aspect-[4/3]' : 'aspect-[3/4]'"
         >
           <img
             v-if="photoCaptured && previewImage"

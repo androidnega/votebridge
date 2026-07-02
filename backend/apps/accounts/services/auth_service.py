@@ -20,6 +20,12 @@ DASHBOARD_ROUTES = {
 }
 
 
+def _user_auth_payload(user: User) -> dict:
+    from apps.accounts.api.serializers import UserSerializer
+
+    return UserSerializer(user).data
+
+
 class AuthService:
     """Authentication flows for students, admins, and super admins."""
 
@@ -601,6 +607,7 @@ class AuthService:
             "tokens": tokens,
             "redirect_path": self.dashboard_path_for_role(user.role.name),
             "trusted_login": trusted_login,
+            "user": _user_auth_payload(user),
         }
         self.otp_service.mark_consumed(
             otp_request,
@@ -731,6 +738,7 @@ class AuthService:
             "tokens": tokens,
             "redirect_path": self.dashboard_path_for_role(user.role.name),
             "trusted_login": False,
+            "user": _user_auth_payload(user),
         }
 
     def _complete_password_login(
@@ -762,6 +770,7 @@ class AuthService:
             "tokens": tokens,
             "redirect_path": self.dashboard_path_for_role(user.role.name),
             "trusted_login": False,
+            "user": _user_auth_payload(user),
         }
 
     def _log_failed_admin_login(

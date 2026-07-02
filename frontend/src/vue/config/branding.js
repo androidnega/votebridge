@@ -1,5 +1,6 @@
 import institutionLogoImage from "@/assets/images/institution-logo.png";
 import loginCampusImage from "@/assets/images/login-campus.webp";
+import dashboardHeroCampusImage from "@/assets/images/dashboard-hero-campus.png";
 
 export const branding = {
   systemName: import.meta.env.VITE_SYSTEM_NAME || "VoteBridge",
@@ -12,6 +13,9 @@ export const branding = {
   /** Auth left-panel background — override via VITE_AUTH_PANEL_IMAGE_URL */
   authPanelImageUrl:
     import.meta.env.VITE_AUTH_PANEL_IMAGE_URL || loginCampusImage,
+  /** Admin dashboard hero — override via VITE_DASHBOARD_HERO_IMAGE_URL */
+  dashboardHeroImageUrl:
+    import.meta.env.VITE_DASHBOARD_HERO_IMAGE_URL || dashboardHeroCampusImage,
   electionOfficeEmail:
     import.meta.env.VITE_ELECTION_OFFICE_EMAIL || "elections@ttu.edu.gh",
   electionOfficePhone:

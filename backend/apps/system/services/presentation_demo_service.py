@@ -37,6 +37,7 @@ from apps.system.data.presentation_demo_data import (
     TTU_DEMO_STUDENTS,
 )
 from apps.system.dev_credentials import (
+    dev_demo_svt_codes,
     dev_otp_fallback_code,
     dev_svt_fallback_code,
     require_dev_bootstrap_password,
@@ -61,6 +62,7 @@ class PresentationSeedSummary:
     strongroom: dict = field(default_factory=dict)
     demo_otp_fallback: str = ""
     demo_svt_fallback: str = ""
+    demo_svt_codes: list = field(default_factory=list)
 
 
 class PresentationDemoService:
@@ -69,6 +71,7 @@ class PresentationDemoService:
         summary = PresentationSeedSummary()
         summary.demo_otp_fallback = dev_otp_fallback_code()
         summary.demo_svt_fallback = dev_svt_fallback_code()
+        summary.demo_svt_codes = dev_demo_svt_codes()
         reset_summary = dev_reset_service.clear_operational_data()
         summary.cleared = reset_summary.cleared
 

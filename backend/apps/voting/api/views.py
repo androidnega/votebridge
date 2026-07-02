@@ -1,4 +1,5 @@
 from rest_framework import status
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.throttling import UserRateThrottle
 from rest_framework.views import APIView
@@ -104,14 +105,14 @@ class PreVotePresenceStatusView(APIView):
 
     def get(self, request, election_uuid):
         status_data = pre_vote_presence_service.get_status(election_uuid, request.user)
-        return Response(
-            {"success": True, "data": PreVotePresenceStatusSerializer(status_data).data}
-        )
+        serializer = PreVotePresenceStatusSerializer(instance=status_data)
+        return Response({"success": True, "data": serializer.data})
 
 
 class PreVotePresenceCaptureView(APIView):
     permission_classes = [CanVote]
     throttle_classes = [VoteCastRateThrottle]
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def post(self, request, election_uuid):
         serializer = PreVotePresenceSubmitSerializer(data=request.data)

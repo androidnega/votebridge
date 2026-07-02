@@ -52,6 +52,7 @@ class VoterEligibilityRepository:
                 | Q(user__first_name__icontains=query)
                 | Q(user__last_name__icontains=query)
                 | Q(user__index_number__icontains=query)
+                | Q(user__phone_number__icontains=query)
                 | Q(eligibility_reason__icontains=query)
             )
         return queryset

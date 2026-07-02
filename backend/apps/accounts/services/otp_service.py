@@ -1,5 +1,6 @@
 import logging
 from datetime import timedelta
+from threading import Thread
 
 from django.conf import settings
 from django.contrib.auth.hashers import check_password, make_password
@@ -77,29 +78,64 @@ class OTPService:
             f"Your VoteBridge verification code is {code}. "
             f"It expires in {expiry_minutes} minutes."
         )
-        self.delivery_service.send(
-            channel=channel, recipient=recipient, message=message, user=user
-        )
-        logger.info(
-            "OTP sent via %s to %s for user %s",
-            channel,
-            self._mask_recipient_for_log(recipient, channel),
-            user.username,
-        )
-
-        self.mfa_service.log(
-            event_type=MFALog.EventType.OTP_SENT,
+        self._dispatch_otp_delivery(
+            otp_request=otp_request,
+            channel=channel,
+            recipient=recipient,
+            message=message,
             user=user,
             ip_address=ip_address,
             user_agent=user_agent,
-            metadata={
-                "otp_request_uuid": str(otp_request.uuid),
-                "channel": channel,
-                "purpose": purpose,
-            },
+            purpose=purpose,
         )
 
         return otp_request
+
+    def _dispatch_otp_delivery(
+        self,
+        *,
+        otp_request: OTPRequest,
+        channel: str,
+        recipient: str,
+        message: str,
+        user: User,
+        ip_address: str | None,
+        user_agent: str | None,
+        purpose: str,
+    ) -> None:
+        def deliver() -> None:
+            try:
+                self.delivery_service.send(
+                    channel=channel,
+                    recipient=recipient,
+                    message=message,
+                    user=user,
+                )
+                logger.info(
+                    "OTP sent via %s to %s for user %s",
+                    channel,
+                    self._mask_recipient_for_log(recipient, channel),
+                    user.username,
+                )
+                self.mfa_service.log(
+                    event_type=MFALog.EventType.OTP_SENT,
+                    user=user,
+                    ip_address=ip_address,
+                    user_agent=user_agent,
+                    metadata={
+                        "otp_request_uuid": str(otp_request.uuid),
+                        "channel": channel,
+                        "purpose": purpose,
+                    },
+                )
+            except Exception:
+                logger.exception("OTP delivery failed for user %s", user.username)
+
+        if getattr(settings, "OTP_DELIVERY_ASYNC", True):
+            transaction.on_commit(lambda: Thread(target=deliver, daemon=True).start())
+            return
+
+        deliver()
 
     def _resend_chain_key(self, user: User, purpose: str) -> str:
         return f"{OTP_RESEND_CHAIN_PREFIX}{user.id}:{purpose}"

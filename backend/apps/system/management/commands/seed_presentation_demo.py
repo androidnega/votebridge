@@ -70,5 +70,10 @@ class Command(BaseCommand):
                 )
 
         self.stdout.write("")
-        self.stdout.write(f"SVT demo fallback for seeded students: {summary.demo_svt_fallback}")
+        self.stdout.write(self.style.MIGRATE_HEADING("Student demo SVT pool (no expiry)"))
+        for index, code in enumerate(summary.demo_svt_codes, start=1):
+            self.stdout.write(f"  {code} — suggested for student #{index}")
+        if summary.demo_svt_fallback and summary.demo_svt_fallback not in summary.demo_svt_codes:
+            self.stdout.write(f"  Legacy fallback: {summary.demo_svt_fallback}")
+        self.stdout.write("  Terminal-issued VB-XXXX-XXXX codes also work when copied from runserver output.")
         self.stdout.write("Login: http://localhost:5173/auth/login")

@@ -71,4 +71,4 @@ class PreVotePresenceSubmitSerializer(serializers.Serializer):
         choices=["web"],
         default="web",
     )
-    image = serializers.ImageField()
+    image = serializers.FileField()

@@ -1,7 +1,6 @@
 <script setup>
 import { onMounted, reactive, ref } from "vue";
 import { RouterLink, useRoute, useRouter } from "vue-router";
-import AuthSecurityTerminal from "@/components/auth/AuthSecurityTerminal.vue";
 import { VAlert, VButton, VCheckbox, VInput, VPasswordInput } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth";
 import { getRememberedIdentifier, setRememberedIdentifier } from "@/utils/auth";
@@ -14,7 +13,7 @@ const authStore = useAuthStore();
 
 /** student | staff — staff path is reached via subtle “Staff access” only */
 const entryMode = ref("student");
-/** identity | password | auth-check */
+/** identity | password */
 const step = ref("identity");
 const form = reactive({
   identity: "",
@@ -24,16 +23,10 @@ const form = reactive({
 const errors = reactive({});
 const submitError = ref("");
 
-const authLines = [
-  "Establishing encrypted session...",
-  "Verifying credentials...",
-  "Identity confirmed.",
-  "Opening secure OTP channel...",
-];
-
 onMounted(() => {
   form.identity = getRememberedIdentifier();
   form.remember = Boolean(form.identity);
+  import("@/views/auth/OTPVerificationView.vue");
 });
 
 function openStaffAccess() {
@@ -49,6 +42,13 @@ function returnToStudentEntry() {
   errors.identity = "";
   errors.password = "";
   step.value = "identity";
+}
+
+async function goToOtpStep() {
+  await router.push({
+    name: "auth-otp",
+    query: { redirect: route.query.redirect },
+  });
 }
 
 async function continueIdentity() {
@@ -82,15 +82,7 @@ async function continueIdentity() {
       return;
     }
 
-    if (result?.mfa_required) {
-      step.value = "auth-check";
-      return;
-    }
-
-    await router.push({
-      name: "auth-otp",
-      query: { redirect: route.query.redirect },
-    });
+    await goToOtpStep();
   } catch (error) {
     submitError.value = error.message;
   }
@@ -115,25 +107,10 @@ async function submitPassword() {
       return;
     }
 
-    if (challenge?.mfa_required) {
-      step.value = "auth-check";
-      return;
-    }
-
-    await router.push({
-      name: "auth-otp",
-      query: { redirect: route.query.redirect },
-    });
+    await goToOtpStep();
   } catch (error) {
     submitError.value = error.message;
   }
-}
-
-async function onAuthCheckComplete() {
-  await router.push({
-    name: "auth-otp",
-    query: { redirect: route.query.redirect },
-  });
 }
 
 function backFromPassword() {
@@ -242,12 +219,5 @@ function backFromPassword() {
         Back
       </button>
     </form>
-
-    <AuthSecurityTerminal
-      v-else-if="step === 'auth-check'"
-      :lines="authLines"
-      :min-duration="2200"
-      @complete="onAuthCheckComplete"
-    />
   </div>
 </template>

@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from apps.accounts.api.serializers import UserSerializer
+
 
 class StudentLoginSerializer(serializers.Serializer):
     index_number = serializers.CharField(max_length=50)
@@ -67,6 +69,7 @@ class AuthSuccessSerializer(serializers.Serializer):
     session_uuid = serializers.UUIDField(required=False)
     tokens = TokenResponseSerializer(required=False)
     redirect_path = serializers.CharField(required=False)
+    user = UserSerializer(required=False)
     requires_biometric = serializers.BooleanField(required=False)
     requires_enrollment = serializers.BooleanField(required=False)
     has_active_biometric_profile = serializers.BooleanField(required=False)

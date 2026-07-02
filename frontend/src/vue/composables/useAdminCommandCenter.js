@@ -23,6 +23,7 @@ import {
   resolveElectionCountdownTarget,
 } from "@/composables/useElectionCountdown";
 import { electionsApi } from "@/api/elections";
+import { groupCandidatesByPosition } from "@/utils/candidateDisplay";
 
 function electionUuid(election) {
   return election?.uuid || election?.election_uuid || null;
@@ -140,6 +141,9 @@ export function useAdminCommandCenter() {
   const analyticsStore = useAnalyticsStore();
   const chartRange = ref("today");
   const allElections = ref([]);
+  const spotlightCandidateGroups = ref([]);
+  const spotlightCandidates = ref([]);
+  const candidatesLoading = ref(false);
   const countdownParts = ref({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   let countdownTimer = null;
 
@@ -198,6 +202,7 @@ export function useAdminCommandCenter() {
         ? `${greetingForHour()}, ${authStore.user?.first_name || "officer"}. Track turnout, ballot readiness, and live activity for your assigned elections.`
         : "Create or schedule an election to begin monitoring turnout and ballot activity.",
       institution: branding.institutionName,
+      imageUrl: branding.dashboardHeroImageUrl,
       status,
       statusLabel: election
         ? `${(election.title || "").slice(0, 36)}${(election.title || "").length > 36 ? "…" : ""}`
@@ -330,36 +335,6 @@ export function useAdminCommandCenter() {
       }))
   );
 
-  const pulseElections = computed(() => {
-    const openAndScheduled = [...openElectionsList.value, ...scheduledElections.value];
-    const closed = allElections.value.filter((election) =>
-      ["closed", "archived"].includes(electionStatus(election))
-    );
-    const merged = openAndScheduled.length
-      ? [...openAndScheduled, ...closed]
-      : allElections.value;
-    const source = merged.filter(
-      (election, index, list) =>
-        list.findIndex((item) => electionUuid(item) === electionUuid(election)) === index
-    );
-    const turnoutMap = resultTurnoutMap.value;
-    const live = liveTurnout.value;
-
-    return source.slice(0, 4).map((election) => {
-      const uuid = electionUuid(election);
-      const turnout = resolveElectionTurnout(election, {
-        liveTurnout: uuid === primaryUuid.value ? live : 0,
-        resultTurnoutMap: turnoutMap,
-      });
-      return {
-        ...election,
-        uuid,
-        typeLabel: election.election_type_display || "Institutional election",
-        ...turnout,
-      };
-    });
-  });
-
   const electionTableRows = computed(() =>
     allElections.value.map((election) => {
       const uuid = electionUuid(election);
@@ -397,6 +372,38 @@ export function useAdminCommandCenter() {
     })
   );
 
+  const spotlightElection = computed(() => {
+    const election = primaryElection.value;
+    if (!election) return null;
+    return {
+      uuid: electionUuid(election),
+      title: election.title || election.election_title || "Election",
+      status: electionStatus(election),
+      typeLabel: election.election_type_display || "Institutional election",
+    };
+  });
+
+  async function loadSpotlightCandidates() {
+    const uuid = spotlightElection.value?.uuid;
+    if (!uuid) {
+      spotlightCandidateGroups.value = [];
+      spotlightCandidates.value = [];
+      return;
+    }
+
+    candidatesLoading.value = true;
+    try {
+      const result = await electionsApi.listCandidates(uuid, {
+        status: "approved",
+        page_size: 100,
+      });
+      spotlightCandidates.value = result?.items || [];
+      spotlightCandidateGroups.value = groupCandidatesByPosition(spotlightCandidates.value);
+    } finally {
+      candidatesLoading.value = false;
+    }
+  }
+
   async function loadCommandCenter() {
     await Promise.allSettled([
       dashboardStore.fetchAdminDashboard(),
@@ -409,6 +416,7 @@ export function useAdminCommandCenter() {
     ]);
 
     startCountdownTicker();
+    await loadSpotlightCandidates().catch(() => {});
 
     if (primaryUuid.value && ["draft", "scheduled"].includes(electionStatus(primaryElection.value))) {
       await electionStore.fetchReadiness(primaryUuid.value).catch(() => {});
@@ -424,7 +432,10 @@ export function useAdminCommandCenter() {
     welcomeBanner,
     heroConfig,
     kpiCards,
-    pulseElections,
+    spotlightElection,
+    spotlightCandidates,
+    spotlightCandidateGroups,
+    candidatesLoading,
     electionTableRows,
     votingActivityLabels,
     votingActivitySeries,

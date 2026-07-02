@@ -160,6 +160,7 @@ class VoterEligibilitySerializer(serializers.ModelSerializer):
     user_email = serializers.EmailField(source="user.email", read_only=True)
     user_name = serializers.SerializerMethodField()
     user_index_number = serializers.CharField(source="user.index_number", read_only=True)
+    user_phone_number = serializers.CharField(source="user.phone_number", read_only=True, allow_blank=True)
     verified_by_uuid = serializers.UUIDField(
         source="verified_by.uuid",
         read_only=True,
@@ -175,6 +176,7 @@ class VoterEligibilitySerializer(serializers.ModelSerializer):
             "user_email",
             "user_name",
             "user_index_number",
+            "user_phone_number",
             "is_eligible",
             "eligibility_reason",
             "verified_by_uuid",
@@ -195,9 +197,23 @@ class VoterEligibilitySerializer(serializers.ModelSerializer):
 
 
 class VoterEligibilityCreateSerializer(serializers.Serializer):
-    user_uuid = serializers.UUIDField()
+    user_uuid = serializers.UUIDField(required=False)
+    index_number = serializers.CharField(required=False, allow_blank=True, max_length=50)
+    phone_number = serializers.CharField(required=False, allow_blank=True, max_length=20)
     is_eligible = serializers.BooleanField(default=True)
     eligibility_reason = serializers.CharField(required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        user_uuid = attrs.get("user_uuid")
+        index_number = (attrs.get("index_number") or "").strip()
+        if not user_uuid and not index_number:
+            raise serializers.ValidationError(
+                "Provide either user_uuid or index_number.",
+                code="identity_required",
+            )
+        if index_number:
+            attrs["index_number"] = index_number.upper()
+        return attrs
 
 
 class VoterEligibilityUpdateSerializer(serializers.Serializer):

@@ -50,6 +50,24 @@ export const useAuthStore = defineStore("auth", {
   },
 
   actions: {
+    _applyAuthSuccess(result) {
+      if (!result?.tokens?.access) return false;
+
+      setTokens(result.tokens.access, result.tokens.refresh);
+      setSessionMeta({
+        userUuid: result.user_uuid,
+        sessionUuid: result.session_uuid,
+      });
+      clearOtpChallenge();
+      this.otpChallenge = null;
+      this.postLoginRedirect = normalizeAuthRedirect(result.redirect_path);
+      if (result.user) {
+        this.user = result.user;
+      }
+      this.establishSession();
+      return true;
+    },
+
     async initialize() {
       if (this.initializePromise) {
         return this.initializePromise;
@@ -154,16 +172,10 @@ export const useAuthStore = defineStore("auth", {
         }
 
         if (challenge?.tokens?.access) {
-          setTokens(challenge.tokens.access, challenge.tokens.refresh);
-          setSessionMeta({
-            userUuid: challenge.user_uuid,
-            sessionUuid: challenge.session_uuid,
-          });
-          clearOtpChallenge();
-          this.otpChallenge = null;
-          this.postLoginRedirect = normalizeAuthRedirect(challenge.redirect_path);
-          await this.fetchProfile();
-          this.establishSession();
+          this._applyAuthSuccess(challenge);
+          if (!this.user?.role) {
+            await this.fetchProfile();
+          }
           return { user: this.user, redirectPath: this.postLoginRedirect, completed: true };
         }
 
@@ -202,16 +214,10 @@ export const useAuthStore = defineStore("auth", {
 
           if (result.module_enabled === false || result.auth_enabled === false) {
             if (result.tokens?.access) {
-              setTokens(result.tokens.access, result.tokens.refresh);
-              setSessionMeta({
-                userUuid: result.user_uuid,
-                sessionUuid: result.session_uuid,
-              });
-              clearOtpChallenge();
-              this.otpChallenge = null;
-              this.postLoginRedirect = normalizeAuthRedirect(result.redirect_path);
-              await this.fetchProfile();
-              this.establishSession();
+              this._applyAuthSuccess(result);
+              if (!this.user?.role) {
+                await this.fetchProfile();
+              }
               return { user: this.user, redirectPath: this.postLoginRedirect };
             }
           }
@@ -231,16 +237,10 @@ export const useAuthStore = defineStore("auth", {
 
           if (result.module_enabled === false || result.auth_enabled === false) {
             if (result.tokens?.access) {
-              setTokens(result.tokens.access, result.tokens.refresh);
-              setSessionMeta({
-                userUuid: result.user_uuid,
-                sessionUuid: result.session_uuid,
-              });
-              clearOtpChallenge();
-              this.otpChallenge = null;
-              this.postLoginRedirect = normalizeAuthRedirect(result.redirect_path);
-              await this.fetchProfile();
-              this.establishSession();
+              this._applyAuthSuccess(result);
+              if (!this.user?.role) {
+                await this.fetchProfile();
+              }
               return { user: this.user, redirectPath: this.postLoginRedirect };
             }
           }
@@ -252,17 +252,10 @@ export const useAuthStore = defineStore("auth", {
           return { requiresEnrollment: true, pendingAuth: result };
         }
 
-        setTokens(result.tokens.access, result.tokens.refresh);
-        setSessionMeta({
-          userUuid: result.user_uuid,
-          sessionUuid: result.session_uuid,
-        });
-
-        clearOtpChallenge();
-        this.otpChallenge = null;
-        this.postLoginRedirect = normalizeAuthRedirect(result.redirect_path);
-        await this.fetchProfile();
-        this.establishSession();
+        this._applyAuthSuccess(result);
+        if (!this.user?.role) {
+          await this.fetchProfile();
+        }
         return { user: this.user, redirectPath: this.postLoginRedirect };
       } catch (error) {
         throw new Error(extractApiError(error));

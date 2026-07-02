@@ -18,6 +18,9 @@ class SVTRepository:
         if not normalized:
             return None
         token_hash = SVTToken.hash_token_code(normalized)
+        return self.get_by_token_hash(token_hash)
+
+    def get_by_token_hash(self, token_hash: str) -> SVTToken | None:
         return self.get_queryset().filter(token_code=token_hash).first()
 
     def list_for_election(self, election, status: str | None = None):

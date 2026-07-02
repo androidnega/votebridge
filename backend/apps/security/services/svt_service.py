@@ -1,15 +1,21 @@
 import logging
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
 from django.utils import timezone
 
-from apps.accounts.models import MFALog
+from apps.accounts.models import MFALog, Role
 from apps.accounts.services.mfa_service import MFAService
 from apps.elections.repositories.election_repository import ElectionRepository
 from apps.elections.repositories.eligibility_repository import VoterEligibilityRepository
+from apps.security.demo_svt_codes import (
+    DEMO_SVT_FAR_FUTURE_YEAR,
+    demo_svt_enabled,
+    get_dev_demo_svt_codes,
+    match_dev_demo_svt_code,
+)
 from apps.security.models import SVTToken
 from apps.security.repositories.svt_repository import SVTRepository
 from apps.security.validators import (
@@ -139,17 +145,27 @@ class SVTService:
         """Development only — print voting code to the runserver terminal for manual copy."""
         if not settings.DEBUG:
             return
+        demo_codes = get_dev_demo_svt_codes() if demo_svt_enabled() else []
+        demo_block = ""
+        if demo_codes:
+            demo_block = (
+                "\n  Demo pool (no expiry — one election per code per student):\n    "
+                + "\n    ".join(demo_codes)
+                + "\n"
+            )
         logger.warning(
             "\n========== DEV VOTING CODE (copy from terminal) ==========\n"
             "  Election: %s\n"
             "  User:     %s\n"
             "  Code:     %s\n"
             "  Expires:  %s\n"
+            "%s"
             "==========================================================",
             election.title,
             user.email or user.uuid,
             plain_code,
             expires_at.strftime("%H:%M"),
+            demo_block,
         )
 
     def _send_svt_sms(self, user, election, plain_code: str, expires_at) -> None:
@@ -455,13 +471,9 @@ class SVTService:
         normalized = str(token_code or "").strip()
         from core.utils.svt_token_format import is_valid_svt_format, normalize_svt_token
 
-        if self._dev_svt_fallback_applies(user, normalized):
-            svt = self._resolve_dev_fallback_svt(user, election)
-            if not svt:
-                raise ValidationError(
-                    message="Request a voting code first, then enter your configured development SVT fallback.",
-                    code="svt_not_found",
-                )
+        demo_code = match_dev_demo_svt_code(normalized)
+        if demo_code:
+            svt = self._get_or_create_demo_svt(user, election, demo_code)
         else:
             if not is_valid_svt_format(normalized):
                 self._record_failed_validation_attempt(user, election)
@@ -537,26 +549,118 @@ class SVTService:
             "message": "Ballot session started. Complete your selections and submit your ballot.",
         }
 
-    def _dev_svt_fallback_applies(self, user, code: str) -> bool:
-        if not getattr(settings, "DEV_SVT_FALLBACK_ENABLED", False):
-            return False
-        if settings.DEBUG is not True:
-            return False
-        if not getattr(user, "demo_seed", False):
-            return False
-        fallback = str(getattr(settings, "DEV_SVT_FALLBACK_CODE", "") or "").strip()
-        return bool(fallback) and str(code or "").strip() == fallback
+    def _demo_svt_student_user(self, user) -> bool:
+        role_name = getattr(getattr(user, "role", None), "name", None)
+        return role_name == Role.Name.STUDENT
 
-    def _resolve_dev_fallback_svt(self, user, election) -> SVTToken | None:
-        return (
+    def _assert_demo_svt_request_allowed(self, user, election, demo_code: str) -> None:
+        if not demo_svt_enabled():
+            raise ValidationError(
+                message="Demo voting codes are not enabled.",
+                code="demo_svt_disabled",
+            )
+        if not self._demo_svt_student_user(user):
+            raise PermissionDeniedError(
+                message="Demo voting codes are only available to student accounts.",
+                code="demo_svt_student_only",
+            )
+        try:
+            validate_election_open_for_svt(election)
+        except DjangoValidationError as exc:
+            raise ValidationError(message=str(exc), code="election_not_open") from exc
+
+        if not self.eligibility_repository.is_user_eligible(election, user):
+            raise PermissionDeniedError(
+                message="You are not eligible to vote in this election.",
+                code="not_eligible",
+            )
+
+        if self._user_has_submitted_ballot(user, election):
+            raise ConflictError(
+                message="You have already voted in this election.",
+                code="already_voted",
+            )
+
+        used_elsewhere = self.svt_repository.get_queryset().filter(
+            user=user,
+            source_demo_code=demo_code,
+            status=SVTToken.Status.USED,
+        ).exclude(election=election)
+        if used_elsewhere.exists():
+            raise ValidationError(
+                message=(
+                    "This demo voting code was already used in another election. "
+                    "Choose a different code from the demo pool."
+                ),
+                code="demo_svt_election_bound",
+            )
+
+        active_elsewhere = (
+            self.svt_repository.get_queryset()
+            .filter(
+                user=user,
+                source_demo_code=demo_code,
+                status__in=[SVTToken.Status.ISSUED, SVTToken.Status.VALIDATED],
+            )
+            .exclude(election=election)
+            .first()
+        )
+        if active_elsewhere:
+            raise ValidationError(
+                message=(
+                    "This demo voting code is active in another election. "
+                    "Finish or abandon that ballot before reusing the code."
+                ),
+                code="demo_svt_active_elsewhere",
+            )
+
+    def _demo_svt_expires_at(self):
+        return datetime(
+            DEMO_SVT_FAR_FUTURE_YEAR,
+            12,
+            31,
+            23,
+            59,
+            59,
+            tzinfo=timezone.utc,
+        )
+
+    def _get_or_create_demo_svt(self, user, election, demo_code: str) -> SVTToken:
+        self._assert_demo_svt_request_allowed(user, election, demo_code)
+
+        token_hash = SVTToken.hash_demo_token_code(demo_code, user.pk, election.pk)
+        existing = self.svt_repository.get_by_token_hash(token_hash)
+        if existing:
+            if existing.status == SVTToken.Status.USED:
+                raise ConflictError(
+                    message="You have already voted in this election with this demo code.",
+                    code="already_voted",
+                )
+            return existing
+
+        pending_sms = (
             self.svt_repository.get_queryset()
             .filter(
                 user=user,
                 election=election,
-                status__in=[SVTToken.Status.ISSUED, SVTToken.Status.VALIDATED],
+                status=SVTToken.Status.ISSUED,
+                source_demo_code="",
             )
             .order_by("-issued_at")
             .first()
+        )
+        if pending_sms and not pending_sms.source_demo_code:
+            self.svt_repository.update(pending_sms, status=SVTToken.Status.REVOKED)
+
+        now = timezone.now()
+        return self.svt_repository.create(
+            user=user,
+            election=election,
+            token_code=token_hash,
+            source_demo_code=demo_code,
+            issued_at=now,
+            expires_at=self._demo_svt_expires_at(),
+            status=SVTToken.Status.ISSUED,
         )
 
     def _record_failed_validation_attempt(self, user, election, svt: SVTToken | None = None) -> None:
@@ -581,9 +685,22 @@ class SVTService:
         if not election:
             raise NotFoundError(message="Election not found.", code="election_not_found")
 
-        svt = self.svt_repository.get_by_token_code(token_code)
-        if not svt:
-            raise NotFoundError(message="Invalid voting token.", code="svt_not_found")
+        normalized = str(token_code or "").strip()
+        demo_code = match_dev_demo_svt_code(normalized)
+        if demo_code:
+            token_hash = SVTToken.hash_demo_token_code(demo_code, user.pk, election.pk)
+            svt = self.svt_repository.get_by_token_hash(token_hash)
+            if not svt:
+                raise NotFoundError(message="Invalid voting token.", code="svt_not_found")
+        else:
+            from core.utils.svt_token_format import normalize_svt_token
+
+            canonical = normalize_svt_token(normalized)
+            if not canonical:
+                raise NotFoundError(message="Invalid voting token.", code="svt_not_found")
+            svt = self.svt_repository.get_by_token_code(canonical)
+            if not svt:
+                raise NotFoundError(message="Invalid voting token.", code="svt_not_found")
 
         try:
             validate_svt_for_ballot_submit(svt, user, election)

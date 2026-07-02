@@ -15,10 +15,9 @@ export const votingApi = {
   },
 
   submitPresenceCapture(electionUuid, formData) {
+    // Let axios set multipart boundary automatically — do not set Content-Type manually.
     return apiClient
-      .post(`/voting/elections/${electionUuid}/presence/`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      })
+      .post(`/voting/elections/${electionUuid}/presence/`, formData)
       .then(unwrapResponse);
   },
 

@@ -16,7 +16,10 @@ from core.exceptions import NotFoundError, PermissionDeniedError, ValidationErro
 
 logger = logging.getLogger("votebridge")
 
-ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp"}
+ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/webp", "application/octet-stream"}
+ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
+JPEG_MAGIC = b"\xff\xd8\xff"
+PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 
@@ -145,13 +148,6 @@ class PreVotePresenceService:
         if not image:
             raise ValidationError(message="A photo is required.", code="image_required")
 
-        content_type = getattr(image, "content_type", "") or ""
-        if content_type.lower() not in ALLOWED_IMAGE_TYPES:
-            raise ValidationError(
-                message="Upload a JPEG or PNG photo.",
-                code="invalid_image_type",
-            )
-
         size = getattr(image, "size", 0) or 0
         if size <= 0:
             raise ValidationError(message="The photo file is empty.", code="empty_image")
@@ -160,6 +156,29 @@ class PreVotePresenceService:
                 message="Photo is too large. Maximum size is 5 MB.",
                 code="image_too_large",
             )
+
+        content_type = (getattr(image, "content_type", "") or "").lower()
+        if content_type in ALLOWED_IMAGE_TYPES and content_type != "application/octet-stream":
+            return
+
+        filename = (getattr(image, "name", "") or "").lower()
+        if any(filename.endswith(ext) for ext in ALLOWED_IMAGE_EXTENSIONS):
+            return
+
+        header = b""
+        if hasattr(image, "read"):
+            position = image.tell() if hasattr(image, "tell") else None
+            header = image.read(12)
+            if hasattr(image, "seek") and position is not None:
+                image.seek(position)
+
+        if header.startswith(JPEG_MAGIC) or header.startswith(PNG_MAGIC):
+            return
+
+        raise ValidationError(
+            message="Upload a JPEG or PNG photo.",
+            code="invalid_image_type",
+        )
 
     @staticmethod
     def _serialize_capture(capture: PreVotePresenceCapture) -> dict:

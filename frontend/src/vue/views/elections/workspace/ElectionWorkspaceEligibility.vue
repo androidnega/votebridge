@@ -16,6 +16,11 @@ const route = useRoute();
 const toast = useToast();
 const electionUuid = computed(() => route.params.uuid);
 
+const quickAdd = ref({
+  indexNumber: "",
+  phoneNumber: "",
+});
+
 const filters = ref({
   indexNumber: "",
   name: "",
@@ -64,6 +69,7 @@ const {
 const columns = [
   { key: "user_name", label: "Voter" },
   { key: "user_index_number", label: "Index number" },
+  { key: "user_phone_number", label: "Phone" },
   { key: "user_email", label: "Email" },
   { key: "is_eligible", label: "Eligible" },
   { key: "actions", label: "" },
@@ -72,6 +78,7 @@ const columns = [
 const searchColumns = [
   { key: "name", label: "Name" },
   { key: "index_number", label: "Index" },
+  { key: "phone_number", label: "Phone" },
   { key: "email", label: "Email" },
   { key: "actions", label: "" },
 ];
@@ -88,6 +95,19 @@ const importForm = ref({
 
 function displayName(user) {
   return `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email;
+}
+
+function normalizeIndex(value = "") {
+  return value.trim().toUpperCase().replace(/\s+/g, "");
+}
+
+function formatPhone(value) {
+  if (!value) return "—";
+  const digits = String(value).replace(/\D/g, "");
+  if (digits.startsWith("233") && digits.length === 12) {
+    return `0${digits.slice(3)}`;
+  }
+  return value;
 }
 
 function matchesProgrammeFilter(user) {
@@ -110,25 +130,68 @@ async function searchStudents() {
   hasSearched.value = true;
   error.value = null;
   try {
-    const query = [filters.value.indexNumber, filters.value.name, filters.value.programmeCode]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
-    const result = await usersApi.list({
-      search: query || undefined,
-      role: "student",
-      is_active: true,
-    });
+    const indexQuery = normalizeIndex(filters.value.indexNumber);
+    const nameQuery = filters.value.name.trim();
+    let result;
+
+    if (indexQuery && !nameQuery) {
+      result = await usersApi.list({
+        search: indexQuery,
+        role: "student,candidate",
+        is_active: true,
+      });
+      const exactMatches = result.items.filter(
+        (user) => normalizeIndex(user.index_number || "") === indexQuery
+      );
+      if (exactMatches.length) {
+        result = { ...result, items: exactMatches };
+      }
+    } else {
+      const query = [nameQuery, indexQuery].filter(Boolean).join(" ").trim();
+      result = await usersApi.list({
+        search: query || undefined,
+        role: "student,candidate",
+        is_active: true,
+      });
+    }
+
     searchResults.value = result.items
       .filter(matchesProgrammeFilter)
       .map((user) => ({
         ...user,
         name: displayName(user),
+        phone_number: formatPhone(user.phone_number),
       }));
   } catch (err) {
     error.value = extractApiError(err);
   } finally {
     searching.value = false;
+  }
+}
+
+async function addByIndex() {
+  const index_number = normalizeIndex(quickAdd.value.indexNumber);
+  if (!index_number) {
+    error.value = "Enter a student index number.";
+    return;
+  }
+
+  saving.value = true;
+  error.value = null;
+  try {
+    await electionsApi.createEligibility(electionUuid.value, {
+      index_number,
+      phone_number: quickAdd.value.phoneNumber.trim() || undefined,
+      is_eligible: eligibleForm.value.is_eligible,
+      eligibility_reason: eligibleForm.value.eligibility_reason,
+    });
+    toast.success(toastMessages.eligibility.added);
+    quickAdd.value = { indexNumber: "", phoneNumber: "" };
+    await refreshRoll();
+  } catch (err) {
+    error.value = extractApiError(err);
+  } finally {
+    saving.value = false;
   }
 }
 
@@ -143,6 +206,7 @@ function toggleSelect(user) {
 
 async function addSingle(user) {
   saving.value = true;
+  error.value = null;
   try {
     await electionsApi.createEligibility(electionUuid.value, {
       user_uuid: user.uuid,
@@ -224,9 +288,9 @@ function onImportFileChange(event) {
 
 function downloadImportTemplate() {
   const csv = [
-    "index_number,email,is_eligible,eligibility_reason",
-    "BC/ITS/24/047,,yes,Registered student voter",
-    ",student@example.com,yes,Registered student voter",
+    "index_number,phone_number,email,is_eligible,eligibility_reason",
+    "BC/ITS/24/047,0247940801,,yes,Registered student voter",
+    ",,student@example.com,yes,Registered student voter",
   ].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -270,6 +334,31 @@ watch(() => electionUuid.value, refreshRoll);
 
     <VAlert v-if="error" variant="error">{{ error }}</VAlert>
 
+    <VCard title="Add by index number">
+      <p class="mb-4 text-sm text-slate-600">
+        Add one student directly using their index number. Attach a phone number for OTP and SMS
+        voting notifications.
+      </p>
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <VInput
+          v-model="quickAdd.indexNumber"
+          label="Index number"
+          placeholder="BC/ITS/24/047"
+          @keyup.enter="addByIndex"
+        />
+        <VInput
+          v-model="quickAdd.phoneNumber"
+          label="Phone number"
+          placeholder="0247940801"
+          hint="Saved on the student profile when provided"
+          @keyup.enter="addByIndex"
+        />
+      </div>
+      <div class="mt-4">
+        <VButton :loading="saving" @click="addByIndex">Add to voter roll</VButton>
+      </div>
+    </VCard>
+
     <VCard title="Find students">
       <p class="mb-4 text-sm text-slate-600">
         Search by index number or name. Use the programme code field to narrow results (e.g. ITS, ITD).
@@ -299,6 +388,9 @@ watch(() => electionUuid.value, refreshRoll);
         :range-label="searchRangeLabel"
         @update:page="goToSearchPage"
       >
+        <template #cell-phone_number="{ row }">
+          {{ row.phone_number || "—" }}
+        </template>
         <template #cell-actions="{ row }">
           <div class="flex gap-1">
             <VButton size="sm" variant="secondary" @click="addSingle(row)">Add</VButton>
@@ -333,6 +425,9 @@ watch(() => electionUuid.value, refreshRoll);
         :range-label="rollRangeLabel"
         @update:page="goToRollPage"
       >
+        <template #cell-user_phone_number="{ row }">
+          {{ formatPhone(row.user_phone_number) }}
+        </template>
         <template #cell-is_eligible="{ row }">{{ row.is_eligible ? "Yes" : "No" }}</template>
         <template #cell-actions="{ row }">
           <VButton size="sm" variant="ghost" @click="askRemoveRecord(row)">Remove</VButton>
