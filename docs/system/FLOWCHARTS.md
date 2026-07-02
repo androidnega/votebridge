@@ -2,6 +2,11 @@
 
 Visual step-by-step flows for the main processes in VoteBridge. Render Mermaid diagrams in GitHub or VS Code.
 
+**Reading guide:**
+- **§1–6** — Core prototype flows (login, voting, election lifecycle, results)
+- **§7** — USSD channel (optional alternate path)
+- **§8–9** — Advanced governance and realtime internals
+
 ---
 
 ## 1. User login flow
@@ -115,7 +120,7 @@ flowchart TD
     subgraph Voting
         V1[Open election]
         V2[Students vote via Web/USSD]
-        V3[Monitor control room]
+        V3[Monitor election]
     end
 
     subgraph Results
@@ -194,7 +199,9 @@ flowchart TD
 
 ---
 
-## 8. Strongroom vault access
+## 8. Strongroom vault access (advanced governance)
+
+Not part of the primary prototype navigation. Committee nomination UI is demoted; vault access is Super Admin governance.
 
 ```mermaid
 flowchart TD

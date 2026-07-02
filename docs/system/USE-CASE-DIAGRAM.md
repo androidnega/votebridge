@@ -2,7 +2,9 @@
 
 A **use case diagram** shows *who* uses the system and *what goals* they achieve. Below is a text explanation plus Mermaid diagrams you can render in GitHub, VS Code, or any Mermaid viewer.
 
-> **Aligned with:** [PRIVILEGES-AND-ROLES.md](./PRIVILEGES-AND-ROLES.md) (July 2026 — Admin election-scoped vs Super Admin platform operations).
+> **Aligned with:** [PRIVILEGES-AND-ROLES.md](./PRIVILEGES-AND-ROLES.md) — Admin election-scoped vs Super Admin platform governance.
+
+**Scope:** The **prototype path** covers login, voting, admin election workspace, and results certification/publication. Advanced use cases (Strong Room vault, Operations Center, operational data reset) exist in code but are **not** primary demo navigation.
 
 ---
 
@@ -20,7 +22,7 @@ A **use case diagram** shows *who* uses the system and *what goals* they achieve
 
 ---
 
-## High-level use case diagram
+## High-level use case diagram (prototype core)
 
 ```mermaid
 flowchart TB
@@ -34,8 +36,8 @@ flowchart TB
         PUB[Public Visitor]
     end
 
-    subgraph Voting
-        UC1[Login with index number]
+    subgraph Voting["Prototype — voting"]
+        UC1[Sign in index number or Staff access]
         UC2[Request voting code SVT]
         UC3[Verify SVT]
         UC4[Capture presence photo]
@@ -44,7 +46,7 @@ flowchart TB
         UC7[View published results]
     end
 
-    subgraph ElectionManagement
+    subgraph ElectionManagement["Prototype — election workspace"]
         UC10[Create election]
         UC11[Manage positions and candidates]
         UC12[Manage voter eligibility]
@@ -52,26 +54,16 @@ flowchart TB
         UC14[Monitor live election]
     end
 
-    subgraph ResultsAndIntegrity
+    subgraph Results["Prototype — results"]
         UC20[Generate results]
         UC21[Certify results]
         UC22[Publish results]
-        UC23[Seal strongroom]
-        UC24[Verify integrity]
     end
 
-    subgraph Platform
+    subgraph Platform["Prototype — settings"]
         UC30[Configure institution]
         UC31[Manage users and roles]
         UC32[Configure SMS/USSD providers]
-        UC33[Maintenance and data reset]
-        UC34[Platform fraud and security investigations]
-        UC35[Operations Center]
-    end
-
-    subgraph Committee
-        UC40[Nominate strong room committee]
-        UC41[Approve committee and vault access]
     end
 
     STU --> UC1
@@ -95,31 +87,32 @@ flowchart TB
     ADM --> UC12
     ADM --> UC13
     ADM --> UC14
-    ADM --> UC40
 
-    SA --> UC10
-    SA --> UC11
-    SA --> UC12
-    SA --> UC13
-    SA --> UC14
-    SA --> UC20
     SA --> UC21
     SA --> UC22
-    SA --> UC23
-    SA --> UC24
     SA --> UC30
     SA --> UC31
     SA --> UC32
-    SA --> UC33
-    SA --> UC34
-    SA --> UC35
-    SA --> UC40
-    SA --> UC41
 
     SMS -.-> UC2
     USSD -.-> UC5
     PUB --> UC7
 ```
+
+> **Note:** Super Admin retains **API capability** for all Admin election operations, but the **presentation UI** emphasizes governance (certify, publish, Settings) — not day-to-day election workspace. Admins own election setup and monitoring in the prototype.
+
+---
+
+## Advanced governance use cases (not primary demo nav)
+
+| Use case | Primary actor | Where |
+|----------|---------------|-------|
+| Seal strongroom / verify integrity | Super Admin | Strong Room module, Settings |
+| Nominate strong room committee | Admin (API); UI demoted | Election governance |
+| Approve committee and vault access | Super Admin | Settings → Election Governance |
+| Platform fraud and security investigations | Super Admin | Settings → Security |
+| Operations Center (health, queues, sessions) | Super Admin | Demoted route / API |
+| Maintenance and operational data reset | Super Admin | Settings → Operations |
 
 ---
 
@@ -127,7 +120,7 @@ flowchart TB
 
 | Use case | Description |
 |----------|-------------|
-| **Authenticate** | Enter index number → receive OTP → access student portal |
+| **Authenticate** | Enter index number → receive OTP → access student portal (staff use **Staff access** → email/username → password → OTP) |
 | **View dashboard** | See active elections, voting status, countdown |
 | **Start vote flow** | Click Vote Now on an eligible election |
 | **Receive SVT** | System sends secure voting code to registered phone |
@@ -162,13 +155,12 @@ Election-scoped — Admin runs elections; platform governance belongs to Super A
 | **Bulk import eligibility** | Upload CSV/Excel voter lists (`POST .../eligibility/import/`) |
 | **Readiness check** | Validate election is ready to open |
 | **Control lifecycle** | Schedule → Open → Pause → Close |
-| **Monitor turnout** | Election workspace control room + per-election WebSocket |
+| **Monitor turnout** | Election workspace **Monitor** tab + per-election WebSocket |
 | **Manage SVTs** | Revoke or reissue tokens for assigned elections |
 | **Review security (election scope)** | Security alerts and fraud cases within operational scope |
 | **Preview results** | View generated results before certification (cannot publish) |
 | **Export reports** | Download integrity and turnout reports |
-| **Nominate committee** | Propose strong room custodians; submit for approval |
-| **Lookup voters** | Read-only user lookup for eligibility and committee nomination |
+| **Lookup voters** | Read-only user lookup for eligibility search |
 
 ### Admin cannot (UI and API for platform areas)
 
@@ -182,21 +174,28 @@ Election-scoped — Admin runs elections; platform governance belongs to Super A
 
 ## Super Admin use cases (detail)
 
+### Prototype emphasis (primary UI)
+
 | Use case | Description |
 |----------|-------------|
-| **All Admin election operations** | Full election workspace access |
 | **Certify results** | Official sign-off after integrity checks |
 | **Publish results** | Make results visible to students/public |
 | **Archive election** | Long-term storage state |
-| **Strong room governance** | Approve committee, vault access requests, vault sessions, integrity hub |
-| **Settings (six hubs)** | Institution, security, integrations, governance, operations, advanced |
-| **Provider config** | SMS, USSD, email providers |
+| **Settings** | Institution, security, integrations, election governance, operations, advanced |
 | **User & role management** | Create users; assign roles in the predefined set |
+| **Provider config** | SMS, USSD, email providers |
+
+### Advanced / governance (API and Settings sub-pages)
+
+| Use case | Description |
+|----------|-------------|
+| **Election workspace (full)** | API supports all Admin election operations; not in primary Super Admin sidebar |
+| **Strong room governance** | Approve committee, vault access requests, vault sessions |
 | **Biometric policy** | Enroll staff, configure step-up rules |
-| **Operational data reset** | Clear elections, votes, and results (dev/staging recovery) |
+| **Platform investigations** | Fraud, security timeline, audit trail (Settings → Security) |
+| **Operations Center** | Platform health, infrastructure, queues, sessions (demoted from nav) |
 | **Backup & maintenance** | Maintenance mode, backups, storage |
-| **Operations Center** | Platform health, infrastructure, queues, sessions, performance |
-| **Platform investigations** | Fraud, security timeline, audit trail (Settings → Security area) |
+| **Operational data reset** | Clear elections, votes, and results (staging/dev recovery — not demo path) |
 
 ---
 

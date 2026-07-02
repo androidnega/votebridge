@@ -2,7 +2,9 @@
 
 A **plain-language walkthrough** of how an election happens in VoteBridge, from creation to published results. Each phase lists **who does it**, **what happens**, and **which privilege** is required.
 
-> **Aligned with:** [PRIVILEGES-AND-ROLES.md](./PRIVILEGES-AND-ROLES.md) (July 2026).
+> **Aligned with:** [PRIVILEGES-AND-ROLES.md](./PRIVILEGES-AND-ROLES.md)
+
+**Prototype path:** Phases 1–6, 9–12 cover the demo (setup → vote → certify → publish). Phase 7 platform monitoring and Strong Room tracks are **advanced governance** — documented but not primary presentation navigation.
 
 ---
 
@@ -183,7 +185,7 @@ Monitoring is **split by scope** — Admin sees assigned elections; Super Admin 
 
 **What admins see:**
 - Turnout trends for **their elections** (aggregate, not per-candidate rankings)
-- Per-election control room and **per-election WebSocket**
+- Per-election **monitor** and **per-election WebSocket**
 - Security alerts and fraud cases within operational scope
 - Communications delivery logs (read-only for election-related traffic)
 
@@ -193,13 +195,16 @@ Monitoring is **split by scope** — Admin sees assigned elections; Super Admin 
 - Platform Operations Center (health, queues, sessions, infrastructure)
 - Strong Room, USSD, or Communications **realtime feeds**
 
-### Super Admin (platform + elections)
+### Super Admin (platform + elections) — advanced
 
-All Admin election monitoring, plus:
+All Admin election monitoring, plus governance capabilities **not shown in primary prototype nav**:
+
 - **Operations Center** (`CanAccessPlatformOperationsCenter`) — platform health, queues, sessions, logs
 - Strong Room, Communications, and USSD **WebSocket feeds**
 - Communications queue process / retry / provider tests
 - Platform-wide fraud and security investigation (Settings → Security area)
+
+Super Admin **prototype UI** emphasizes certification, publication, and Settings — not the election workspace sidebar.
 
 ---
 
@@ -293,7 +298,7 @@ Temporarily stops new voting. Used for technical issues or institutional decisio
 
 ---
 
-## Maintenance — Operational data reset (non-production / recovery)
+## Appendix A — Operational data reset (advanced / non-production)
 
 | Who | Super Admin |
 |-----|-------------|
@@ -304,20 +309,20 @@ Temporarily stops new voting. Used for technical issues or institutional decisio
 2. `data_reset_service` / `election_purge_service` remove elections, votes, results, SVT tokens, presence captures, and related records
 3. User accounts and institution settings are preserved (unless a full dev reset command is used)
 
-**Layman:** A “factory reset” for election data — used in development, staging, or after a test run. Not part of the normal election lifecycle.
+**Layman:** A “factory reset” for election data — used in development, staging, or after a test run. **Not part of the normal election lifecycle or prototype demo.**
 
-For local development, `python manage.py reset_votebridge_dev --force` rebuilds demo data and documents dev OTP fallback in its docstring.
+For local development tooling, see [TECH-STACK.md — Appendix](./TECH-STACK.md).
 
 ---
 
-## Strongroom parallel track
+## Appendix B — Strongroom parallel track (advanced governance)
 
-Runs alongside results for integrity:
+Runs alongside results for integrity — **not** part of the primary prototype navigation:
 
 | Stage | Action |
 |-------|--------|
 | On each ballot submit | `BallotSeal` created |
-| Committee nomination | Admin proposes custodians |
+| Committee nomination | Admin (API); UI demoted |
 | Committee approval | Super Admin approves |
 | Vault access | Super Admin opens vault session |
 | After certification | `ElectionSeal` links all ballots |
@@ -339,8 +344,8 @@ Runs alongside results for integrity:
 | Close | — | — | ✓ | ✓ |
 | Certify results | — | — | — | ✓ |
 | Publish results | — | — | — | ✓ |
-| Vault / strongroom | — | — | nominate | ✓ approve & access |
-| Data reset | — | — | — | ✓ |
+| Vault / strongroom | — | — | API only | ✓ approve & access |
+| Data reset | — | — | — | ✓ (advanced) |
 
 ---
 

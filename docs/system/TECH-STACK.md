@@ -39,10 +39,12 @@ Vue is a JavaScript framework for building the user interface in the browser.
 
 ### What it does in VoteBridge
 - Student dashboard and voting wizard (`StudentAppShell` — dedicated student portal)
-- Admin election workspace and control room
-- Super admin settings (six hubs) and strongroom terminal
-- Login, OTP, and presence capture screens
+- Admin election workspace and **Monitor** tab
+- Super Admin settings (six hubs) and certification flows
+- Login (index number + Staff access), OTP, and presence capture screens
 - Shared list pagination via `VPagination` + `useClientListPagination` / `useServerListPagination`
+
+Advanced screens (Strong Room terminal, Operations Center) exist but are **not** in primary prototype navigation.
 
 ### Why Vue?
 - **Component-based** — reusable cards, tables, forms
@@ -237,10 +239,21 @@ USSD uses the same vote tables as web but skips presence photo capture.
 | HTTPS | Optional | Required (SSL) |
 | Debug | Verbose errors | Hidden from users |
 | Static files | Vite dev server | WhiteNoise + built assets |
-| OTP fallback | `DEV_OTP_FALLBACK_*` for named dev accounts (development settings only) | Disabled |
-| Demo data reset | `python manage.py reset_votebridge_dev --force` | Not for production use |
 
-**Development OTP fallback:** When `DEV_OTP_FALLBACK_ENABLED` is true (development settings), named usernames can log in with a fixed OTP code instead of SMS — speeds up local testing. Never enable in production.
+See **Appendix: Developer tooling** below for local-only OTP fallback and demo data reset.
+
+---
+
+## Appendix: Developer tooling (local only)
+
+These features exist for **development and staging** only. They are not part of the prototype presentation path and must not be enabled in production.
+
+| Tool | Purpose |
+|------|---------|
+| `DEV_OTP_FALLBACK_*` settings | Named dev accounts can use a fixed OTP instead of SMS when `DEV_OTP_FALLBACK_ENABLED` is true |
+| `python manage.py reset_votebridge_dev --force` | Rebuilds demo election data locally |
+
+**OTP fallback:** Speeds up local testing. Never enable in production.
 
 ---
 

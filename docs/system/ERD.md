@@ -1,8 +1,8 @@
 # VoteBridge — Entity Relationship Diagram (ERD)
 
-An **ERD** shows how data is stored in PostgreSQL and how tables relate. This document matches the **July 2026 presentation-clean prototype** and the live Django models.
+An **ERD** shows how data is stored in PostgreSQL and how tables relate. This document matches the **presentation-ready prototype** and the live Django models.
 
-> **Prototype focus:** Core entities below power the demo flows (login → vote → results; admin election workspace). Supporting/governance entities remain in the database but are not primary UI surfaces.
+> **Prototype focus:** Core entities below power the demo flows (login → vote → results; admin election workspace). Supporting/governance entities remain in the database but are not primary UI surfaces. See [SYSTEM-DOCUMENTATION-INDEX.md](../SYSTEM-DOCUMENTATION-INDEX.md) for core vs advanced documentation layers.
 
 ---
 

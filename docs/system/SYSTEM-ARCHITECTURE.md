@@ -2,7 +2,9 @@
 
 This document explains **how VoteBridge is built** and how the parts work together. Written for both technical readers and curious non-developers.
 
-> **Aligned with:** [PRIVILEGES-AND-ROLES.md](./PRIVILEGES-AND-ROLES.md) for WebSocket and operations boundaries (July 2026).
+> **Aligned with:** [PRIVILEGES-AND-ROLES.md](./PRIVILEGES-AND-ROLES.md) for WebSocket and operations boundaries.
+
+**Presentation note:** Primary sidebars show the campus e-voting prototype. Advanced modules (Operations Center, Strong Room committee tab, infrastructure pages) remain routable but are demoted from main navigation.
 
 ---
 
@@ -117,6 +119,14 @@ When a student submits a ballot, the backend saves to PostgreSQL, then publishes
 
 Open-election payloads are sanitized — no candidate rankings or winners leak over WebSocket.
 
+### 4. Data layer
+
+| Component | Role |
+|-----------|------|
+| **PostgreSQL** | Permanent storage — users, votes, elections, audit logs |
+| **Redis** | Cache + WebSocket pub/sub |
+| **Media files** | Candidate photos, presence capture images, logos |
+
 ### 5. Presentation UI surfaces (prototype)
 
 Primary navigation is trimmed per role. Deep modules stay routable (`meta.presentationHidden` or `roles: ["super_admin"]`) but are demoted from sidebars.
@@ -127,17 +137,9 @@ Primary navigation is trimmed per role. Deep modules stay routable (`meta.presen
 | **Admin** | Dashboard, Elections, Results, Reports | Election workspace (positions, candidates, eligibility, readiness, monitor) |
 | **Super Admin** | Dashboard, Results, Settings | Certification queue, settings hubs (institution, integrations, governance) |
 
-**Hidden / demoted from primary nav:** global control-room redirect, election-management stubs, Strong Room committee tab in workspace, platform operations center, infrastructure/performance pages, analytics sub-pages (reachable via reports for admin only).
+**Demoted from primary nav:** global control-room redirect, election-management stubs, Strong Room committee tab in workspace, platform Operations Center, infrastructure/performance pages.
 
 **Login:** Single `/auth/login` — public copy is index-number only; **Staff access** link reveals privileged sign-in (email/username → password → OTP).
-
-### 4. Data layer
-
-| Component | Role |
-|-----------|------|
-| **PostgreSQL** | Permanent storage — users, votes, elections, audit logs |
-| **Redis** | Cache + WebSocket pub/sub |
-| **Media files** | Candidate photos, presence capture images, logos |
 
 ---
 
@@ -246,7 +248,7 @@ Docker Compose (development) provides PostgreSQL 16 and Redis 7 locally.
 | `notifications` | SMS, templates, in-app notifications |
 | `biometrics` | Staff face enrollment/verification |
 | `trusted_devices` | Admin device trust |
-| `system` | Institution settings (six hubs), feature flags, **data reset**, dev reset |
+| `system` | Institution settings (six hubs), feature flags, operational data reset (Settings → Operations) |
 | `ussd` | Phone voting sessions |
 | `realtime` | WebSocket consumers |
 | `dashboard` | Dashboard aggregation services |
@@ -280,7 +282,7 @@ Vue routes under `/settings/*` map to six hubs defined in `systemControlHub.js`:
 2. Security  
 3. Integrations  
 4. Election Governance  
-5. Operations (maintenance, backup, storage, **operational data reset**)  
+5. Operations (maintenance, backup, storage, operational data reset — advanced / recovery)
 6. Advanced  
 
 ### Operations API split

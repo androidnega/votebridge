@@ -44,6 +44,10 @@ Audit and oversight are handled through **governed workflows and approved privil
 
 External auditors participate through **approved committee / access-request context**, not a separate login role.
 
+### Presentation UI note
+
+Primary navigation reflects the **campus e-voting prototype**. Strong Room committee nomination remains supported via API (`IsAdminOrSuperAdmin`) but the committee tab is **demoted** from the election workspace sidebar. Super Admin sidebar emphasizes Dashboard, Results, and Settings — not day-to-day election workspace.
+
 ---
 
 ## Authentication by role
@@ -51,8 +55,10 @@ External auditors participate through **approved committee / access-request cont
 | Role | Login method | Extra security |
 |------|--------------|----------------|
 | Student / Candidate | Index number (no password) → OTP (SMS or email) | — |
-| Admin | Email + password → OTP | Biometric step-up when policy requires |
-| Super Admin | Email + password → MFA OTP | Biometric step-up; bypasses maintenance mode |
+| Admin | **Staff access** → email + password → OTP | Biometric step-up when policy requires |
+| Super Admin | **Staff access** → email + password → MFA OTP | Biometric step-up; bypasses maintenance mode |
+
+All roles use the **same login page** (`/auth/login`). Public copy is student-first; staff reveal email/username fields via **Staff access**.
 
 ---
 
@@ -107,7 +113,7 @@ Admin power is **election-scoped**. Admins run elections; they do **not** own th
 - Manage own profile (contact fields only, same self-service rule as students)
 - **Create, edit, schedule, open, pause, close** elections
 - Manage **positions**, **candidates**, and **voter eligibility** (register / import / assign)
-- Use election **control room / monitor** (turnout, activity) per election workspace
+- Use election **monitor** (turnout, activity) per election workspace
 - View **election-scoped** result statuses (including draft) and export election reports
 - **Preview** results (not certify or publish)
 - List, **revoke, reissue** SVT tokens for assigned elections
