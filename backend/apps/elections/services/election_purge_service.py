@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from django.db import transaction
 from django.db.models import Q
 
+from apps.candidates.models import Candidate
 from apps.elections.models import Election
 from apps.fraud.models import FraudCase, SecurityAlert
 from apps.results.models import ElectionResult
@@ -80,6 +81,8 @@ class ElectionPurgeService:
         summary.svt_tokens, _ = SVTToken.objects.filter(election=election).delete()
         ElectionSeal.objects.filter(election=election).delete()
         summary.results, _ = ElectionResult.objects.filter(election=election).delete()
+
+        Candidate.objects.filter(election=election).delete()
 
         AuditLog.objects.filter(election=election).update(election=None)
 
