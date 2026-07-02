@@ -12,6 +12,8 @@ const router = useRouter();
 const route = useRoute();
 const authStore = useAuthStore();
 
+/** student | staff — staff path is reached via subtle “Staff access” only */
+const entryMode = ref("student");
 /** identity | password | auth-check */
 const step = ref("identity");
 const form = reactive({
@@ -34,10 +36,27 @@ onMounted(() => {
   form.remember = Boolean(form.identity);
 });
 
+function openStaffAccess() {
+  entryMode.value = "staff";
+  submitError.value = "";
+  errors.identity = "";
+  step.value = "identity";
+}
+
+function returnToStudentEntry() {
+  entryMode.value = "student";
+  submitError.value = "";
+  errors.identity = "";
+  errors.password = "";
+  step.value = "identity";
+}
+
 async function continueIdentity() {
   submitError.value = "";
+  const identityMessage =
+    entryMode.value === "student" ? "Enter your index number." : "Enter your email or username.";
   const { valid, errors: fieldErrors } = validateFields(form, {
-    identity: [required("Enter your index number.")],
+    identity: [required(identityMessage)],
   });
   errors.identity = fieldErrors.identity || "";
   if (!valid) return;
@@ -129,7 +148,7 @@ function backFromPassword() {
       {{ submitError }}
     </VAlert>
 
-    <form v-if="step === 'identity'" class="space-y-4" @submit.prevent="continueIdentity">
+    <form v-if="step === 'identity' && entryMode === 'student'" class="space-y-4" @submit.prevent="continueIdentity">
       <div>
         <h2 class="text-base font-semibold text-slate-800">Sign in</h2>
         <p class="mt-1 text-sm text-slate-500">
@@ -148,6 +167,45 @@ function backFromPassword() {
       />
 
       <VButton type="submit" block :loading="authStore.loading">Continue</VButton>
+
+      <p class="text-center">
+        <button
+          type="button"
+          class="text-xs font-medium text-slate-400 hover:text-slate-600"
+          @click="openStaffAccess"
+        >
+          Staff access
+        </button>
+      </p>
+    </form>
+
+    <form v-else-if="step === 'identity' && entryMode === 'staff'" class="space-y-4" @submit.prevent="continueIdentity">
+      <div>
+        <h2 class="text-base font-semibold text-slate-800">Staff access</h2>
+        <p class="mt-1 text-sm text-slate-500">Enter your email or username to continue.</p>
+      </div>
+
+      <VInput
+        id="staff-identity"
+        v-model="form.identity"
+        label="Email or username"
+        autocomplete="username"
+        placeholder="admin@ttu.edu.gh"
+        :error="errors.identity"
+        required
+      />
+
+      <VButton type="submit" block :loading="authStore.loading">Continue</VButton>
+
+      <p class="text-center">
+        <button
+          type="button"
+          class="text-xs font-medium text-slate-400 hover:text-slate-600"
+          @click="returnToStudentEntry"
+        >
+          Back to student sign in
+        </button>
+      </p>
     </form>
 
     <form v-else-if="step === 'password'" class="space-y-4" @submit.prevent="submitPassword">

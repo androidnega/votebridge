@@ -36,12 +36,10 @@ export const adminQuickActionsPhase51 = [
   { id: "reports", label: "Reports", icon: "analytics", route: "/dashboard/reports" },
 ];
 
-/** Phase 62 — governance-level destinations only; no duplicate provider or audit shortcuts. */
+/** Phase 63 — governance quick actions for prototype demo (no deep ops surfaces). */
 export const governanceQuickActionsPhase51 = [
-  { id: "certifications", label: "Results / Certification", icon: "results", route: "/dashboard/results?filter=certification" },
-  { id: "reports", label: "Reports", icon: "analytics", route: "/dashboard/reports" },
-  { id: "settings", label: "Settings", icon: "settings", route: "/dashboard/settings" },
-  { id: "operations", label: "Operations", icon: "operations", route: "/dashboard/operations" },
+  { id: "certifications", label: "Certify results", icon: "results", route: "/dashboard/results?filter=certification" },
+  { id: "settings", label: "Platform settings", icon: "settings", route: "/dashboard/settings" },
 ];
 
 export function greetingForHour(hour = new Date().getHours()) {

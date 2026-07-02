@@ -75,6 +75,9 @@ function isActive(item) {
       route.path.startsWith(dashboardPath("election-management"))
     );
   }
+  if (item.to === dashboardPath("results")) {
+    return route.path.startsWith(dashboardPath("results"));
+  }
   if (item.to === dashboardPath("reports")) {
     return route.path.startsWith(dashboardPath("reports")) || route.path.startsWith(dashboardPath("analytics"));
   }

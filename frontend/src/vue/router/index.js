@@ -180,7 +180,7 @@ const router = createRouter({
           path: "control-room",
           name: "admin-control-room",
           component: () => import("@/views/elections/AdminControlRoomRedirectView.vue"),
-          meta: { title: "Control Room", roles: ["admin"] },
+          meta: { title: "Monitor", roles: ["admin"] },
         },
         {
           path: "elections/create",
@@ -232,7 +232,7 @@ const router = createRouter({
               path: "monitor",
               name: "election-workspace-monitor",
               component: () => import("@/views/elections/workspace/ElectionWorkspaceMonitor.vue"),
-              meta: { title: "Control Room", roles: ["admin"] },
+              meta: { title: "Monitor", roles: ["admin"] },
             },
             {
               path: "vote",
@@ -250,7 +250,7 @@ const router = createRouter({
               path: "committee",
               name: "election-vault-committee",
               component: () => import("@/views/strongroom/ElectionVaultCommitteeView.vue"),
-              meta: { title: "Strong Room Committee", roles: ["admin", "super_admin"] },
+              meta: { title: "Strong Room Committee", roles: ["super_admin"], presentationHidden: true },
             },
             {
               path: "vault/access",

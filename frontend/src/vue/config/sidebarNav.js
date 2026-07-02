@@ -5,6 +5,7 @@ import { dashboardPath } from "@/config/routes";
 const studentNav = [
   { name: "Dashboard", to: dashboardPath(), icon: "home" },
   { name: "Elections", to: dashboardPath("my-elections"), icon: "elections", key: "elections" },
+  { name: "Results", to: dashboardPath("results"), icon: "results" },
   { name: "Notifications", to: dashboardPath("notifications"), icon: "notifications" },
 ];
 
@@ -18,7 +19,6 @@ const adminNav = [
 const superAdminNav = [
   { name: "Dashboard", to: dashboardPath(), icon: "home" },
   { name: "Results", to: dashboardPath("results"), icon: "results" },
-  { name: "Reports", to: dashboardPath("reports"), icon: "analytics" },
   { name: "Settings", to: dashboardPath("settings"), icon: "settings", roles: ["super_admin"] },
 ];
 

@@ -2,16 +2,13 @@
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 import LineChart from "@/components/charts/LineChart.vue";
-import DonutChart from "@/components/charts/DonutChart.vue";
 import {
-  DashboardActivityTimeline,
   DashboardKpiCard,
   DashboardQuickActions,
   DashboardSectionCard,
-  DashboardSecurityPanel,
   DashboardWelcomeBanner,
 } from "@/components/dashboard/experience";
-import { EmptyState, LoadingSkeleton, VAlert, VButton, VIcon } from "@/components/ui";
+import { EmptyState, LoadingSkeleton, VAlert, VButton } from "@/components/ui";
 import { useDashboardRealtime } from "@/composables/useDashboardRealtime";
 import { useGovernanceDashboard } from "@/composables/useGovernanceDashboard";
 
@@ -23,14 +20,10 @@ const {
   error,
   welcomeBanner,
   kpiCards,
-  platformServicesChart,
   participationLabels,
   participationSeries,
   hasParticipationTrend,
-  adminActivity,
-  securityItems,
   quickActions,
-  chartColors,
   loadDashboard,
 } = useGovernanceDashboard();
 
@@ -57,7 +50,7 @@ function navigate(route) {
         <DashboardWelcomeBanner
           v-bind="welcomeBanner"
           :is-live="isLive"
-          subtitle="Platform governance, security, and operational oversight."
+          subtitle="Platform governance — certification and institutional settings."
         >
           <template #actions>
             <VButton variant="secondary" size="sm" :loading="loading" @click="refresh">Refresh</VButton>
@@ -65,7 +58,7 @@ function navigate(route) {
         </DashboardWelcomeBanner>
 
         <section aria-label="Platform summary">
-          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-8">
+          <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
             <DashboardKpiCard
               v-for="card in kpiCards"
               :key="card.id"
@@ -78,9 +71,9 @@ function navigate(route) {
 
         <section class="grid grid-cols-1 gap-6 xl:grid-cols-12">
           <DashboardSectionCard
-            class="xl:col-span-8"
+            class="xl:col-span-12"
             title="Platform Activity"
-            subtitle="Votes processed across active elections — aggregate operational view."
+            subtitle="Votes processed across active elections."
           >
             <LineChart
               v-if="hasParticipationTrend"
@@ -96,55 +89,9 @@ function navigate(route) {
               description="Vote processing trends appear when elections are active."
             />
           </DashboardSectionCard>
-
-          <DashboardSectionCard
-            class="xl:col-span-4"
-            title="Platform Services"
-            subtitle="Healthy, warning, and offline service counts."
-          >
-            <DonutChart
-              v-if="platformServicesChart.length"
-              :items="platformServicesChart"
-              :colors="['#166534', '#D97706', '#DC2626']"
-              donut
-              height="320px"
-            />
-            <EmptyState
-              v-else
-              icon="operations"
-              title="Service status unavailable"
-              description="Infrastructure health will display once services are checked."
-            />
-          </DashboardSectionCard>
         </section>
 
-        <section class="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <DashboardSectionCard title="Recent Platform Activity" subtitle="Administrative and governance events.">
-            <DashboardActivityTimeline v-if="adminActivity.length" :items="adminActivity" />
-            <EmptyState
-              v-else
-              icon="inbox"
-              title="No recent activity"
-              description="Backup, maintenance, and integration events will appear here."
-            />
-            <div v-if="adminActivity.length" class="mt-4 border-t border-border pt-4">
-              <button
-                type="button"
-                class="inline-flex items-center gap-1 text-sm font-medium text-[#2563EB] hover:underline"
-                @click="navigate({ name: 'platform-logs' })"
-              >
-                View full audit log
-                <VIcon name="chevronRight" size="sm" />
-              </button>
-            </div>
-          </DashboardSectionCard>
-
-          <DashboardSectionCard title="Recent Security" subtitle="Authentication, fraud, and vault access signals.">
-            <DashboardSecurityPanel :items="securityItems" />
-          </DashboardSectionCard>
-        </section>
-
-        <DashboardSectionCard title="Quick Actions" subtitle="Super Admin platform operations — no election management.">
+        <DashboardSectionCard title="Quick Actions" subtitle="Certification and platform configuration for the demo.">
           <DashboardQuickActions :actions="quickActions" @select="navigate" />
         </DashboardSectionCard>
       </template>

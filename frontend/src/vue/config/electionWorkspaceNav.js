@@ -1,4 +1,4 @@
-/** Election workspace navigation — sidebar and module tabs. */
+/** Election workspace navigation — presentation-focused election management tabs. */
 
 import { dashboardPath } from "@/config/routes";
 
@@ -12,16 +12,8 @@ export function getElectionWorkspaceNav(electionUuid, status) {
     { label: "Readiness", to: `${base}/readiness` },
   ];
 
-  if (["open", "paused"].includes(status)) {
-    tabs.push({ label: "Control room", to: `${base}/monitor` });
-  }
-
-  if (["draft", "scheduled"].includes(status)) {
-    tabs.push({ label: "Strong room committee", to: `${base}/committee` });
-  }
-
-  if (["closed", "archived"].includes(status)) {
-    tabs.push({ label: "Vault access", to: `${base}/vault/access` });
+  if (["open", "paused", "closed"].includes(status)) {
+    tabs.push({ label: "Monitor", to: `${base}/monitor` });
   }
 
   return tabs;
@@ -42,19 +34,28 @@ export function getElectionStudentNav(electionUuid, status) {
 export function getElectionSidebarChildren(electionUuid, status, { isElectionOfficer, isStudent, isSuperAdmin } = {}) {
   if (!electionUuid) return [];
 
-  let tabs = [];
   if (isElectionOfficer) {
-    tabs = getElectionWorkspaceNav(electionUuid, status);
-  } else if (isStudent) {
-    tabs = getElectionStudentNav(electionUuid, status);
-  } else if (isSuperAdmin) {
-    tabs = getElectionWorkspaceNav(electionUuid, status);
+    return getElectionWorkspaceNav(electionUuid, status).map((tab) => ({
+      name: tab.label,
+      to: tab.to,
+      exact: tab.exact,
+      disabled: tab.disabled,
+    }));
   }
 
-  return tabs.map((tab) => ({
-    name: tab.label,
-    to: tab.to,
-    exact: tab.exact,
-    disabled: tab.disabled,
-  }));
+  if (isStudent) {
+    return getElectionStudentNav(electionUuid, status).map((tab) => ({
+      name: tab.label,
+      to: tab.to,
+      exact: tab.exact,
+      disabled: tab.disabled,
+    }));
+  }
+
+  if (isSuperAdmin) {
+    const base = dashboardPath(`elections/${electionUuid}`);
+    return [{ name: "Overview", to: base, exact: true }];
+  }
+
+  return [];
 }

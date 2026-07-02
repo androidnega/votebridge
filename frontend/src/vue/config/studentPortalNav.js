@@ -1,9 +1,10 @@
 import { dashboardPath } from "@/config/routes";
 
-/** Phase 62 — student primary nav: Dashboard, Elections, Notifications only. Profile is header-only. */
+/** Phase 62 — student primary nav. Profile is header-only. */
 export const studentPrimaryNav = [
   { name: "Dashboard", to: dashboardPath(), icon: "home", key: "dashboard" },
   { name: "Elections", to: dashboardPath("my-elections"), icon: "elections", key: "elections" },
+  { name: "Results", to: dashboardPath("results"), icon: "results", key: "results" },
   { name: "Notifications", to: dashboardPath("notifications"), icon: "notifications", key: "notifications" },
 ];
 

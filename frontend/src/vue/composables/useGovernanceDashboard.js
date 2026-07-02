@@ -284,7 +284,21 @@ export function useGovernanceDashboard() {
     ];
   });
 
-  const participationLabels = computed(
+  const presentationKpiCards = computed(() =>
+    kpiCards.value
+      .filter((card) =>
+        ["pending-certification", "active-elections", "sms-delivery"].includes(card.id)
+      )
+      .map((card) => {
+        if (card.id === "active-elections") {
+          return { ...card, clickable: false, route: undefined };
+        }
+        if (card.id === "sms-delivery") {
+          return { ...card, route: r.integrations.sms };
+        }
+        return card;
+      })
+  );
     () => analytics.value.trends?.votes_hourly?.map((point) => point.label) || []
   );
 
@@ -414,7 +428,7 @@ export function useGovernanceDashboard() {
     ),
     platformStatusLabel,
     welcomeBanner,
-    kpiCards,
+    kpiCards: presentationKpiCards,
     platformServicesChart,
     participationLabels,
     participationSeries,

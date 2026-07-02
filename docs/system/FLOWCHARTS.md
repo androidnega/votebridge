@@ -11,9 +11,9 @@ flowchart TD
     A[User opens VoteBridge] --> B{Already logged in?}
     B -->|Yes| C[Go to dashboard]
     B -->|No| D[Enter your index number]
-    D --> E{Account type resolved by API}
-    E -->|Student/Candidate| F[Send OTP to phone/email]
-    E -->|Privileged account| G[Enter password on same login flow]
+    D --> E{API resolves account}
+    E -->|Student/Candidate| F[Send OTP]
+    E -->|Privileged| G[Staff access → email/username + password]
     G --> H[Send OTP]
     F --> K[Enter OTP]
     H --> K
@@ -25,7 +25,7 @@ flowchart TD
     N --> C
 ```
 
-**Layman summary:** Everyone uses the **same sign-in page**. Students enter their **index number** and receive a code. The system recognises privileged accounts on the same page and adds a password step before the code.
+**Layman summary:** Everyone uses the **same sign-in page** with student-first copy (“Enter your index number”). Staff use a subtle **Staff access** link, then email/username and password, then OTP.
 
 ---
 
